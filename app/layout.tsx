@@ -1,4 +1,5 @@
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -19,8 +20,8 @@ const geistMono = Geist_Mono({
 
 const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
-  weight: '400',
   variable: '--font-instrument-serif',
+  weight: '400',
 })
 
 export const metadata: Metadata = {
@@ -64,6 +65,7 @@ export default function RootLayout({
           </TooltipProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
+        {process.env.NODE_ENV === 'production' && <SpeedInsights />}
       </body>
     </html>
   )
