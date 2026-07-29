@@ -87,7 +87,7 @@ export async function joinTeam(code: string) {
     // Find team by code
     const { data: team, error: teamError } = await supabase
       .from('teams')
-      .select('id, name')
+      .select('id, name, leader_id')
       .eq('code', code)
       .single()
 
@@ -121,6 +121,11 @@ export async function joinTeam(code: string) {
       }
       return { error: "Failed to send join request." }
     }
+
+    // Notify team leader
+    const { createNotification } = await import('./notifications')
+    const studentName = user.user.user_metadata?.name || user.user.user_metadata?.niat_id || 'A student'
+    await createNotification(team.leader_id, 'New Join Request', `${studentName} wants to join your team!`, 'info')
 
     return { success: true, teamName: team.name }
   } catch (err: any) {
@@ -199,7 +204,7 @@ export async function handleTeamRequest(requestId: string, status: 'approved' | 
 
     // If approved, automatically reject all other pending/invited requests for this student
     if (status === 'approved') {
-      const { data: request } = await supabase.from('team_members').select('student_id').eq('id', requestId).single()
+      const { data: request } = await supabase.from('team_members').select('student_id, team_id, teams(name)').eq('id', requestId).single()
       if (request) {
         await supabase
           .from('team_members')
@@ -207,6 +212,10 @@ export async function handleTeamRequest(requestId: string, status: 'approved' | 
           .eq('student_id', request.student_id)
           .neq('id', requestId)
           .in('status', ['pending', 'invited'])
+          
+        const { createNotification } = await import('./notifications')
+        const teamName = request.teams?.name || 'the team'
+        await createNotification(request.student_id, 'Request Approved', `Your request to join ${teamName} was approved!`, 'success')
       }
     }
 

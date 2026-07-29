@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { toast } from "sonner"
-import { CheckCircle2Icon, GlobeIcon } from "lucide-react"
+import { CheckCircle2Icon, GlobeIcon, Loader2Icon } from "lucide-react"
 
 const Github = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -38,7 +38,7 @@ const Linkedin = (props: React.SVGProps<SVGSVGElement>) => (
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
@@ -57,48 +57,66 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ACADEMIC_YEARS, DEPARTMENTS } from "@/lib/mock-data"
-import { useAppState } from "@/lib/app-state-context"
+import { getMyProfile, updateMyProfile } from "@/app/actions/profile"
+
+// Instead of mock-data, hardcode options or keep if they are constants
+const ACADEMIC_YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Alumni"]
+const DEPARTMENTS = ["Computer Science", "Information Technology", "Electronics", "Electrical", "Mechanical", "Civil", "Other"]
 
 export default function ProfilePage() {
-  const { currentUser, updateUserProfile } = useAppState()
-  
-  const [skills, setSkills] = React.useState(currentUser.skills)
+  const [loading, setLoading] = React.useState(true)
+  const [saving, setSaving] = React.useState(false)
+
+  const [skills, setSkills] = React.useState<string[]>([])
   const [skillInput, setSkillInput] = React.useState("")
 
-  const [fullName, setFullName] = React.useState(currentUser.fullName)
-  const [collegeId, setCollegeId] = React.useState(currentUser.collegeId)
-  const [email, setEmail] = React.useState(currentUser.email)
-  const [phone, setPhone] = React.useState(currentUser.phone)
-  const [department, setDepartment] = React.useState(currentUser.department)
-  const [academicYear, setAcademicYear] = React.useState(currentUser.academicYear)
-  const [linkedin, setLinkedin] = React.useState(currentUser.linkedin)
-  const [github, setGithub] = React.useState(currentUser.github || "")
-  const [portfolio, setPortfolio] = React.useState(currentUser.portfolio || "")
+  const [fullName, setFullName] = React.useState("")
+  const [collegeId, setCollegeId] = React.useState("")
+  const [email, setEmail] = React.useState("")
+  const [phone, setPhone] = React.useState("")
+  const [department, setDepartment] = React.useState("")
+  const [academicYear, setAcademicYear] = React.useState("")
+  const [linkedin, setLinkedin] = React.useState("")
+  const [github, setGithub] = React.useState("")
+  const [portfolio, setPortfolio] = React.useState("")
+  const [niatId, setNiatId] = React.useState("")
+  const [avatarUrl, setAvatarUrl] = React.useState("")
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
+  const fetchProfile = async () => {
+    setLoading(true)
+    const { profile } = await getMyProfile()
+    if (profile) {
+      setFullName(profile.name || "")
+      setCollegeId(profile.collegeId || "")
+      setEmail(profile.email || "")
+      setPhone(profile.phone || "")
+      setDepartment(profile.department || "")
+      setAcademicYear(profile.academicYear || "")
+      setLinkedin(profile.linkedin || "")
+      setGithub(profile.github || "")
+      setPortfolio(profile.portfolio || "")
+      setSkills(profile.skills || [])
+      setNiatId(profile.niat_id || "")
+      setAvatarUrl(profile.avatarUrl || "")
+    }
+    setLoading(false)
+  }
+
   React.useEffect(() => {
-    setFullName(currentUser.fullName)
-    setCollegeId(currentUser.collegeId)
-    setEmail(currentUser.email)
-    setPhone(currentUser.phone)
-    setDepartment(currentUser.department)
-    setAcademicYear(currentUser.academicYear)
-    setLinkedin(currentUser.linkedin)
-    setGithub(currentUser.github || "")
-    setPortfolio(currentUser.portfolio || "")
-    setSkills(currentUser.skills)
-  }, [currentUser])
+    fetchProfile()
+  }, [])
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     const reader = new FileReader()
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       const base64String = reader.result as string
-      updateUserProfile({ avatarUrl: base64String })
+      setAvatarUrl(base64String)
+      await updateMyProfile({ avatarUrl: base64String })
       toast.success("Profile picture updated successfully.")
     }
     reader.readAsDataURL(file)
@@ -114,10 +132,11 @@ export default function ProfilePage() {
     }
   }
 
-  function save(e: React.FormEvent) {
+  async function save(e: React.FormEvent) {
     e.preventDefault()
-    updateUserProfile({
-      fullName,
+    setSaving(true)
+    const res = await updateMyProfile({
+      name: fullName,
       collegeId,
       email,
       phone,
@@ -128,16 +147,46 @@ export default function ProfilePage() {
       portfolio,
       skills,
     })
-    toast.success("Profile updated successfully.")
+    setSaving(false)
+    
+    if (res.success) {
+      toast.success("Profile updated successfully.")
+    } else {
+      toast.error(res.error || "Failed to update profile.")
+    }
   }
 
-  const initials = currentUser.fullName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
+  const initials = fullName
+    ? fullName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .substring(0, 2)
+    : "U"
+
+  let completionScore = 0
+  if (fullName) completionScore += 10
+  if (collegeId) completionScore += 10
+  if (email) completionScore += 10
+  if (phone) completionScore += 10
+  if (department) completionScore += 10
+  if (academicYear) completionScore += 10
+  if (skills.length > 0) completionScore += 10
+  if (linkedin) completionScore += 10
+  if (github) completionScore += 10
+  if (portfolio) completionScore += 10
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
+        <Loader2Icon className="size-8 animate-spin text-primary" />
+        <p>Loading profile...</p>
+      </div>
+    )
+  }
 
   return (
-    <form onSubmit={save} className="flex flex-col gap-6">
+    <form onSubmit={save} className="flex flex-col gap-6 animate-in fade-in duration-300">
       <input
         type="file"
         ref={fileInputRef}
@@ -155,14 +204,14 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="flex flex-col items-center gap-4 p-6 text-center">
               <Avatar className="size-20">
-                <AvatarImage src={currentUser.avatarUrl || "/placeholder.svg"} alt={currentUser.fullName} />
+                <AvatarImage src={avatarUrl || "/placeholder.svg"} alt={fullName} />
                 <AvatarFallback className="text-lg">{initials}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col gap-0.5">
-                <span className="font-semibold">{currentUser.fullName}</span>
-                <span className="text-sm text-muted-foreground">{currentUser.niatId}</span>
+                <span className="font-semibold">{fullName || 'Add your name'}</span>
+                <span className="text-sm text-muted-foreground">{niatId || 'No NIAT ID'}</span>
               </div>
-              <Badge variant="secondary">{currentUser.department}</Badge>
+              {department && <Badge variant="secondary">{department}</Badge>}
               <Button
                 type="button"
                 variant="outline"
@@ -176,18 +225,18 @@ export default function ProfilePage() {
           </Card>
 
           <Card>
-            <CardContent className="flex flex-col gap-4">
+            <CardContent className="flex flex-col gap-4 p-6">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Overall</span>
-                  <span className="font-medium">{currentUser.profileCompletion}%</span>
+                  <span className="font-medium">{completionScore}%</span>
                 </div>
-                <Progress value={currentUser.profileCompletion} />
+                <Progress value={completionScore} />
               </div>
               <ul className="flex flex-col gap-2 text-sm">
-                <ChecklistItem done>Basic details added</ChecklistItem>
-                <ChecklistItem done={!!currentUser.linkedin}>LinkedIn linked</ChecklistItem>
-                <ChecklistItem done={!!currentUser.portfolio}>Portfolio link</ChecklistItem>
+                <ChecklistItem done={completionScore > 30}>Basic details added</ChecklistItem>
+                <ChecklistItem done={!!linkedin}>LinkedIn linked</ChecklistItem>
+                <ChecklistItem done={!!portfolio}>Portfolio link</ChecklistItem>
               </ul>
             </CardContent>
           </Card>
@@ -195,7 +244,7 @@ export default function ProfilePage() {
 
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Card>
-            <CardContent>
+            <CardContent className="p-6">
               <FieldGroup>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field>
@@ -235,7 +284,7 @@ export default function ProfilePage() {
                     <FieldLabel htmlFor="department">Department</FieldLabel>
                     <Select value={department} onValueChange={setDepartment}>
                       <SelectTrigger id="department">
-                        <SelectValue />
+                        <SelectValue placeholder="Select department" />
                       </SelectTrigger>
                       <SelectContent>
                         {DEPARTMENTS.map((d) => (
@@ -250,7 +299,7 @@ export default function ProfilePage() {
                     <FieldLabel htmlFor="year">Academic year</FieldLabel>
                     <Select value={academicYear} onValueChange={setAcademicYear}>
                       <SelectTrigger id="year">
-                        <SelectValue />
+                        <SelectValue placeholder="Select year" />
                       </SelectTrigger>
                       <SelectContent>
                         {ACADEMIC_YEARS.map((y) => (
@@ -267,7 +316,7 @@ export default function ProfilePage() {
           </Card>
 
           <Card>
-            <CardContent>
+            <CardContent className="p-6">
               <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor="skills">Skills</FieldLabel>
@@ -282,6 +331,7 @@ export default function ProfilePage() {
                     {skills.map((skill) => (
                       <Badge key={skill} variant="secondary">
                         {skill}
+                        <button type="button" onClick={() => setSkills(skills.filter(s => s !== skill))} className="ml-1 opacity-50 hover:opacity-100">x</button>
                       </Badge>
                     ))}
                   </div>
@@ -337,21 +387,15 @@ export default function ProfilePage() {
               type="button"
               variant="ghost"
               onClick={() => {
-                setFullName(currentUser.fullName)
-                setCollegeId(currentUser.collegeId)
-                setEmail(currentUser.email)
-                setPhone(currentUser.phone)
-                setDepartment(currentUser.department)
-                setAcademicYear(currentUser.academicYear)
-                setLinkedin(currentUser.linkedin)
-                setGithub(currentUser.github || "")
-                setPortfolio(currentUser.portfolio || "")
-                setSkills(currentUser.skills)
+                fetchProfile()
               }}
+              disabled={saving}
             >
               Cancel
             </Button>
-            <Button type="submit">Save changes</Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? 'Saving...' : 'Save changes'}
+            </Button>
           </div>
         </div>
       </div>
@@ -362,7 +406,7 @@ export default function ProfilePage() {
 function ChecklistItem({ children, done }: { children: React.ReactNode; done?: boolean }) {
   return (
     <li className={done ? "flex items-center gap-2 text-foreground" : "flex items-center gap-2 text-muted-foreground"}>
-      <CheckCircle2Icon className={done ? "size-4 text-success" : "size-4 text-muted-foreground/40"} />
+      <CheckCircle2Icon className={done ? "size-4 text-green-500" : "size-4 text-muted-foreground/40"} />
       {children}
     </li>
   )

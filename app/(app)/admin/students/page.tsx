@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { SearchIcon, FilterIcon, CircleDotIcon } from "lucide-react"
+import { SearchIcon, CircleDotIcon } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,26 +12,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { DEPARTMENTS, ACADEMIC_YEARS, adminStudents } from "@/lib/mock-data"
-import { StatusBadge } from "@/components/status-badge"
+import { getAllStudents } from "@/app/actions/admin"
 
 export default function AdminStudentsPage() {
   const [search, setSearch] = React.useState("")
   const [deptFilter, setDeptFilter] = React.useState("all")
   const [yearFilter, setYearFilter] = React.useState("all")
+  const [students, setStudents] = React.useState<any[]>([])
 
-  const filteredStudents = adminStudents.filter((student) => {
+  React.useEffect(() => {
+    async function load() {
+      const data = await getAllStudents()
+      setStudents(data)
+    }
+    load()
+  }, [])
+
+  const filteredStudents = students.filter((student) => {
     const matchesSearch =
-      student.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      student.niatId.toLowerCase().includes(search.toLowerCase()) ||
-      student.email.toLowerCase().includes(search.toLowerCase())
+      student.name?.toLowerCase().includes(search.toLowerCase()) ||
+      student.niatId?.toLowerCase().includes(search.toLowerCase()) ||
+      student.email?.toLowerCase().includes(search.toLowerCase())
 
     const matchesDept = deptFilter === "all" || student.department === deptFilter
     const matchesYear = yearFilter === "all" || student.academicYear === yearFilter
 
     return matchesSearch && matchesDept && matchesYear
   })
+  
+  const departments = Array.from(new Set(students.map(s => s.department).filter(Boolean)))
+  const years = Array.from(new Set(students.map(s => s.academicYear).filter(Boolean)))
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
@@ -59,7 +69,7 @@ export default function AdminStudentsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                {DEPARTMENTS.map((d) => (
+                {departments.map((d: any) => (
                   <SelectItem key={d} value={d}>
                     {d}
                   </SelectItem>
@@ -73,7 +83,7 @@ export default function AdminStudentsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Years</SelectItem>
-                {ACADEMIC_YEARS.map((y) => (
+                {years.map((y: any) => (
                   <SelectItem key={y} value={y}>
                     {y}
                   </SelectItem>
@@ -102,16 +112,15 @@ export default function AdminStudentsPage() {
                   <tr className="border-b bg-muted/30 text-xs font-semibold text-muted-foreground uppercase">
                     <th className="p-4">Student</th>
                     <th className="p-4">Department &amp; Year</th>
-                    <th className="p-4">Startup</th>
                     <th className="p-4">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y text-sm">
                   {filteredStudents.map((student) => (
-                    <tr key={student.niatId} className="hover:bg-muted/10 transition-colors">
+                    <tr key={student.id} className="hover:bg-muted/10 transition-colors">
                       <td className="p-4">
                         <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-foreground">{student.fullName}</span>
+                          <span className="font-medium text-foreground">{student.name}</span>
                           <span className="text-xs text-muted-foreground">
                             {student.niatId} · {student.email}
                           </span>
@@ -119,31 +128,17 @@ export default function AdminStudentsPage() {
                       </td>
                       <td className="p-4">
                         <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
-                          <span>{student.department}</span>
-                          <span>{student.academicYear}</span>
+                          <span>{student.department || 'N/A'}</span>
+                          <span>{student.academicYear || 'N/A'}</span>
                         </div>
-                      </td>
-                      <td className="p-4">
-                        {student.startupName ? (
-                          <div className="flex flex-col gap-1">
-                            <span className="font-medium text-foreground text-xs">{student.startupName}</span>
-                            {student.startupStatus && (
-                              <div className="scale-90 origin-left">
-                                <StatusBadge status={student.startupStatus} />
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground italic">None registered</span>
-                        )}
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-1.5 text-xs">
                           <CircleDotIcon
-                            className={`size-3 ${student.active ? "text-green-500 fill-green-500" : "text-muted-foreground"}`}
+                            className="size-3 text-green-500 fill-green-500"
                           />
-                          <span className={student.active ? "text-foreground" : "text-muted-foreground"}>
-                            {student.active ? "Active" : "Inactive"}
+                          <span className="text-foreground">
+                            Active
                           </span>
                         </div>
                       </td>

@@ -11,44 +11,60 @@ import {
   UserIcon,
   FileTextIcon,
   Trash2Icon,
-  UsersIcon
+  UsersIcon,
+  Loader2Icon
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAppState } from "@/lib/app-state-context"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getMyInvitations, respondToInvitation } from "@/app/actions/team"
+import { getMyNotifications, markAllRead, markOneRead, deleteNotification } from "@/app/actions/notifications"
 
 export default function NotificationsPage() {
-  const {
-    notifications,
-    markAllNotificationsRead,
-    toggleNotificationRead,
-    deleteNotification,
-  } = useAppState()
-  
+  const [notifications, setNotifications] = useState<any[]>([])
   const [invitations, setInvitations] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchAll = async () => {
+    setLoading(true)
+    const [invRes, notifRes] = await Promise.all([
+      getMyInvitations(),
+      getMyNotifications()
+    ])
+    if (invRes.invitations) setInvitations(invRes.invitations)
+    if (notifRes.notifications) setNotifications(notifRes.notifications)
+    setLoading(false)
+  }
 
   useEffect(() => {
-    getMyInvitations().then(res => {
-      if (res.invitations) {
-        setInvitations(res.invitations)
-      }
-    })
+    fetchAll()
   }, [])
 
-  const handleMarkAllRead = () => {
-    markAllNotificationsRead()
-    toast.success("All notifications marked as read.")
+  const handleMarkAllRead = async () => {
+    const res = await markAllRead()
+    if (res.success) {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      toast.success("All notifications marked as read.")
+    } else {
+      toast.error("Failed to mark all as read.")
+    }
   }
 
-  const handleToggleRead = (id: string) => {
-    toggleNotificationRead(id)
+  const handleMarkRead = async (id: string) => {
+    const res = await markOneRead(id)
+    if (res.success) {
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    }
   }
 
-  const handleDelete = (id: string) => {
-    deleteNotification(id)
-    toast.success("Notification removed.")
+  const handleDelete = async (id: string) => {
+    const res = await deleteNotification(id)
+    if (res.success) {
+      setNotifications(prev => prev.filter(n => n.id !== id))
+      toast.success("Notification removed.")
+    } else {
+      toast.error("Failed to remove notification.")
+    }
   }
   
   const handleInviteAction = async (id: string, status: 'approved' | 'rejected') => {
@@ -66,6 +82,7 @@ export default function NotificationsPage() {
     switch (type) {
       case "feedback":
         return <MessageSquareIcon className="size-4 text-blue-500" />
+      case "success":
       case "approved":
         return <RocketIcon className="size-4 text-green-500 animate-bounce" />
       case "profile":
@@ -73,6 +90,15 @@ export default function NotificationsPage() {
       default:
         return <FileTextIcon className="size-4 text-primary" />
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
+        <Loader2Icon className="size-8 animate-spin text-primary" />
+        <p>Loading notifications...</p>
+      </div>
+    )
   }
 
   return (
@@ -145,18 +171,22 @@ export default function NotificationsPage() {
                       <span className={`text-sm font-semibold truncate ${!n.read ? "text-foreground" : "text-muted-foreground"}`}>
                         {n.title}
                       </span>
-                      <span className="text-xs text-muted-foreground shrink-0">{n.createdAt}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {new Date(n.created_at).toLocaleDateString()}
+                      </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed text-pretty">
                       {n.message}
                     </p>
                     <div className="flex gap-4 mt-2">
-                      <button
-                        onClick={() => handleToggleRead(n.id)}
-                        className="text-xs font-semibold text-primary hover:underline"
-                      >
-                        {n.read ? "Mark as unread" : "Mark as read"}
-                      </button>
+                      {!n.read && (
+                        <button
+                          onClick={() => handleMarkRead(n.id)}
+                          className="text-xs font-semibold text-primary hover:underline"
+                        >
+                          Mark as read
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDelete(n.id)}
                         className="text-xs font-semibold text-destructive hover:underline flex items-center gap-1"

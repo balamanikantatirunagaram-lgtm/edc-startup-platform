@@ -9,33 +9,33 @@ import {
   CheckCircle2Icon,
   ArrowRightIcon,
   ActivityIcon,
-  MessageSquareIcon,
-  AlertTriangleIcon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatCard } from "@/components/stat-card"
 import { StatusBadge } from "@/components/status-badge"
-import { adminMetrics, activityLogs, adminStartups } from "@/lib/mock-data"
+import { getAdminStats, getAllStartups } from "@/app/actions/admin"
 
 export default function AdminOverviewPage() {
-  const pendingStartups = adminStartups.filter(
-    (s) => s.status === "Submitted" || s.status === "Under Review"
-  )
+  const [stats, setStats] = React.useState({ totalStudents: 0, totalStartups: 0, pendingReviews: 0 })
+  const [startups, setStartups] = React.useState<any[]>([])
+  
+  React.useEffect(() => {
+    async function load() {
+      const [s, list] = await Promise.all([
+        getAdminStats(),
+        getAllStartups()
+      ])
+      setStats(s)
+      setStartups(list)
+    }
+    load()
+  }, [])
 
-  const getActivityIcon = (action: string) => {
-    if (action.includes("feedback") || action.includes("note")) {
-      return <MessageSquareIcon className="size-4 text-blue-500" />
-    }
-    if (action.includes("approved")) {
-      return <CheckCircle2Icon className="size-4 text-green-500 animate-pulse" />
-    }
-    if (action.includes("changes") || action.includes("improvement")) {
-      return <AlertTriangleIcon className="size-4 text-amber-500" />
-    }
-    return <RocketIcon className="size-4 text-primary" />
-  }
+  const pendingStartups = startups.filter(
+    (s) => s.status === "pending" || s.status === "Under Review" || !s.status
+  )
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
@@ -48,25 +48,25 @@ export default function AdminOverviewPage() {
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Registered Students"
-          value={adminMetrics.totalStudents}
+          value={stats.totalStudents}
           icon={UsersIcon}
           hint="Active founders"
         />
         <StatCard
           label="Total Startups"
-          value={adminMetrics.totalStartups}
+          value={stats.totalStartups}
           icon={RocketIcon}
           hint="Incubation applications"
         />
         <StatCard
           label="Pending Reviews"
-          value={adminMetrics.pendingReviews}
+          value={stats.pendingReviews}
           icon={ClockIcon}
           hint="Action required"
         />
         <StatCard
           label="Approved / Ready"
-          value={adminMetrics.approved}
+          value={stats.totalStartups - stats.pendingReviews}
           icon={CheckCircle2Icon}
           hint="Successfully validated"
         />
@@ -93,15 +93,15 @@ export default function AdminOverviewPage() {
                 </div>
               ) : (
                 <div className="divide-y divide-border/60">
-                  {pendingStartups.map((s) => (
+                  {pendingStartups.slice(0, 5).map((s) => (
                     <div key={s.id} className="flex items-center justify-between p-4 hover:bg-muted/10 transition-colors">
                       <div className="flex flex-col gap-1 max-w-[70%]">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm">{s.name}</span>
-                          <StatusBadge status={s.status} />
+                          <StatusBadge status={s.status || 'pending'} />
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          Founder: {s.founder} · {s.category}
+                          Team: {s.teams?.name || 'Unknown'} · {s.industry || s.category}
                         </span>
                       </div>
                       <Button render={<Link href={`/admin/startups/${s.id}`} />} nativeButton={false} size="sm" variant="ghost">
@@ -115,7 +115,6 @@ export default function AdminOverviewPage() {
           </Card>
         </div>
 
-        {/* Recent Activities Panel */}
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
@@ -126,24 +125,8 @@ export default function AdminOverviewPage() {
               <CardDescription>Latest actions on the platform.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="flex flex-col gap-4 p-5">
-                {activityLogs.map((log) => (
-                  <div key={log.id} className="flex gap-3 text-xs leading-relaxed">
-                    <div className="size-6 rounded-full border bg-background flex items-center justify-center shrink-0">
-                      {getActivityIcon(log.action)}
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">
-                        <span className="font-semibold text-foreground">{log.actor}</span>{" "}
-                        {log.action}{" "}
-                        <span className="font-semibold text-foreground">{log.target}</span>
-                      </p>
-                      <span className="text-[10px] text-muted-foreground block mt-0.5">
-                        {log.timestamp}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-col gap-4 p-5 text-sm text-muted-foreground italic">
+                Activity feed coming soon based on real event logs.
               </div>
             </CardContent>
           </Card>

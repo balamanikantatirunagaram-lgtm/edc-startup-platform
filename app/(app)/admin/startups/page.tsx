@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { SearchIcon, PlusIcon, RocketIcon } from "lucide-react"
+import { SearchIcon, RocketIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,23 +15,35 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StatusBadge } from "@/components/status-badge"
-import { STARTUP_CATEGORIES, adminStartups } from "@/lib/mock-data"
+import { getAllStartups } from "@/app/actions/admin"
 
 export default function AdminStartupsPage() {
   const [search, setSearch] = React.useState("")
   const [catFilter, setCatFilter] = React.useState("all")
   const [statusFilter, setStatusFilter] = React.useState("all")
+  const [startups, setStartups] = React.useState<any[]>([])
 
-  const filteredStartups = adminStartups.filter((s) => {
+  React.useEffect(() => {
+    async function load() {
+      const data = await getAllStartups()
+      setStartups(data)
+    }
+    load()
+  }, [])
+
+  const filteredStartups = startups.filter((s) => {
     const matchesSearch =
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.founder.toLowerCase().includes(search.toLowerCase())
+      s.name?.toLowerCase().includes(search.toLowerCase()) ||
+      s.teams?.name?.toLowerCase().includes(search.toLowerCase())
 
-    const matchesCat = catFilter === "all" || s.category === catFilter
-    const matchesStatus = statusFilter === "all" || s.status === statusFilter
+    const matchesCat = catFilter === "all" || s.industry === catFilter || s.category === catFilter
+    const matchesStatus = statusFilter === "all" || (s.status || 'pending') === statusFilter
 
     return matchesSearch && matchesCat && matchesStatus
   })
+
+  // get unique categories
+  const categories = Array.from(new Set(startups.map(s => s.industry || s.category).filter(Boolean)))
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
@@ -48,7 +60,7 @@ export default function AdminStartupsPage() {
           <div className="relative flex-1">
             <SearchIcon className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search by startup or founder name..."
+              placeholder="Search by startup or team name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 h-9 text-sm"
@@ -61,7 +73,7 @@ export default function AdminStartupsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {STARTUP_CATEGORIES.map((c) => (
+                {categories.map((c: any) => (
                   <SelectItem key={c} value={c}>
                     {c}
                   </SelectItem>
@@ -75,7 +87,7 @@ export default function AdminStartupsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="Draft">Draft</SelectItem>
+                <SelectItem value="pending">pending</SelectItem>
                 <SelectItem value="Submitted">Submitted</SelectItem>
                 <SelectItem value="Under Review">Under Review</SelectItem>
                 <SelectItem value="Needs Improvement">Needs Improvement</SelectItem>
@@ -102,25 +114,25 @@ export default function AdminStartupsPage() {
                     <RocketIcon className="size-4 text-primary shrink-0" />
                     <CardTitle className="text-base font-semibold truncate">{s.name}</CardTitle>
                   </div>
-                  <CardDescription className="text-xs truncate">{s.tagline}</CardDescription>
+                  <CardDescription className="text-xs truncate">{s.problem_statement?.substring(0, 50)}...</CardDescription>
                 </div>
                 <div className="scale-90 origin-right shrink-0">
-                  <StatusBadge status={s.status} />
+                  <StatusBadge status={s.status || 'pending'} />
                 </div>
               </CardHeader>
               <CardContent className="pb-4 pt-0 flex-1 flex flex-col justify-between gap-4">
                 <div className="grid grid-cols-2 gap-2 text-xs border-y py-2.5 border-border/60">
                   <div>
                     <span className="text-muted-foreground block">Category</span>
-                    <span className="font-semibold text-foreground mt-0.5 block">{s.category}</span>
+                    <span className="font-semibold text-foreground mt-0.5 block">{s.industry || s.category}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground block">Stage</span>
                     <span className="font-semibold text-foreground mt-0.5 block">{s.stage}</span>
                   </div>
                   <div className="col-span-2 mt-1">
-                    <span className="text-muted-foreground block">Founder</span>
-                    <span className="font-semibold text-foreground mt-0.5 block">{s.founder}</span>
+                    <span className="text-muted-foreground block">Team</span>
+                    <span className="font-semibold text-foreground mt-0.5 block">{s.teams?.name}</span>
                   </div>
                 </div>
                 <Button render={<Link href={`/admin/startups/${s.id}`} />} nativeButton={false} size="sm" className="w-full mt-2">
