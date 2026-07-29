@@ -1,0 +1,122 @@
+"use client"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import {
+  LayoutDashboardIcon,
+  RocketIcon,
+  BellIcon,
+  UserIcon,
+  SettingsIcon,
+  UsersIcon,
+  ClipboardListIcon,
+  ShieldCheckIcon,
+  GraduationCapIcon,
+  CalendarIcon,
+  BanknoteIcon,
+  BriefcaseIcon,
+} from "lucide-react"
+
+import { Brand } from "@/components/brand"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar"
+
+const studentNav = [
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
+  { title: "My Startup", href: "/startup", icon: RocketIcon },
+  { title: "Team Connect", href: "/team", icon: UsersIcon },
+  { title: "Mentor Connect", href: "/mentors", icon: BriefcaseIcon },
+  { title: "Resources", href: "/resources", icon: ClipboardListIcon },
+  { title: "Funding", href: "/funding", icon: BanknoteIcon },
+  { title: "Events", href: "/events", icon: CalendarIcon },
+  { title: "Profile", href: "/profile", icon: UserIcon },
+  { title: "Settings", href: "/settings", icon: SettingsIcon },
+]
+
+const adminNav = [
+  { title: "Overview", href: "/admin", icon: LayoutDashboardIcon },
+  { title: "Students", href: "/admin/students", icon: UsersIcon },
+  { title: "Startups", href: "/admin/startups", icon: ClipboardListIcon },
+]
+
+export function AppSidebar() {
+  const pathname = usePathname()
+  const isAdmin = pathname.startsWith("/admin")
+
+  const isActive = (href: string) =>
+    href === "/admin" || href === "/dashboard"
+      ? pathname === href
+      : pathname.startsWith(href)
+
+  return (
+    <Sidebar>
+      <SidebarHeader className="p-4">
+        <Link href={isAdmin ? "/admin" : "/dashboard"}>
+          <Brand />
+        </Link>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>
+            {isAdmin ? "Administration" : "Student"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {(isAdmin ? adminNav : studentNav).map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    isActive={isActive(item.href)}
+                    tooltip={item.title}
+                    render={
+                      <Link href={item.href}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    }
+                  />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Switch view</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip={isAdmin ? "Student view" : "Admin view"}
+                  render={
+                    <Link href={isAdmin ? "/dashboard" : "/admin"}>
+                      {isAdmin ? <GraduationCapIcon /> : <ShieldCheckIcon />}
+                      <span>
+                        {isAdmin ? "Student view" : "Admin view"}
+                      </span>
+                    </Link>
+                  }
+                />
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter className="p-3">
+        <div className="rounded-lg border bg-card p-3 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">EDC Cell · v1</p>
+          <p className="mt-0.5">MVP preview — demo data only.</p>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  )
+}
