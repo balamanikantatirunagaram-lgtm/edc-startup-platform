@@ -161,3 +161,9 @@ export async function getCurrentUser() {
     return null
   }
 }
+
+export async function logout() {
+  const cookieStore = await cookies()
+  cookieStore.delete('sb-access-token')
+  return { success: true }
+}
