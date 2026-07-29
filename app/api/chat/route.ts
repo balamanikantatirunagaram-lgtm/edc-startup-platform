@@ -98,11 +98,10 @@ Be concise, helpful, and encouraging. Use emojis sparingly for warmth. Always re
       return NextResponse.json({ error: 'NVIDIA API key not configured.' }, { status: 500 })
     }
 
-    // Try Nemotron Ultra 550b first, fall back to others if needed
+    // Use highly optimized Llama 3.1 models for lightning-fast responses
     const modelsToTry = [
-      'nvidia/nemotron-3-ultra-550b-a55b',
-      'nvidia/llama-3.1-nemotron-70b-instruct',
-      'meta/llama-3.3-70b-instruct',
+      'meta/llama-3.1-70b-instruct',
+      'meta/llama-3.1-8b-instruct',
     ]
 
     let response: Response | null = null
