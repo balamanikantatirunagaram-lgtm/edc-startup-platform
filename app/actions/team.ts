@@ -138,44 +138,53 @@ export async function getTeamRequests() {
     const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
-    if (!token) return { error: "Not authenticated" }
+    if (!token) return { requests: [] }
     
     const { data: user } = await supabase.auth.getUser(token)
-    if (!user.user) return { error: "Not authenticated" }
+    if (!user.user) return { requests: [] }
 
-    // Find team led by user
+    // Find team led by this user
     const { data: team } = await supabase
       .from('teams')
       .select('id')
       .eq('leader_id', user.user.id)
-      .single()
+      .maybeSingle()
 
     if (!team) return { requests: [] }
 
-    const { data: requests } = await supabase
+    const { data: requests, error: reqError } = await supabase
       .from('team_members')
       .select('*')
       .eq('team_id', team.id)
-      .eq('status', 'pending')
+      .in('status', ['pending', 'invited'])
 
-    // Enhance with user names
-    const enrichedRequests = []
-    if (requests && requests.length > 0) {
-      const { createClient } = require("@supabase/supabase-js")
-      const supabaseAdmin = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_SECRET_KEY || "", {
-        auth: { autoRefreshToken: false, persistSession: false }
-      })
-      
-      const { data: usersData } = await supabaseAdmin.auth.admin.listUsers()
-      
-      for (const req of requests) {
-        const user = usersData?.users?.find((u: any) => u.id === req.student_id)
-        enrichedRequests.push({
-          ...req,
-          studentName: user?.user_metadata?.name || user?.user_metadata?.niat_id || 'Unknown Student'
-        })
-      }
+    if (reqError || !requests || requests.length === 0) {
+      return { success: true, teamId: team.id, requests: [] }
     }
+
+    // Fetch ALL users with pagination to avoid the 50-user cap
+    const { createClient } = require("@supabase/supabase-js")
+    const supabaseAdmin = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_SECRET_KEY || "", {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
+    
+    let allUsers: any[] = []
+    let page = 1
+    while (true) {
+      const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
+      if (!usersData?.users || usersData.users.length === 0) break
+      allUsers = [...allUsers, ...usersData.users]
+      if (usersData.users.length < 1000) break
+      page++
+    }
+
+    const enrichedRequests = requests.map((req: any) => {
+      const found = allUsers.find((u: any) => u.id === req.student_id)
+      return {
+        ...req,
+        studentName: found?.user_metadata?.name || found?.user_metadata?.niat_id || 'Unknown Student'
+      }
+    })
 
     return { success: true, teamId: team.id, requests: enrichedRequests }
   } catch (err: any) {

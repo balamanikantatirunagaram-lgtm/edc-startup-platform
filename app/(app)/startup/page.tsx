@@ -43,6 +43,16 @@ export default function StartupCommandCenter() {
     loadEverything()
   }, [])
 
+  // Auto-refresh join requests every 30 seconds for leaders
+  React.useEffect(() => {
+    if (!status?.isLeader) return
+    const interval = setInterval(async () => {
+      const reqsRes = await getTeamRequests()
+      if (reqsRes.requests) setRequests(reqsRes.requests)
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [status?.isLeader])
+
   const loadEverything = async () => {
     setLoading(true)
     const tStatus = await getMyTeamStatus()
@@ -202,7 +212,14 @@ export default function StartupCommandCenter() {
       <Tabs defaultValue="portfolio" className="w-full">
         <TabsList className="grid w-full grid-cols-3 h-12">
           <TabsTrigger value="portfolio" className="h-full gap-2"><RocketIcon className="size-4" /> Portfolio</TabsTrigger>
-          <TabsTrigger value="team" className="h-full gap-2"><UsersIcon className="size-4" /> Team & Invites</TabsTrigger>
+          <TabsTrigger value="team" className="h-full gap-2">
+            <UsersIcon className="size-4" /> Team & Invites
+            {requests.length > 0 && (
+              <span className="ml-1 bg-red-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                {requests.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="tasks" className="h-full gap-2"><ListTodoIcon className="size-4" /> Tasks</TabsTrigger>
         </TabsList>
 
@@ -341,8 +358,15 @@ export default function StartupCommandCenter() {
               </Card>
 
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Pending Join Requests</CardTitle>
+                  <Button variant="ghost" size="sm" onClick={async () => {
+                    const res = await getTeamRequests()
+                    if (res.requests) setRequests(res.requests)
+                    toast.info("Refreshed")
+                  }}>
+                    Refresh
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   {requests.length === 0 ? (
@@ -353,7 +377,9 @@ export default function StartupCommandCenter() {
                         <div key={req.id} className="flex items-center justify-between p-3 rounded-lg border">
                           <div>
                             <p className="font-medium">{req.studentName}</p>
-                            <p className="text-xs text-muted-foreground">Requested {new Date(req.created_at).toLocaleDateString()}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {req.status === 'invited' ? '📨 You invited them' : '📩 Requested to join'} · {new Date(req.created_at).toLocaleDateString()}
+                            </p>
                           </div>
                           <div className="flex gap-2">
                             <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleRequestAction(req.id, 'rejected')}>Reject</Button>

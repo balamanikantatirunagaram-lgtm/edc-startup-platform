@@ -64,10 +64,19 @@ export async function getMyStartup() {
     const teamMembers = []
     if (teamMembersDb && teamMembersDb.length > 0) {
       const supabaseAdmin = getSupabaseAdmin()
-      const { data: usersData } = await supabaseAdmin.auth.admin.listUsers()
+      // Paginate to get ALL users, not just the first 50
+      let allUsers: any[] = []
+      let page = 1
+      while (true) {
+        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
+        if (!usersData?.users || usersData.users.length === 0) break
+        allUsers = [...allUsers, ...usersData.users]
+        if (usersData.users.length < 1000) break
+        page++
+      }
       
       for (const m of teamMembersDb) {
-        const u = usersData?.users?.find(usr => usr.id === m.student_id)
+        const u = allUsers.find(usr => usr.id === m.student_id)
         teamMembers.push({
           name: u?.user_metadata?.name || u?.user_metadata?.niat_id || 'Unknown Member',
           role: m.student_id === memberRecord.teams.leader_id ? 'Team Leader' : 'Team Member',
