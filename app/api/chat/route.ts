@@ -98,27 +98,45 @@ Be concise, helpful, and encouraging. Use emojis sparingly for warmth. Always re
       return NextResponse.json({ error: 'NVIDIA API key not configured.' }, { status: 500 })
     }
 
-    const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${nvidiaApiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'nvidia/llama-3.1-nemotron-ultra-253b-v1',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages,
-        ],
-        temperature: 0.6,
-        max_tokens: 1024,
-        stream: false,
-      }),
-    })
+    // Try Nemotron Ultra first, fall back to Nemotron 70b if not activated
+    const modelsToTry = [
+      'nvidia/llama-3.1-nemotron-ultra-253b-v1',
+      'nvidia/llama-3.1-nemotron-70b-instruct',
+      'meta/llama-3.3-70b-instruct',
+    ]
 
-    if (!response.ok) {
+    let response: Response | null = null
+    let lastError = ''
+
+    for (const model of modelsToTry) {
+      response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${nvidiaApiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...messages,
+          ],
+          temperature: 0.6,
+          max_tokens: 1024,
+          stream: false,
+        }),
+      })
+
+      if (response.ok) break
+
       const errText = await response.text()
-      console.error('NVIDIA API error:', errText)
+      lastError = errText
+      console.error(`NVIDIA model ${model} failed:`, errText)
+      response = null
+    }
+
+    if (!response) {
+      console.error('All NVIDIA models failed. Last error:', lastError)
       return NextResponse.json({ error: 'AI service error. Please try again.' }, { status: 500 })
     }
 
