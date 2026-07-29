@@ -31,10 +31,11 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const studentNav = [
+import { useEffect, useState } from "react"
+import { getMyTeamStatus } from "@/app/actions/team"
+
+const baseStudentNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
-  { title: "My Startup", href: "/startup", icon: RocketIcon },
-  { title: "Team Connect", href: "/team", icon: UsersIcon },
   { title: "Mentor Connect", href: "/mentors", icon: BriefcaseIcon },
   { title: "Resources", href: "/resources", icon: ClipboardListIcon },
   { title: "Funding", href: "/funding", icon: BanknoteIcon },
@@ -52,6 +53,29 @@ const adminNav = [
 export function AppSidebar() {
   const pathname = usePathname()
   const isAdmin = pathname.startsWith("/admin")
+
+  const [navItems, setNavItems] = useState<any[]>(baseStudentNav)
+
+  useEffect(() => {
+    if (!isAdmin) {
+      getMyTeamStatus().then(status => {
+        if (status.hasTeam) {
+          setNavItems([
+            baseStudentNav[0],
+            { title: "My Startup", href: "/startup", icon: RocketIcon },
+            ...baseStudentNav.slice(1)
+          ])
+        } else {
+          setNavItems([
+            baseStudentNav[0],
+            { title: "Register Startup", href: "/startup/register", icon: RocketIcon },
+            { title: "Team Connect", href: "/team", icon: UsersIcon },
+            ...baseStudentNav.slice(1)
+          ])
+        }
+      })
+    }
+  }, [isAdmin])
 
   const isActive = (href: string) =>
     href === "/admin" || href === "/dashboard"
@@ -72,7 +96,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {(isAdmin ? adminNav : studentNav).map((item) => (
+              {(isAdmin ? adminNav : navItems).map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     isActive={isActive(item.href)}

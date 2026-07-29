@@ -342,6 +342,39 @@ export async function respondToInvitation(inviteId: string, status: 'approved' |
   return handleTeamRequest(inviteId, status)
 }
 
+export async function removeTeamMember(studentId: string, teamId: string) {
+  try {
+    const supabase = getSupabase()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+
+    const { data: user } = await supabase.auth.getUser(token)
+    if (!user.user) return { error: "Not authenticated" }
+
+    // Verify leader
+    const { data: team } = await supabase.from('teams').select('leader_id').eq('id', teamId).single()
+    if (!team || team.leader_id !== user.user.id) {
+      return { error: "Only the leader can remove members." }
+    }
+
+    if (studentId === user.user.id) {
+      return { error: "Leader cannot be removed. You can transfer leadership or delete the team." }
+    }
+
+    const { error } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('team_id', teamId)
+      .eq('student_id', studentId)
+
+    if (error) return { error: "Failed to remove member." }
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
 
 export async function getMyTeamStatus() {
   try {
