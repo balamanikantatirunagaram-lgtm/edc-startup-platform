@@ -117,14 +117,14 @@ export default function StartupCommandCenter() {
     setIsSearching(false)
   }
 
-  const handleInvite = async (studentNiat: string) => {
-    setInviting(studentNiat)
-    const res = await inviteStudent(studentNiat, status.team.id)
+  const handleInvite = async (userId: string, niatId: string) => {
+    setInviting(userId)
+    const res = await inviteStudent(userId, status.team.id)
     setInviting(null)
     if (res.error) toast.error(res.error)
     else {
       toast.success("Invite sent successfully!")
-      setSearchResults(prev => prev.filter(u => u.id !== studentNiat))
+      setSearchResults(prev => prev.filter((u: any) => u.userId !== userId))
     }
   }
 
@@ -340,14 +340,14 @@ export default function StartupCommandCenter() {
                   </form>
                   {searchResults.length > 0 && (
                     <div className="mt-4 flex flex-col gap-2">
-                      {searchResults.map(user => (
-                        <div key={user.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                      {searchResults.map((user: any) => (
+                        <div key={user.userId} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
                           <div className="flex flex-col">
                             <span className="font-medium text-sm">{user.name}</span>
-                            <span className="text-xs text-muted-foreground">{user.id}</span>
+                            <span className="text-xs text-muted-foreground font-mono">{user.niatId}</span>
                           </div>
-                          <Button size="sm" variant="outline" onClick={() => handleInvite(user.id)} disabled={inviting === user.id}>
-                            {inviting === user.id ? <Loader2Icon className="size-4 animate-spin" /> : <SendIcon className="size-4 mr-2" />}
+                          <Button size="sm" variant="outline" onClick={() => handleInvite(user.userId, user.niatId)} disabled={inviting === user.userId}>
+                            {inviting === user.userId ? <Loader2Icon className="size-4 animate-spin" /> : <SendIcon className="size-4 mr-2" />}
                             Invite
                           </Button>
                         </div>

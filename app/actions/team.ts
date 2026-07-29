@@ -234,41 +234,23 @@ export async function handleTeamRequest(requestId: string, status: 'approved' | 
   }
 }
 
-export async function inviteStudent(niatId: string, teamId: string) {
+export async function inviteStudent(userId: string, teamId: string) {
   try {
     const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
     if (!token) return { error: "Not authenticated" }
 
-    const { data: user } = await supabase.auth.getUser(token)
-    if (!user.user) return { error: "Not authenticated" }
+    const { data: caller } = await supabase.auth.getUser(token)
+    if (!caller.user) return { error: "Not authenticated" }
 
-    // Find student ID by niatId.
-    // For now we'll store niatId in the request if we can't search auth schema
-    // To do it properly, we need getSupabaseAdmin
-    const { createClient } = require("@supabase/supabase-js")
-    const supabaseAdmin = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_SECRET_KEY || "", {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
-
-    const email = `${niatId.toLowerCase()}@student.tartup.local`
-    
-    // Quick search
-    let targetUserId = null
-    const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers()
-    if (!listError) {
-      const target = usersData.users.find(u => u.email === email)
-      if (target) targetUserId = target.id
-    }
-
-    if (!targetUserId) return { error: "Student not found." }
+    if (!userId) return { error: "Student not found." }
 
     // Check if student is already in a team
     const { data: existing } = await supabase
       .from('team_members')
       .select('id')
-      .eq('student_id', targetUserId)
+      .eq('student_id', userId)
       .eq('status', 'approved')
       .maybeSingle()
       
@@ -276,12 +258,24 @@ export async function inviteStudent(niatId: string, teamId: string) {
        return { error: "Student is already an approved member of a team." }
     }
 
+    // Check for duplicate pending/invite
+    const { data: dupCheck } = await supabase
+      .from('team_members')
+      .select('id, status')
+      .eq('team_id', teamId)
+      .eq('student_id', userId)
+      .maybeSingle()
+
+    if (dupCheck) {
+      return { error: `Student already has a ${dupCheck.status} request for this team.` }
+    }
+
     const { error } = await supabase
       .from('team_members')
       .insert({
         team_id: teamId,
-        student_id: targetUserId,
-        status: 'invited' // Leader initiated
+        student_id: userId,
+        status: 'invited'
       })
 
     if (error) {
@@ -302,20 +296,29 @@ export async function searchStudentsByNiat(query: string) {
       auth: { autoRefreshToken: false, persistSession: false }
     })
 
-    const { data: usersData, error } = await supabaseAdmin.auth.admin.listUsers()
-    if (error) return { users: [] }
-    
-    const matched = usersData.users.filter(u => {
+    // Paginate through ALL users
+    let allUsers: any[] = []
+    let page = 1
+    while (true) {
+      const { data: usersData, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
+      if (error || !usersData?.users || usersData.users.length === 0) break
+      allUsers = [...allUsers, ...usersData.users]
+      if (usersData.users.length < 1000) break
+      page++
+    }
+
+    const q = query.toLowerCase().trim()
+    const matched = allUsers.filter(u => {
       const metadata = u.user_metadata || {}
       const niat = (metadata.niat_id || '').toLowerCase()
       const name = (metadata.name || '').toLowerCase()
-      const q = query.toLowerCase()
       return niat.includes(q) || name.includes(q)
-    }).slice(0, 5)
+    }).slice(0, 8)
 
     return { 
       users: matched.map(u => ({
-        id: u.user_metadata?.niat_id || '',
+        userId: u.id,  // actual UUID for invite
+        niatId: u.user_metadata?.niat_id || '',
         name: u.user_metadata?.name || u.user_metadata?.niat_id || 'Unknown',
       }))
     }
