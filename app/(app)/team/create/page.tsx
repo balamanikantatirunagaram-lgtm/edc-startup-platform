@@ -71,7 +71,7 @@ export default function CreateTeamPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" onClick={() => router.push("/team/manage")}>
+            <Button className="w-full" onClick={() => router.push("/team")}>
               Go to Team Dashboard
             </Button>
           </CardFooter>

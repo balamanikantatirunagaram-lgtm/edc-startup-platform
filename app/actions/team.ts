@@ -342,3 +342,38 @@ export async function respondToInvitation(inviteId: string, status: 'approved' |
   return handleTeamRequest(inviteId, status)
 }
 
+
+export async function getMyTeamStatus() {
+  try {
+    const supabase = getSupabase()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { hasTeam: false }
+
+    const { data: user } = await supabase.auth.getUser(token)
+    if (!user.user) return { hasTeam: false }
+
+    const { data: member } = await supabase
+      .from('team_members')
+      .select('team_id, teams(id, name, code, leader_id)')
+      .eq('student_id', user.user.id)
+      .eq('status', 'approved')
+      .maybeSingle()
+
+    if (!member) {
+      return { hasTeam: false }
+    }
+
+    return { 
+      hasTeam: true, 
+      isLeader: member.teams.leader_id === user.user.id,
+      team: {
+        id: member.teams.id,
+        name: member.teams.name,
+        code: member.teams.code
+      }
+    }
+  } catch (err) {
+    return { hasTeam: false }
+  }
+}
