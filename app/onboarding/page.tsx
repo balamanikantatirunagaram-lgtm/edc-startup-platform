@@ -30,31 +30,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ACADEMIC_YEARS, DEPARTMENTS, STARTUP_CATEGORIES, STARTUP_STAGES, currentUser, currentStartup } from "@/lib/mock-data"
 import { Brand } from "@/components/brand"
+
+const DEPARTMENTS = ["CSE", "ECE", "EEE", "MECH", "CIVIL", "AIDS", "AIML", "IT", "Other"]
+const ACADEMIC_YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year"]
+const STARTUP_CATEGORIES = ["Technology", "Healthcare", "Education", "Finance", "E-commerce", "Agriculture", "Other"]
+const STARTUP_STAGES = ["Idea", "Prototype", "MVP", "Traction", "Scaling"]
 
 export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = React.useState(1)
 
   // Step 1: Personal Info
-  const [fullName, setFullName] = React.useState(currentUser.fullName)
-  const [collegeId, setCollegeId] = React.useState(currentUser.collegeId)
-  const [email, setEmail] = React.useState(currentUser.email)
-  const [phone, setPhone] = React.useState(currentUser.phone)
-  const [department, setDepartment] = React.useState(currentUser.department)
-  const [academicYear, setAcademicYear] = React.useState(currentUser.academicYear)
+  const [fullName, setFullName] = React.useState("")
+  const [collegeId, setCollegeId] = React.useState("")
+  const [email, setEmail] = React.useState("")
+  const [phone, setPhone] = React.useState("")
+  const [department, setDepartment] = React.useState("")
+  const [academicYear, setAcademicYear] = React.useState("")
 
   // Step 2: Startup Profile
-  const [startupName, setStartupName] = React.useState(currentStartup.name)
-  const [tagline, setTagline] = React.useState(currentStartup.tagline)
-  const [category, setCategory] = React.useState(currentStartup.category)
-  const [stage, setStage] = React.useState(currentStartup.stage)
+  const [startupName, setStartupName] = React.useState("")
+  const [tagline, setTagline] = React.useState("")
+  const [category, setCategory] = React.useState("")
+  const [stage, setStage] = React.useState("")
 
-  // Step 3: Startup Details
-  const [problem, setProblem] = React.useState(currentStartup.problem)
-  const [solution, setSolution] = React.useState(currentStartup.solution)
-  const [targetCustomers, setTargetCustomers] = React.useState(currentStartup.targetCustomers)
+  // Step 3: Pitch
+  const [problem, setProblem] = React.useState("")
+  const [solution, setSolution] = React.useState("")
+  const [targetCustomers, setTargetCustomers] = React.useState("")
 
   const [loading, setLoading] = React.useState(false)
 

@@ -12,6 +12,7 @@ import {
   XCircleIcon,
   ClockIcon,
   HistoryIcon,
+  Loader2Icon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -31,8 +32,8 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { adminStartups, StartupStatus } from "@/lib/mock-data"
 import { Separator } from "@/components/ui/separator"
+import { getAllStartups, updateStartupStatus } from "@/app/actions/admin"
 
 export default function AdminStartupReviewPage({
   params,
@@ -42,16 +43,45 @@ export default function AdminStartupReviewPage({
   const router = useRouter()
   const { id } = React.use(params)
 
-  const startup = adminStartups.find((s) => s.id === id)
-
-  // Review states
-  const [status, setStatus] = React.useState<StartupStatus>(
-    startup?.status ?? "Under Review"
-  )
-  const [reviewer, setReviewer] = React.useState("Dr. Neha Kapoor")
+  const [startup, setStartup] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [status, setStatus] = React.useState("Under Review")
+  const [reviewer, setReviewer] = React.useState("")
   const [feedback, setFeedback] = React.useState("")
   const [nextSteps, setNextSteps] = React.useState("")
   const [submitting, setSubmitting] = React.useState(false)
+
+  React.useEffect(() => {
+    getAllStartups().then(res => {
+      const found = res.startups?.find((s: any) => s.id === id)
+      if (found) {
+        setStartup(found)
+        setStatus(found.status || "Under Review")
+      }
+      setLoading(false)
+    })
+  }, [id])
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    const res = await updateStartupStatus(id, status)
+    setSubmitting(false)
+    if (res.error) {
+      toast.error(res.error)
+    } else {
+      toast.success(`Status updated to ${status}.`)
+      router.push("/admin/startups")
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   if (!startup) {
     return (
@@ -65,27 +95,6 @@ export default function AdminStartupReviewPage({
         </Button>
       </div>
     )
-  }
-
-  const handleSubmitReview = (e: React.FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
-
-    setTimeout(() => {
-      setSubmitting(false)
-      // Simulate saving changes by changing the imported data locally for this session
-      startup.status = status
-      startup.history.push({
-        status,
-        date: new Date().toISOString().split("T")[0],
-        reviewer,
-        feedback: feedback || undefined,
-        nextSteps: nextSteps || undefined,
-      })
-
-      toast.success(`Application status updated to ${status}.`)
-      router.push("/admin/startups")
-    }, 1200)
   }
 
   return (
@@ -105,7 +114,7 @@ export default function AdminStartupReviewPage({
             <StatusBadge status={startup.status} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Reviewing application by {startup.founder}
+            Reviewing application by {startup.leaderName || startup.leader_id}
           </p>
         </div>
       </section>
@@ -122,81 +131,42 @@ export default function AdminStartupReviewPage({
               <CardDescription>Core value proposition, problem, and solution.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-muted-foreground uppercase">Tagline</span>
-                <p className="text-sm font-medium">{startup.tagline}</p>
-              </div>
-              <Separator />
+              {startup.tagline && (
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase">Tagline</span>
+                    <p className="text-sm font-medium">{startup.tagline}</p>
+                  </div>
+                  <Separator />
+                </>
+              )}
               <div className="flex flex-col gap-1.5">
                 <span className="text-xs font-semibold text-muted-foreground uppercase">The Problem</span>
                 <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
-                  {startup.problem}
+                  {startup.problem_statement || startup.problem || "Not provided."}
                 </p>
               </div>
               <Separator />
               <div className="flex flex-col gap-1.5">
                 <span className="text-xs font-semibold text-muted-foreground uppercase">The Solution</span>
                 <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
-                  {startup.solution}
-                </p>
-              </div>
-              <Separator />
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-muted-foreground uppercase">Target Customers</span>
-                <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
-                  {startup.targetCustomers}
+                  {startup.proposed_solution || startup.solution || "Not provided."}
                 </p>
               </div>
               <Separator />
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
-                  <span className="text-xs text-muted-foreground block">Category</span>
-                  <span className="text-sm font-medium mt-0.5 block">{startup.category}</span>
+                  <span className="text-xs text-muted-foreground block">Industry</span>
+                  <span className="text-sm font-medium mt-0.5 block">{startup.industry || "N/A"}</span>
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground block">Current Stage</span>
-                  <span className="text-sm font-medium mt-0.5 block">{startup.stage}</span>
+                  <span className="text-sm font-medium mt-0.5 block">{startup.stage || "N/A"}</span>
                 </div>
                 <div>
-                  <span className="text-xs text-muted-foreground block">Co-Founders</span>
-                  <span className="text-sm font-medium mt-0.5 block">
-                    {startup.coFounders.join(", ") || "None"}
-                  </span>
+                  <span className="text-xs text-muted-foreground block">Team</span>
+                  <span className="text-sm font-medium mt-0.5 block">{startup.teamName || "N/A"}</span>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Review History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <HistoryIcon className="size-4 text-primary" />
-                Application History
-              </CardTitle>
-              <CardDescription>Past reviews, status changes, and notes.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-4">
-                {startup.history.map((h, idx) => (
-                  <div key={idx} className="flex items-start gap-3 border-l-2 pl-4 border-muted/80 relative">
-                    <div className="absolute -left-[5px] top-1 size-2 rounded-full bg-muted-foreground" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between text-xs gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-foreground">Moved to {h.status}</span>
-                          <span className="text-muted-foreground">by {h.reviewer}</span>
-                        </div>
-                        <span className="text-muted-foreground">{h.date}</span>
-                      </div>
-                      {h.feedback && (
-                        <p className="text-xs text-muted-foreground mt-1 rounded bg-muted/40 p-2 leading-relaxed">
-                          {h.feedback}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
               </div>
             </CardContent>
           </Card>
@@ -221,13 +191,14 @@ export default function AdminStartupReviewPage({
                       id="reviewerName"
                       value={reviewer}
                       onChange={(e) => setReviewer(e.target.value)}
+                      placeholder="Your name"
                       required
                     />
                   </Field>
 
                   <Field>
                     <FieldLabel htmlFor="newStatus">Action / Status</FieldLabel>
-                    <Select value={status} onValueChange={(val) => setStatus(val as StartupStatus)}>
+                    <Select value={status} onValueChange={setStatus}>
                       <SelectTrigger id="newStatus" className="w-full">
                         <SelectValue />
                       </SelectTrigger>
@@ -263,7 +234,7 @@ export default function AdminStartupReviewPage({
                   </Field>
 
                   <Button type="submit" className="w-full mt-2" disabled={submitting}>
-                    {submitting ? "Submitting Evaluation..." : "Submit Evaluation"}
+                    {submitting ? "Submitting..." : "Submit Evaluation"}
                   </Button>
                 </FieldGroup>
               </form>
