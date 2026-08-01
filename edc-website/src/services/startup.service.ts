@@ -174,21 +174,33 @@ export async function deleteMyStartup() {
     const { data: user } = await supabase.auth.getUser(token)
     if (!user.user) return { error: "Not authenticated" }
 
-    const { data: teamRecord } = await supabaseAdmin
-      .from('teams')
-      .select('id, leader_id')
-      .eq('leader_id', user.user.id)
-      .maybeSingle()
+    // Find the specific team they are currently active in
+    const { data: memberRecord } = await supabase
+      .from('team_members')
+      .select('team_id, teams(leader_id)')
+      .eq('student_id', user.user.id)
+      .eq('status', 'approved')
+      .limit(1)
+      .single()
       
-    if (!teamRecord) {
-      return { error: "You are not the leader of any team, or the team does not exist." }
+    if (!memberRecord || !memberRecord.team_id) {
+      return { error: "You are not an active member of any team." }
     }
 
+    // @ts-ignore - PostgREST typings can be slightly off for joins
+    const leaderId = memberRecord.teams?.leader_id || (Array.isArray(memberRecord.teams) ? memberRecord.teams[0]?.leader_id : null)
+
+    if (leaderId !== user.user.id) {
+      return { error: "You are not the leader of this team." }
+    }
+
+    const teamId = memberRecord.team_id
+
     // Delete in order to avoid foreign key constraints
-    await supabaseAdmin.from('startups').delete().eq('team_id', teamRecord.id)
-    await supabaseAdmin.from('tasks').delete().eq('team_id', teamRecord.id)
-    await supabaseAdmin.from('team_members').delete().eq('team_id', teamRecord.id)
-    await supabaseAdmin.from('teams').delete().eq('id', teamRecord.id)
+    await supabaseAdmin.from('startups').delete().eq('team_id', teamId)
+    await supabaseAdmin.from('tasks').delete().eq('team_id', teamId)
+    await supabaseAdmin.from('team_members').delete().eq('team_id', teamId)
+    await supabaseAdmin.from('teams').delete().eq('id', teamId)
 
     return { success: true }
   } catch (err: any) {
