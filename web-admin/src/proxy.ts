@@ -12,7 +12,7 @@ function getJwtSecret() {
   return new TextEncoder().encode(process.env.SUPABASE_SECRET_KEY || 'fallback-secret-for-jwt')
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Ignore static files, images, and api routes
