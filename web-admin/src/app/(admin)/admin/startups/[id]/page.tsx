@@ -53,7 +53,7 @@ export default function AdminStartupReviewPage({
 
   React.useEffect(() => {
     getAllStartups().then(res => {
-      const found = res.startups?.find((s: any) => s.id === id)
+      const found = Array.isArray(res) ? res.find((s: any) => s.id === id) : undefined
       if (found) {
         setStartup(found)
         setStatus(found.status || "Under Review")
@@ -114,7 +114,7 @@ export default function AdminStartupReviewPage({
             <StatusBadge status={startup.status} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Reviewing application by {startup.leaderName || startup.leader_id}
+            Reviewing application by {startup.teams?.leader_id || "Unknown Leader"}
           </p>
         </div>
       </section>
@@ -165,7 +165,7 @@ export default function AdminStartupReviewPage({
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground block">Team</span>
-                  <span className="text-sm font-medium mt-0.5 block">{startup.teamName || "N/A"}</span>
+                  <span className="text-sm font-medium mt-0.5 block">{startup.teams?.name || "N/A"}</span>
                 </div>
               </div>
             </CardContent>
