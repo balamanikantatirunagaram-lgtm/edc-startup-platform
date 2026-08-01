@@ -33,8 +33,8 @@ export default function AdminStartupsPage() {
 
   const filteredStartups = startups.filter((s) => {
     const matchesSearch =
-      s.name?.toLowerCase().includes(search.toLowerCase()) ||
-      s.teams?.name?.toLowerCase().includes(search.toLowerCase())
+      (s.name?.toLowerCase() || "").includes(search.toLowerCase()) ||
+      (s.teams?.name?.toLowerCase() || "").includes(search.toLowerCase())
 
     const matchesCat = catFilter === "all" || s.industry === catFilter || s.category === catFilter
     const matchesStatus = statusFilter === "all" || (s.status || 'pending') === statusFilter

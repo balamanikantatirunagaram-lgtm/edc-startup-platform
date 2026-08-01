@@ -19,7 +19,7 @@ export async function getAllStartups() {
       .from('startups')
       .select(`
         *,
-        teams (
+        teams!startups_team_id_fkey (
           name,
           leader_id
         )
