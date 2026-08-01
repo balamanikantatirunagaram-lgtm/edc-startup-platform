@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
+import { logout } from "@/services/auth.service"
 import { BellIcon, LogOutIcon, UserIcon, SettingsIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -117,7 +118,10 @@ export function AppHeader() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
-              onClick={() => router.push("/login")}
+              onClick={async () => {
+                await logout()
+                window.location.href = '/login'
+              }}
             >
               <LogOutIcon />
               Log out

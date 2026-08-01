@@ -32,7 +32,6 @@ import {
 
 import { useEffect, useState } from "react"
 import { getMyTeamStatus } from "@/services/team.service"
-import { logout } from "@/services/auth.service"
 import { useAppState } from "@/lib/app-state-context"
 
 const baseStudentNav = [
@@ -128,15 +127,6 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-3">
         <div className="flex flex-col gap-2">
-          <button
-            onClick={async () => {
-              await logout()
-              window.location.href = '/login'
-            }}
-            className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600 font-medium px-3 py-2 rounded-md hover:bg-red-50 transition-colors w-full text-left"
-          >
-            Sign out
-          </button>
           <div className="rounded-lg border bg-card p-3 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">EDC Cell · v1</p>
             <p className="mt-0.5">MVP preview — demo data only.</p>

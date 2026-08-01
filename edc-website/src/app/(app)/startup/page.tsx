@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { getMyStartup, updateMyStartup } from "@/services/startup.service"
+import { getMyStartup, updateMyStartup, deleteMyStartup } from "@/services/startup.service"
 import { getTeamTasks, createTask, updateTaskStatus } from "@/services/tasks.service"
 import { getMyTeamStatus, getTeamRequests, handleTeamRequest, searchStudentsByNiat, inviteStudent, removeTeamMember } from "@/services/team.service"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -23,6 +23,7 @@ export default function StartupCommandCenter() {
   const [currentStartup, setCurrentStartup] = React.useState<any>(null)
   const [isEditing, setIsEditing] = React.useState(false)
   const [portfolioData, setPortfolioData] = React.useState<any>({})
+  const [isDeleting, setIsDeleting] = React.useState(false)
 
   // Team Mgmt States
   const [requests, setRequests] = React.useState<any[]>([])
@@ -104,6 +105,19 @@ export default function StartupCommandCenter() {
       setIsEditing(false)
       toast.success("Startup details updated successfully.")
       loadEverything() // Refresh data
+    }
+  }
+
+  const handleDeleteStartup = async () => {
+    if (!confirm("WARNING: This will permanently delete your startup, all tasks, and disband your team. This action cannot be undone. Are you absolutely sure?")) return
+    setIsDeleting(true)
+    const res = await deleteMyStartup()
+    setIsDeleting(false)
+    if (res.error) {
+      toast.error(res.error)
+    } else {
+      toast.success("Startup and team deleted.")
+      window.location.href = "/team"
     }
   }
 
@@ -283,6 +297,18 @@ export default function StartupCommandCenter() {
                 </div>
               )}
             </CardContent>
+            {isLeader && (
+              <CardFooter className="border-t bg-destructive/10 pt-4 flex justify-between items-center rounded-b-xl">
+                <div>
+                  <h4 className="font-semibold text-destructive">Danger Zone</h4>
+                  <p className="text-xs text-muted-foreground">Permanently delete your startup and disband this team.</p>
+                </div>
+                <Button variant="destructive" onClick={handleDeleteStartup} disabled={isDeleting}>
+                  {isDeleting ? <Loader2Icon className="size-4 animate-spin mr-2" /> : <TrashIcon className="size-4 mr-2" />}
+                  Delete Startup
+                </Button>
+              </CardFooter>
+            )}
           </Card>
         </TabsContent>
 

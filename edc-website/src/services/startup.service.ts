@@ -162,3 +162,36 @@ export async function updateMyStartup(data: any) {
     return { error: err.message }
   }
 }
+
+export async function deleteMyStartup() {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+    
+    const supabase = getSupabase()
+    const { data: user } = await supabase.auth.getUser(token)
+    if (!user.user) return { error: "Not authenticated" }
+
+    const { data: teamRecord } = await supabaseAdmin
+      .from('teams')
+      .select('id, leader_id')
+      .eq('leader_id', user.user.id)
+      .maybeSingle()
+      
+    if (!teamRecord) {
+      return { error: "You are not the leader of any team, or the team does not exist." }
+    }
+
+    // Delete in order to avoid foreign key constraints
+    await supabaseAdmin.from('startups').delete().eq('team_id', teamRecord.id)
+    await supabaseAdmin.from('tasks').delete().eq('team_id', teamRecord.id)
+    await supabaseAdmin.from('team_members').delete().eq('team_id', teamRecord.id)
+    await supabaseAdmin.from('teams').delete().eq('id', teamRecord.id)
+
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
