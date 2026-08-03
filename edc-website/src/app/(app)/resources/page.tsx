@@ -1,8 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { ExternalLink, FileText } from "lucide-react"
 import { getResources } from "@/services/content.service"
+import { cn } from "@/lib/utils"
 
 export default async function ResourcesPage() {
   const resources = await getResources()
@@ -18,7 +19,7 @@ export default async function ResourcesPage() {
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2 mt-4">
         {resources.map((item: any) => (
-          <Card key={item.id} className="flex flex-col">
+          <Card key={item.id} className="flex flex-col h-full">
             <CardHeader>
               <div className="flex justify-between items-start gap-4 mb-2">
                 <Badge variant="outline" className="font-medium bg-primary/5 text-primary border-primary/20">
@@ -36,7 +37,7 @@ export default async function ResourcesPage() {
                 {item.description}
               </p>
             </CardContent>
-            <CardFooter className="pt-4 bg-muted/20">
+            <CardFooter className="pt-4 bg-muted/20 mt-auto">
               {(() => {
                 let finalLink = item.link;
                 if (finalLink && !finalLink.startsWith('http://') && !finalLink.startsWith('https://')) {
@@ -44,15 +45,14 @@ export default async function ResourcesPage() {
                 }
                 
                 return finalLink ? (
-                  <Button variant="default" className="w-full gap-2" asChild>
-                    <a href={finalLink} target="_blank" rel="noreferrer">
-                      View Resource
-                      <ExternalLink className="size-4" />
-                    </a>
-                  </Button>
+                  <a href={finalLink} target="_blank" rel="noreferrer" className={cn(buttonVariants({ variant: "default" }), "w-full gap-2")}>
+                    View Resource
+                    <ExternalLink className="size-4" />
+                  </a>
                 ) : (
-                  <Button variant="default" className="w-full gap-2" disabled>
-                    Link Unavailable
+                  <Button variant="default" className="w-full gap-2" disabled={false}>
+                    View Resource
+                    <ExternalLink className="size-4" />
                   </Button>
                 )
               })()}

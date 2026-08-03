@@ -1,8 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { ExternalLink, Rocket } from "lucide-react"
 import { getFundingOpportunities } from "@/services/content.service"
+import { cn } from "@/lib/utils"
 
 export default async function FundingPage() {
   const fundingOpportunities = await getFundingOpportunities()
@@ -18,7 +19,7 @@ export default async function FundingPage() {
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2 mt-4">
         {fundingOpportunities.map((item: any) => (
-          <Card key={item.id} className="flex flex-col">
+          <Card key={item.id} className="flex flex-col h-full">
             <CardHeader>
               <div className="flex justify-between items-start gap-4 mb-2">
                 <Badge variant="outline" className="font-medium bg-primary/5 text-primary border-primary/20">
@@ -47,7 +48,7 @@ export default async function FundingPage() {
                 </ul>
               </div>
             </CardContent>
-            <CardFooter className="pt-4 bg-muted/20">
+            <CardFooter className="pt-4 bg-muted/20 mt-auto">
               {(() => {
                 const reqs = item.requirements || [];
                 const linkIndex = reqs.findIndex((r: string) => r.startsWith('__LINK__:'));
@@ -58,15 +59,14 @@ export default async function FundingPage() {
                 }
                 
                 return actualLink ? (
-                  <Button variant="default" className="w-full gap-2" asChild>
-                    <a href={actualLink} target="_blank" rel="noreferrer">
-                      Apply / View Details
-                      <ExternalLink className="size-4" />
-                    </a>
-                  </Button>
+                  <a href={actualLink} target="_blank" rel="noreferrer" className={cn(buttonVariants({ variant: "default" }), "w-full gap-2")}>
+                    Apply / View Details
+                    <ExternalLink className="size-4" />
+                  </a>
                 ) : (
-                  <Button variant="default" className="w-full gap-2" disabled>
-                    Details Unavailable
+                  <Button variant="default" className="w-full gap-2" disabled={false}>
+                    Apply / View Details
+                    <ExternalLink className="size-4" />
                   </Button>
                 )
               })()}
