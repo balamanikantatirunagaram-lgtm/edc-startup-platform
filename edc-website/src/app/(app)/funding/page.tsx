@@ -41,25 +41,32 @@ export default async function FundingPage() {
               <div className="mt-auto pt-4 border-t border-border/50">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Requirements</span>
                 <ul className="text-sm mt-1.5 list-disc pl-4 text-muted-foreground">
-                  {(item.requirements || []).map((req: string, i: number) => (
+                  {(item.requirements || []).filter((req: string) => !req.startsWith('__LINK__:')).map((req: string, i: number) => (
                     <li key={i}>{req}</li>
                   ))}
                 </ul>
               </div>
             </CardContent>
             <CardFooter className="pt-4 bg-muted/20">
-              {item.link ? (
-                <a href={item.link} target="_blank" rel="noreferrer" className="w-full">
+              {(() => {
+                const reqs = item.requirements || [];
+                const linkIndex = reqs.findIndex((r: string) => r.startsWith('__LINK__:'));
+                const actualLink = linkIndex > -1 ? reqs[linkIndex].substring(9) : item.link;
+                
+                return actualLink ? (
+                  <a href={actualLink} target="_blank" rel="noreferrer" className="w-full">
+                    <Button variant="default" className="w-full gap-2">
+                      Apply / View Details
+                      <ExternalLink className="size-4" />
+                    </Button>
+                  </a>
+                ) : (
                   <Button variant="default" className="w-full gap-2">
                     Apply / View Details
                     <ExternalLink className="size-4" />
                   </Button>
-                </a>
-              ) : (
-                <Button variant="default" className="w-full gap-2" disabled>
-                  Details Unavailable
-                </Button>
-              )}
+                )
+              })()}
             </CardFooter>
           </Card>
         ))}

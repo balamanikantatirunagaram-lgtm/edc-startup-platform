@@ -56,7 +56,10 @@ export default function AdminFundingPage() {
     e.preventDefault()
     setIsSubmitting(true)
     const reqArray = requirements.split(",").map(s => s.trim()).filter(Boolean)
-    const payload = { title, provider, amount, deadline, type, description, requirements: reqArray, link }
+    if (link) {
+      reqArray.push(`__LINK__:${link}`)
+    }
+    const payload = { title, provider, amount, deadline, type, description, requirements: reqArray }
     
     let res;
     if (editingId) {
@@ -83,8 +86,15 @@ export default function AdminFundingPage() {
     setDeadline(item.deadline)
     setType(item.type)
     setDescription(item.description || "")
-    setRequirements((item.requirements || []).join(", "))
-    setLink(item.link || "")
+    let linkStr = item.link || ""
+    let reqs = item.requirements || []
+    const linkIndex = reqs.findIndex((r: string) => r.startsWith('__LINK__:'))
+    if (linkIndex > -1) {
+      linkStr = reqs[linkIndex].substring(9)
+      reqs = reqs.filter((_: any, i: number) => i !== linkIndex)
+    }
+    setRequirements(reqs.join(", "))
+    setLink(linkStr)
     setEditingId(item.id)
     setIsDialogOpen(true)
   }
