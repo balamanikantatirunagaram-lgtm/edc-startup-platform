@@ -175,11 +175,13 @@ export default function AdminMentorsPage() {
                       </td>
                       <td className="p-4 text-muted-foreground">{mentor.availability}</td>
                       <td className="p-4 text-right space-x-2">
-                        <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-600" onClick={() => handleEdit(mentor)}>
-                          <PencilIcon className="size-4" />
+                        <Button variant="outline" size="sm" className="text-blue-500 hover:text-blue-600" onClick={() => handleEdit(mentor)}>
+                          <PencilIcon className="size-4 mr-2" />
+                          Edit
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(mentor.id)}>
-                          <Trash2Icon className="size-4" />
+                        <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(mentor.id)}>
+                          <Trash2Icon className="size-4 mr-2" />
+                          Delete
                         </Button>
                       </td>
                     </tr>

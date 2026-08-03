@@ -1,4 +1,4 @@
-# EDC Startup Management Platform — Monorepo
+1# EDC Startup Management Platform — Monorepo
 
 > **Entrepreneurship Development Cell** · Student Incubation Portal + Admin Panel
 
