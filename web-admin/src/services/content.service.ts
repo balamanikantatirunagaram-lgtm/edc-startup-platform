@@ -94,6 +94,13 @@ export async function deleteResource(id: string) {
   return { success: true }
 }
 
+export async function updateResource(id: string, resource: any) {
+  const supabase = getAdminSupabase()
+  const { error } = await supabase.from('resources').update(resource).eq('id', id)
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
 // ─── Mentors ─────────────────────────────────────────────────────────────────
 
 export async function getMentors() {
@@ -121,6 +128,13 @@ export async function deleteMentor(id: string) {
   return { success: true }
 }
 
+export async function updateMentor(id: string, mentor: any) {
+  const supabase = getAdminSupabase()
+  const { error } = await supabase.from('mentors').update(mentor).eq('id', id)
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
 // ─── Funding Opportunities ───────────────────────────────────────────────────
 
 export async function getFundingOpportunities() {
@@ -144,6 +158,13 @@ export async function createFundingOpportunity(funding: any) {
 export async function deleteFundingOpportunity(id: string) {
   const supabase = getAdminSupabase()
   const { error } = await supabase.from('funding_opportunities').delete().eq('id', id)
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function updateFundingOpportunity(id: string, funding: any) {
+  const supabase = getAdminSupabase()
+  const { error } = await supabase.from('funding_opportunities').update(funding).eq('id', id)
   if (error) return { error: error.message }
   return { success: true }
 }

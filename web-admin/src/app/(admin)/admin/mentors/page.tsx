@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Trash2Icon, PlusIcon, Loader2 } from "lucide-react"
+import { Trash2Icon, PlusIcon, Loader2, PencilIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { getMentors, createMentor, deleteMentor } from "@/services/content.service"
+import { getMentors, createMentor, deleteMentor, updateMentor } from "@/services/content.service"
 
 export default function AdminMentorsPage() {
   const [mentors, setMentors] = React.useState<any[]>([])
@@ -32,6 +32,7 @@ export default function AdminMentorsPage() {
   const [expertise, setExpertise] = React.useState("")
   const [availability, setAvailability] = React.useState("")
   const [image, setImage] = React.useState("")
+  const [editingId, setEditingId] = React.useState<string | null>(null)
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -44,23 +45,44 @@ export default function AdminMentorsPage() {
     load()
   }, [load])
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const resetForm = () => {
+    setName(""); setRole(""); setCompany(""); setExpertise(""); setAvailability(""); setImage("")
+    setEditingId(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     const expArray = expertise.split(",").map(s => s.trim()).filter(Boolean)
-    const res = await createMentor({
-      name, role, company, expertise: expArray, availability, image
-    })
+    const payload = { name, role, company, expertise: expArray, availability, image }
+
+    let res;
+    if (editingId) {
+      res = await updateMentor(editingId, payload)
+    } else {
+      res = await createMentor(payload)
+    }
+
     setIsSubmitting(false)
     if (res.error) {
       toast.error(res.error)
     } else {
-      toast.success("Mentor created successfully")
+      toast.success(editingId ? "Mentor updated successfully" : "Mentor created successfully")
       setIsDialogOpen(false)
       load()
-      // reset form
-      setName(""); setRole(""); setCompany(""); setExpertise(""); setAvailability(""); setImage("")
+      resetForm()
     }
+  }
+
+  const handleEdit = (item: any) => {
+    setName(item.name)
+    setRole(item.role)
+    setCompany(item.company)
+    setExpertise((item.expertise || []).join(", "))
+    setAvailability(item.availability)
+    setImage(item.image || "")
+    setEditingId(item.id)
+    setIsDialogOpen(true)
   }
 
   const handleDelete = async (id: string) => {
@@ -81,18 +103,21 @@ export default function AdminMentorsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Manage Mentors</h1>
           <p className="text-sm text-muted-foreground">Add and remove mentors available for students.</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open)
+          if (!open) resetForm()
+        }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <PlusIcon className="size-4" /> Add Mentor
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
-            <form onSubmit={handleCreate}>
+            <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>Add New Mentor</DialogTitle>
+                <DialogTitle>{editingId ? "Edit Mentor" : "Add New Mentor"}</DialogTitle>
                 <DialogDescription>
-                  Enter details for the new mentor profile.
+                  {editingId ? "Update details for the mentor profile." : "Enter details for the new mentor profile."}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -106,7 +131,7 @@ export default function AdminMentorsPage() {
               <DialogFooter>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Mentor
+                  {editingId ? "Update Mentor" : "Save Mentor"}
                 </Button>
               </DialogFooter>
             </form>
@@ -149,7 +174,10 @@ export default function AdminMentorsPage() {
                         </div>
                       </td>
                       <td className="p-4 text-muted-foreground">{mentor.availability}</td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-right space-x-2">
+                        <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-600" onClick={() => handleEdit(mentor)}>
+                          <PencilIcon className="size-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(mentor.id)}>
                           <Trash2Icon className="size-4" />
                         </Button>

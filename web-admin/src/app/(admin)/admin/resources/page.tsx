@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Trash2Icon, PlusIcon, Loader2 } from "lucide-react"
+import { Trash2Icon, PlusIcon, Loader2, PencilIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { getResources, createResource, deleteResource } from "@/services/content.service"
+import { getResources, createResource, deleteResource, updateResource } from "@/services/content.service"
 
 export default function AdminResourcesPage() {
   const [resources, setResources] = React.useState<any[]>([])
@@ -31,6 +31,7 @@ export default function AdminResourcesPage() {
   const [description, setDescription] = React.useState("")
   const [link, setLink] = React.useState("")
   const [icon, setIcon] = React.useState("FileText")
+  const [editingId, setEditingId] = React.useState<string | null>(null)
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -43,22 +44,42 @@ export default function AdminResourcesPage() {
     load()
   }, [load])
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const resetForm = () => {
+    setTitle(""); setCategory(""); setDescription(""); setLink(""); setIcon("FileText")
+    setEditingId(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    const res = await createResource({
-      title, category, description, link, icon
-    })
+    const payload = { title, category, description, link, icon }
+
+    let res;
+    if (editingId) {
+      res = await updateResource(editingId, payload)
+    } else {
+      res = await createResource(payload)
+    }
+
     setIsSubmitting(false)
     if (res.error) {
       toast.error(res.error)
     } else {
-      toast.success("Resource created successfully")
+      toast.success(editingId ? "Resource updated successfully" : "Resource created successfully")
       setIsDialogOpen(false)
       load()
-      // reset form
-      setTitle(""); setCategory(""); setDescription(""); setLink(""); setIcon("FileText")
+      resetForm()
     }
+  }
+
+  const handleEdit = (item: any) => {
+    setTitle(item.title)
+    setCategory(item.category)
+    setDescription(item.description || "")
+    setLink(item.link)
+    setIcon(item.icon)
+    setEditingId(item.id)
+    setIsDialogOpen(true)
   }
 
   const handleDelete = async (id: string) => {
@@ -79,18 +100,21 @@ export default function AdminResourcesPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Manage Resources</h1>
           <p className="text-sm text-muted-foreground">Add and remove learning resources for students.</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open)
+          if (!open) resetForm()
+        }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <PlusIcon className="size-4" /> Add Resource
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
-            <form onSubmit={handleCreate}>
+            <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>Add New Resource</DialogTitle>
+                <DialogTitle>{editingId ? "Edit Resource" : "Add New Resource"}</DialogTitle>
                 <DialogDescription>
-                  Enter details for the new resource material.
+                  {editingId ? "Update details for the resource material." : "Enter details for the new resource material."}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -103,7 +127,7 @@ export default function AdminResourcesPage() {
               <DialogFooter>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Resource
+                  {editingId ? "Update Resource" : "Save Resource"}
                 </Button>
               </DialogFooter>
             </form>
@@ -145,7 +169,10 @@ export default function AdminResourcesPage() {
                           {resource.link}
                         </a>
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-right space-x-2">
+                        <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-600" onClick={() => handleEdit(resource)}>
+                          <PencilIcon className="size-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(resource.id)}>
                           <Trash2Icon className="size-4" />
                         </Button>

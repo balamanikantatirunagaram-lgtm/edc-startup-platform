@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Trash2Icon, PlusIcon, Loader2 } from "lucide-react"
+import { Trash2Icon, PlusIcon, Loader2, PencilIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { getFundingOpportunities, createFundingOpportunity, deleteFundingOpportunity } from "@/services/content.service"
+import { getFundingOpportunities, createFundingOpportunity, deleteFundingOpportunity, updateFundingOpportunity } from "@/services/content.service"
 
 export default function AdminFundingPage() {
   const [funding, setFunding] = React.useState<any[]>([])
@@ -33,6 +33,7 @@ export default function AdminFundingPage() {
   const [type, setType] = React.useState("")
   const [description, setDescription] = React.useState("")
   const [requirements, setRequirements] = React.useState("")
+  const [editingId, setEditingId] = React.useState<string | null>(null)
 
   const load = React.useCallback(async () => {
     setLoading(true)
@@ -45,23 +46,45 @@ export default function AdminFundingPage() {
     load()
   }, [load])
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const resetForm = () => {
+    setTitle(""); setProvider(""); setAmount(""); setDeadline(""); setType(""); setDescription(""); setRequirements("")
+    setEditingId(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     const reqArray = requirements.split(",").map(s => s.trim()).filter(Boolean)
-    const res = await createFundingOpportunity({
-      title, provider, amount, deadline, type, description, requirements: reqArray
-    })
+    const payload = { title, provider, amount, deadline, type, description, requirements: reqArray }
+    
+    let res;
+    if (editingId) {
+      res = await updateFundingOpportunity(editingId, payload)
+    } else {
+      res = await createFundingOpportunity(payload)
+    }
+    
     setIsSubmitting(false)
     if (res.error) {
       toast.error(res.error)
     } else {
-      toast.success("Funding opportunity created successfully")
+      toast.success(editingId ? "Funding opportunity updated successfully" : "Funding opportunity created successfully")
       setIsDialogOpen(false)
       load()
-      // reset form
-      setTitle(""); setProvider(""); setAmount(""); setDeadline(""); setType(""); setDescription(""); setRequirements("")
+      resetForm()
     }
+  }
+
+  const handleEdit = (item: any) => {
+    setTitle(item.title)
+    setProvider(item.provider)
+    setAmount(item.amount)
+    setDeadline(item.deadline)
+    setType(item.type)
+    setDescription(item.description || "")
+    setRequirements((item.requirements || []).join(", "))
+    setEditingId(item.id)
+    setIsDialogOpen(true)
   }
 
   const handleDelete = async (id: string) => {
@@ -82,18 +105,21 @@ export default function AdminFundingPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Manage Funding</h1>
           <p className="text-sm text-muted-foreground">Add and remove funding opportunities for startups.</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open)
+          if (!open) resetForm()
+        }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <PlusIcon className="size-4" /> Add Opportunity
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
-            <form onSubmit={handleCreate}>
+            <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>Add New Funding Opportunity</DialogTitle>
+                <DialogTitle>{editingId ? "Edit Funding Opportunity" : "Add New Funding Opportunity"}</DialogTitle>
                 <DialogDescription>
-                  Enter details for the new funding or grant.
+                  {editingId ? "Update details for the funding or grant." : "Enter details for the new funding or grant."}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -108,7 +134,7 @@ export default function AdminFundingPage() {
               <DialogFooter>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Opportunity
+                  {editingId ? "Update Opportunity" : "Save Opportunity"}
                 </Button>
               </DialogFooter>
             </form>
@@ -151,7 +177,10 @@ export default function AdminFundingPage() {
                         </div>
                       </td>
                       <td className="p-4 text-muted-foreground">{item.deadline}</td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-right space-x-2">
+                        <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-600" onClick={() => handleEdit(item)}>
+                          <PencilIcon className="size-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(item.id)}>
                           <Trash2Icon className="size-4" />
                         </Button>
