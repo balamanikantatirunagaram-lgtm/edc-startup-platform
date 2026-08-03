@@ -50,9 +50,8 @@ export default async function ResourcesPage() {
                     <ExternalLink className="size-4" />
                   </a>
                 ) : (
-                  <Button variant="default" className="w-full gap-2" disabled={false}>
-                    View Resource
-                    <ExternalLink className="size-4" />
+                  <Button variant="secondary" className="w-full gap-2" disabled>
+                    No Link Provided
                   </Button>
                 )
               })()}

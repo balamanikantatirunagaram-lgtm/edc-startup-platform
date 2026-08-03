@@ -64,9 +64,8 @@ export default async function FundingPage() {
                     <ExternalLink className="size-4" />
                   </a>
                 ) : (
-                  <Button variant="default" className="w-full gap-2" disabled={false}>
-                    Apply / View Details
-                    <ExternalLink className="size-4" />
+                  <Button variant="secondary" className="w-full gap-2" disabled>
+                    No Link Provided
                   </Button>
                 )
               })()}
