@@ -48,10 +48,18 @@ export default async function FundingPage() {
               </div>
             </CardContent>
             <CardFooter className="pt-4 bg-muted/20">
-              <Button variant="default" className="w-full gap-2">
-                Apply / View Details
-                <ExternalLink className="size-4" />
-              </Button>
+              {item.link ? (
+                <a href={item.link} target="_blank" rel="noreferrer" className="w-full">
+                  <Button variant="default" className="w-full gap-2">
+                    Apply / View Details
+                    <ExternalLink className="size-4" />
+                  </Button>
+                </a>
+              ) : (
+                <Button variant="default" className="w-full gap-2" disabled>
+                  Details Unavailable
+                </Button>
+              )}
             </CardFooter>
           </Card>
         ))}

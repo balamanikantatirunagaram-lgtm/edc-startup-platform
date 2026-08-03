@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS public.funding_opportunities (
   type TEXT,
   description TEXT,
   requirements TEXT[],
+  link TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

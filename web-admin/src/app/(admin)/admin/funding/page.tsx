@@ -33,6 +33,7 @@ export default function AdminFundingPage() {
   const [type, setType] = React.useState("")
   const [description, setDescription] = React.useState("")
   const [requirements, setRequirements] = React.useState("")
+  const [link, setLink] = React.useState("")
   const [editingId, setEditingId] = React.useState<string | null>(null)
 
   const load = React.useCallback(async () => {
@@ -47,7 +48,7 @@ export default function AdminFundingPage() {
   }, [load])
 
   const resetForm = () => {
-    setTitle(""); setProvider(""); setAmount(""); setDeadline(""); setType(""); setDescription(""); setRequirements("")
+    setTitle(""); setProvider(""); setAmount(""); setDeadline(""); setType(""); setDescription(""); setRequirements(""); setLink("")
     setEditingId(null)
   }
 
@@ -55,7 +56,7 @@ export default function AdminFundingPage() {
     e.preventDefault()
     setIsSubmitting(true)
     const reqArray = requirements.split(",").map(s => s.trim()).filter(Boolean)
-    const payload = { title, provider, amount, deadline, type, description, requirements: reqArray }
+    const payload = { title, provider, amount, deadline, type, description, requirements: reqArray, link }
     
     let res;
     if (editingId) {
@@ -83,6 +84,7 @@ export default function AdminFundingPage() {
     setType(item.type)
     setDescription(item.description || "")
     setRequirements((item.requirements || []).join(", "))
+    setLink(item.link || "")
     setEditingId(item.id)
     setIsDialogOpen(true)
   }
@@ -129,6 +131,7 @@ export default function AdminFundingPage() {
                 <Input placeholder="Type (e.g. Equity-free Grant)" value={type} onChange={e => setType(e.target.value)} required />
                 <Input placeholder="Deadline (e.g. Oct 15, 2026)" value={deadline} onChange={e => setDeadline(e.target.value)} required />
                 <Input placeholder="Requirements (comma separated)" value={requirements} onChange={e => setRequirements(e.target.value)} required />
+                <Input placeholder="External Link (URL)" value={link} onChange={e => setLink(e.target.value)} />
                 <Textarea placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} required />
               </div>
               <DialogFooter>
