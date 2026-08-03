@@ -6,7 +6,7 @@ import { getTeamTasks, createTask, updateTaskStatus } from "@/services/tasks.ser
 import { getMyTeamStatus, getTeamRequests, handleTeamRequest, searchStudentsByNiat, inviteStudent, removeTeamMember } from "@/services/team.service"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -288,10 +288,10 @@ export default function StartupCommandCenter() {
                   </div>
                   <div className="flex flex-wrap gap-4">
                     {currentStartup.attachments?.pitchDeck && (
-                      <Button variant="outline" asChild><a href={currentStartup.attachments.pitchDeck} target="_blank">View Pitch Deck</a></Button>
+                      <a href={currentStartup.attachments.pitchDeck} target="_blank" className={buttonVariants({ variant: "outline" })}>View Pitch Deck</a>
                     )}
                     {currentStartup.attachments?.website && (
-                      <Button variant="outline" asChild><a href={currentStartup.attachments.website} target="_blank">Visit Website</a></Button>
+                      <a href={currentStartup.attachments.website} target="_blank" className={buttonVariants({ variant: "outline" })}>Visit Website</a>
                     )}
                   </div>
                 </div>
@@ -436,7 +436,7 @@ export default function StartupCommandCenter() {
                   </div>
                   <div className="grid gap-2">
                     <Label>Assignee</Label>
-                    <Select value={newTaskAssignee} onValueChange={setNewTaskAssignee} required>
+                    <Select value={newTaskAssignee} onValueChange={(v) => setNewTaskAssignee(v ?? '')} required>
                       <SelectTrigger><SelectValue placeholder="Select member" /></SelectTrigger>
                       <SelectContent>
                         {currentStartup.teamMembers.map((m: any) => (

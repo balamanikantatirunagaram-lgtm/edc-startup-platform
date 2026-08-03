@@ -174,7 +174,7 @@ export const currentStartup: StartupApplication = {
   revenueModel: "",
   currentProgress: "Go to 'Create Team' to register your startup.",
   expectedSupport: "",
-  attachments: {},
+  attachments: { documents: [] },
   status: "Draft",
   ownerNiatId: "",
   createdAt: "",

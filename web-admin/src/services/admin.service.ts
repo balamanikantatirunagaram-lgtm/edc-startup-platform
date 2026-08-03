@@ -37,6 +37,16 @@ export async function getAllStartups() {
   }
 }
 
+export interface IAdminStudent {
+  id: string;
+  email: string;
+  name: string;
+  niatId: string;
+  department: string;
+  academicYear: string;
+  isSuspended: boolean;
+}
+
 export async function getAllStudents(): Promise<IAdminStudent[]> {
   noStore()
   try {

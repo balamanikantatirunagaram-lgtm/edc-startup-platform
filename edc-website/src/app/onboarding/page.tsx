@@ -231,7 +231,7 @@ export default function OnboardingPage() {
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="department">Department</FieldLabel>
-                    <Select value={department} onValueChange={setDepartment}>
+                    <Select value={department} onValueChange={(v) => setDepartment(v ?? '')}>
                       <SelectTrigger id="department" className="w-full">
                         <SelectValue placeholder="Select department" />
                       </SelectTrigger>
@@ -246,7 +246,7 @@ export default function OnboardingPage() {
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="academicYear">Academic Year</FieldLabel>
-                    <Select value={academicYear} onValueChange={setAcademicYear}>
+                    <Select value={academicYear} onValueChange={(v) => setAcademicYear(v ?? '')}>
                       <SelectTrigger id="academicYear" className="w-full">
                         <SelectValue placeholder="Select academic year" />
                       </SelectTrigger>
@@ -300,7 +300,7 @@ export default function OnboardingPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field>
                       <FieldLabel htmlFor="category">Category</FieldLabel>
-                      <Select value={category} onValueChange={setCategory}>
+                      <Select value={category} onValueChange={(v) => setCategory(v ?? '')}>
                         <SelectTrigger id="category" className="w-full">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
@@ -315,7 +315,7 @@ export default function OnboardingPage() {
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="stage">Current Stage</FieldLabel>
-                      <Select value={stage} onValueChange={setStage}>
+                      <Select value={stage} onValueChange={(v) => setStage(v ?? '')}>
                         <SelectTrigger id="stage" className="w-full">
                           <SelectValue placeholder="Select stage" />
                         </SelectTrigger>

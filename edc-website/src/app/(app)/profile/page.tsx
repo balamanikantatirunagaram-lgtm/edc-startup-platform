@@ -303,7 +303,7 @@ export default function ProfilePage() {
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="department">Department</FieldLabel>
-                    <Select value={department} onValueChange={setDepartment}>
+                    <Select value={department} onValueChange={(v) => setDepartment(v ?? '')}>
                       <SelectTrigger id="department">
                         <SelectValue placeholder="Select department" />
                       </SelectTrigger>
@@ -318,7 +318,7 @@ export default function ProfilePage() {
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="year">Academic year</FieldLabel>
-                    <Select value={academicYear} onValueChange={setAcademicYear}>
+                    <Select value={academicYear} onValueChange={(v) => setAcademicYear(v ?? '')}>
                       <SelectTrigger id="year">
                         <SelectValue placeholder="Select year" />
                       </SelectTrigger>

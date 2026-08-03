@@ -198,7 +198,7 @@ export default function AdminStartupReviewPage({
 
                   <Field>
                     <FieldLabel htmlFor="newStatus">Action / Status</FieldLabel>
-                    <Select value={status} onValueChange={setStatus}>
+                    <Select value={status} onValueChange={(v) => setStatus(v ?? '')}>
                       <SelectTrigger id="newStatus" className="w-full">
                         <SelectValue />
                       </SelectTrigger>

@@ -223,7 +223,7 @@ export async function handleTeamRequest(requestId: string, status: 'approved' | 
           .in('status', ['pending', 'invited'])
           
         const { createNotification } = await import('./notifications.service')
-        const teamName = request.teams?.name || 'the team'
+        const teamName = (request.teams as any)?.name || 'the team'
         await createNotification(request.student_id, 'Request Approved', `Your request to join ${teamName} was approved!`, 'success')
       }
     }
@@ -418,13 +418,14 @@ export async function getMyTeamStatus() {
       return { hasTeam: false }
     }
 
+    const teams = member.teams as any;
     return { 
       hasTeam: true, 
-      isLeader: member.teams.leader_id === user.user.id,
+      isLeader: teams.leader_id === user.user.id,
       team: {
-        id: member.teams.id,
-        name: member.teams.name,
-        code: member.teams.code
+        id: teams.id,
+        name: teams.name,
+        code: teams.code
       }
     }
   } catch (err) {

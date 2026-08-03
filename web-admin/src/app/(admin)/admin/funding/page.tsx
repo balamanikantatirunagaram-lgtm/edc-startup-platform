@@ -121,11 +121,11 @@ export default function AdminFundingPage() {
           setIsDialogOpen(open)
           if (!open) resetForm()
         }}>
-          <DialogTrigger asChild>
+          <DialogTrigger render={
             <Button className="gap-2">
               <PlusIcon className="size-4" /> Add Opportunity
             </Button>
-          </DialogTrigger>
+          } />
           <DialogContent className="sm:max-w-[425px]">
             <form onSubmit={handleSubmit}>
               <DialogHeader>

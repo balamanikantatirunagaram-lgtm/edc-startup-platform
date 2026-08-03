@@ -116,7 +116,7 @@ export default function AdminStudentsPage() {
             />
           </div>
           <div className="flex gap-2 shrink-0">
-            <Select value={deptFilter} onValueChange={setDeptFilter}>
+            <Select value={deptFilter} onValueChange={(v) => setDeptFilter(v ?? '')}>
               <SelectTrigger className="w-[160px] h-9 text-xs">
                 <SelectValue placeholder="All Departments" />
               </SelectTrigger>
@@ -130,7 +130,7 @@ export default function AdminStudentsPage() {
               </SelectContent>
             </Select>
 
-            <Select value={yearFilter} onValueChange={setYearFilter}>
+            <Select value={yearFilter} onValueChange={(v) => setYearFilter(v ?? '')}>
               <SelectTrigger className="w-[140px] h-9 text-xs">
                 <SelectValue placeholder="All Years" />
               </SelectTrigger>

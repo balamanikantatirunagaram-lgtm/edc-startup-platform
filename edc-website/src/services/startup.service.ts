@@ -79,7 +79,7 @@ export async function getMyStartup() {
         const u = allUsers.find(usr => usr.id === m.student_id)
         teamMembers.push({
           name: u?.user_metadata?.name || u?.user_metadata?.niat_id || 'Unknown Member',
-          role: m.student_id === memberRecord.teams.leader_id ? 'Team Leader' : 'Team Member',
+          role: m.student_id === (memberRecord.teams as any).leader_id ? 'Team Leader' : 'Team Member',
           id: m.student_id
         })
       }

@@ -67,7 +67,7 @@ export default function AdminStartupsPage() {
             />
           </div>
           <div className="flex gap-2 shrink-0">
-            <Select value={catFilter} onValueChange={setCatFilter}>
+            <Select value={catFilter} onValueChange={(v) => setCatFilter(v ?? '')}>
               <SelectTrigger className="w-[160px] h-9 text-xs">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
@@ -81,7 +81,7 @@ export default function AdminStartupsPage() {
               </SelectContent>
             </Select>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? '')}>
               <SelectTrigger className="w-[160px] h-9 text-xs">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>

@@ -53,7 +53,7 @@ export async function getDashboardData() {
       }
     }
 
-    const team = member.teams
+    const team = member.teams as any
 
     let startupData = null
     if (team.startup_id) {

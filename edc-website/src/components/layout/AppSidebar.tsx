@@ -47,7 +47,7 @@ const baseStudentNav = [
 export function AppSidebar() {
   const pathname = usePathname()
   const { currentUser } = useAppState()
-  const isAdmin = currentUser?.role === "admin" || currentUser?.is_admin
+  const isAdmin = currentUser?.role === "admin"
 
   const [navItems, setNavItems] = useState<any[]>(baseStudentNav)
 

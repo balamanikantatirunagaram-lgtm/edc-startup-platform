@@ -21,7 +21,7 @@ export async function getTeamTasks() {
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
-      .eq('team_id', status.team.id)
+      .eq('team_id', status.team?.id)
       .order('created_at', { ascending: false })
 
     if (error) return { tasks: [] }
