@@ -32,6 +32,8 @@ export default function AdminMentorsPage() {
   const [expertise, setExpertise] = React.useState("")
   const [availability, setAvailability] = React.useState("")
   const [image, setImage] = React.useState("")
+  const [username, setUsername] = React.useState("")
+  const [password, setPassword] = React.useState("")
   const [editingId, setEditingId] = React.useState<string | null>(null)
 
   const load = React.useCallback(async () => {
@@ -47,6 +49,7 @@ export default function AdminMentorsPage() {
 
   const resetForm = () => {
     setName(""); setRole(""); setCompany(""); setExpertise(""); setAvailability(""); setImage("")
+    setUsername(""); setPassword("")
     setEditingId(null)
   }
 
@@ -54,13 +57,13 @@ export default function AdminMentorsPage() {
     e.preventDefault()
     setIsSubmitting(true)
     const expArray = expertise.split(",").map(s => s.trim()).filter(Boolean)
-    const payload = { name, role, company, expertise: expArray, availability, image }
+    const payload: any = { name, role, company, expertise: expArray, availability, image }
 
     let res;
     if (editingId) {
       res = await updateMentor(editingId, payload)
     } else {
-      res = await createMentor(payload)
+      res = await createMentor({ ...payload, username, password })
     }
 
     setIsSubmitting(false)
@@ -127,6 +130,12 @@ export default function AdminMentorsPage() {
                 <Input placeholder="Expertise (comma separated)" value={expertise} onChange={e => setExpertise(e.target.value)} required />
                 <Input placeholder="Availability (e.g. 2 hrs/week)" value={availability} onChange={e => setAvailability(e.target.value)} required />
                 <Input placeholder="Image URL (optional)" value={image} onChange={e => setImage(e.target.value)} />
+                {!editingId && (
+                  <>
+                    <Input placeholder="Login Username" value={username} onChange={e => setUsername(e.target.value)} required />
+                    <Input type="password" placeholder="Login Password" value={password} onChange={e => setPassword(e.target.value)} required />
+                  </>
+                )}
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={isSubmitting}>

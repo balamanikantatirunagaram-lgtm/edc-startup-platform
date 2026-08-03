@@ -116,7 +116,30 @@ export async function getMentors() {
 
 export async function createMentor(mentor: any) {
   const supabase = getAdminSupabase()
-  const { error } = await supabase.from('mentors').insert([mentor])
+  
+  const email = `${mentor.username.toLowerCase().replace(/\\s+/g, '')}@mentor.com`
+  const password = mentor.password
+  
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      name: mentor.name,
+      role: 'mentor',
+      username: mentor.username
+    }
+  })
+  
+  if (authError) {
+    return { error: `Failed to create auth user: ${authError.message}` }
+  }
+
+  // Remove auth-specific fields before inserting into public table
+  const { username, password: _pwd, ...mentorData } = mentor
+  const mentorRecord = { ...mentorData, id: authData.user.id }
+  
+  const { error } = await supabase.from('mentors').insert([mentorRecord])
   if (error) return { error: error.message }
   return { success: true }
 }
