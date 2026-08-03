@@ -51,19 +51,22 @@ export default async function FundingPage() {
               {(() => {
                 const reqs = item.requirements || [];
                 const linkIndex = reqs.findIndex((r: string) => r.startsWith('__LINK__:'));
-                const actualLink = linkIndex > -1 ? reqs[linkIndex].substring(9) : item.link;
+                let actualLink = linkIndex > -1 ? reqs[linkIndex].substring(9) : item.link;
+                
+                if (actualLink && !actualLink.startsWith('http://') && !actualLink.startsWith('https://')) {
+                  actualLink = 'https://' + actualLink;
+                }
                 
                 return actualLink ? (
-                  <a href={actualLink} target="_blank" rel="noreferrer" className="w-full">
-                    <Button variant="default" className="w-full gap-2">
+                  <Button variant="default" className="w-full gap-2" asChild>
+                    <a href={actualLink} target="_blank" rel="noreferrer">
                       Apply / View Details
                       <ExternalLink className="size-4" />
-                    </Button>
-                  </a>
+                    </a>
+                  </Button>
                 ) : (
-                  <Button variant="default" className="w-full gap-2">
-                    Apply / View Details
-                    <ExternalLink className="size-4" />
+                  <Button variant="default" className="w-full gap-2" disabled>
+                    Details Unavailable
                   </Button>
                 )
               })()}

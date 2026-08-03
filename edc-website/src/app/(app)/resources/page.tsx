@@ -1,57 +1,62 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FileText, Download, Briefcase, FileSignature, PieChart, ExternalLink } from "lucide-react"
+import { ExternalLink, FileText } from "lucide-react"
 import { getResources } from "@/services/content.service"
 
 export default async function ResourcesPage() {
   const resources = await getResources()
 
-  // Group resources by category
-  const groupedResources = resources.reduce((acc: any, resource: any) => {
-    const category = resource.category || "General"
-    if (!acc[category]) acc[category] = []
-    acc[category].push(resource)
-    return acc
-  }, {})
-
   return (
-    <div className="container max-w-6xl py-10 mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="mb-10">
-        <h1 className="text-4xl font-extrabold tracking-tight text-foreground mb-3">Resource Center</h1>
-        <p className="text-muted-foreground text-lg max-w-3xl">
+    <div className="flex flex-col gap-6 pb-10">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">Resource Center</h1>
+        <p className="text-muted-foreground">
           Everything you need to build, launch, and scale your startup. Download these curated templates and frameworks created by industry experts.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {Object.entries(groupedResources).map(([category, items]: [string, any]) => (
-          <Card key={category} className="flex flex-col h-full border-border/60 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-4 bg-muted/20 border-b">
-              <CardTitle className="text-2xl">{category}</CardTitle>
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2 mt-4">
+        {resources.map((item: any) => (
+          <Card key={item.id} className="flex flex-col">
+            <CardHeader>
+              <div className="flex justify-between items-start gap-4 mb-2">
+                <Badge variant="outline" className="font-medium bg-primary/5 text-primary border-primary/20">
+                  {item.category || "General"}
+                </Badge>
+              </div>
+              <CardTitle className="text-xl">{item.title}</CardTitle>
+              <CardDescription className="flex items-center gap-1.5 mt-1 text-sm font-medium">
+                <FileText className="size-3.5" />
+                Resource Document
+              </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 p-0">
-              <ul className="divide-y divide-border">
-                {items.map((item: any) => (
-                  <li key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-muted/10 transition-colors gap-4">
-                    <div className="flex items-start sm:items-center gap-3">
-                      <div className="bg-primary/10 p-2 rounded-md mt-1 sm:mt-0 shrink-0">
-                        <FileText className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm text-foreground">{item.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon" asChild className="shrink-0 h-8 w-8 text-muted-foreground hover:text-primary sm:self-center">
-                      <a href={item.link} target="_blank" rel="noreferrer">
-                        <Download className="w-4 h-4" />
-                        <span className="sr-only">Download {item.title}</span>
-                      </a>
-                    </Button>
-                  </li>
-                ))}
-              </ul>
+            <CardContent className="flex-1 flex flex-col gap-4">
+              <p className="text-sm text-foreground/80 leading-relaxed">
+                {item.description}
+              </p>
             </CardContent>
+            <CardFooter className="pt-4 bg-muted/20">
+              {(() => {
+                let finalLink = item.link;
+                if (finalLink && !finalLink.startsWith('http://') && !finalLink.startsWith('https://')) {
+                  finalLink = 'https://' + finalLink;
+                }
+                
+                return finalLink ? (
+                  <Button variant="default" className="w-full gap-2" asChild>
+                    <a href={finalLink} target="_blank" rel="noreferrer">
+                      View Resource
+                      <ExternalLink className="size-4" />
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant="default" className="w-full gap-2" disabled>
+                    Link Unavailable
+                  </Button>
+                )
+              })()}
+            </CardFooter>
           </Card>
         ))}
         {resources.length === 0 && (
