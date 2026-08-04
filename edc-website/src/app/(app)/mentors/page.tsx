@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { getMentors } from "@/services/content.service"
 import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
+import { RequestMentorshipButton } from "@/components/shared/RequestMentorshipButton"
 
 export default async function MentorsPage() {
   const mentors = await getMentors()
@@ -45,9 +46,7 @@ export default async function MentorsPage() {
               </p>
             </CardContent>
             <CardFooter>
-               <Button className="w-full gap-2" variant="default">
-                  Request Session <ExternalLink className="size-4" />
-               </Button>
+               <RequestMentorshipButton mentorId={mentor.id} />
             </CardFooter>
           </Card>
         ))}

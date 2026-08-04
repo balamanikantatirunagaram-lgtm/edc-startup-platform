@@ -38,27 +38,15 @@ export default function LoginPage() {
       }
 
       // Update the mock state's localStorage so the dashboard shows the real name
-      const existingUserStr = localStorage.getItem('edc_user');
-      const existingUser = existingUserStr ? JSON.parse(existingUserStr) : {
-        id: "u_logged_in",
-        fullName: "Student",
-        niatId: "Unknown",
-        collegeId: "",
-        phone: "",
-        email: "",
-        department: "",
-        academicYear: "",
-        skills: [],
-        role: "student",
+      localStorage.setItem('edc_user', JSON.stringify({
+        id: "u_mentor_logged_in",
+        fullName: res.name,
+        username: username,
+        role: "mentor",
+        email: `${username.toLowerCase()}@mentor.com`,
         active: true,
         passwordChanged: true,
-        profileCompletion: 20
-      };
-      
-      localStorage.setItem('edc_user', JSON.stringify({ 
-        ...existingUser, 
-        fullName: res.name, 
-        username: username 
+        profileCompletion: 100
       }));
 
       if (res.isFirstLogin) {
@@ -69,6 +57,7 @@ export default function LoginPage() {
         router.push("/dashboard")
       }
     } catch (err) {
+      console.error("Client Catch Error:", err)
       toast.error("An unexpected error occurred.")
       setLoading(false)
     }

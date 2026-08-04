@@ -100,7 +100,7 @@ export function AppHeader() {
                   {currentUser.fullName}
                 </span>
                 <span className="text-xs font-normal text-muted-foreground">
-                  {currentUser.niatId}
+                  @{currentUser.username}
                 </span>
               </div>
             </DropdownMenuLabel>

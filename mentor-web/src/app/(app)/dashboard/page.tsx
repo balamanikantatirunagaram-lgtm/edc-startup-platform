@@ -3,25 +3,21 @@
 import * as React from "react"
 import Link from "next/link"
 import {
-  ArrowRightIcon,
   BellIcon,
-  FileTextIcon,
+  BriefcaseIcon,
   MessageSquareIcon,
   RocketIcon,
-  SparklesIcon,
-  TrendingUpIcon,
-  UserCircleIcon,
-  PlusIcon,
-  UsersIcon
+  UsersIcon,
+  CheckCircle2Icon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
 import { StatCard } from "@/components/shared/StatCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
-import { getDashboardData } from "@/services/dashboard.service"
+
+import { getMentorDashboardData } from "@/services/mentorship.service"
+import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardPage() {
@@ -30,200 +26,138 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     async function load() {
-      const result = await getDashboardData()
-      setData(result)
+      const res = await getMentorDashboardData()
+      if (res.error) {
+        toast.error(res.error)
+      } else {
+        setData(res)
+      }
       setLoading(false)
     }
     load()
   }, [])
 
-  if (loading) {
+  if (loading || !data) {
     return (
       <div className="flex flex-col gap-6 animate-in fade-in">
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-96" />
-        </div>
+        <Skeleton className="h-8 w-64" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-32 w-full" />
         </div>
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <Skeleton className="h-64 w-full" />
-          </div>
-          <Skeleton className="h-64 w-full" />
-        </div>
       </div>
     )
   }
 
-  if (data?.error) {
-    return <div>Error: {data.error}</div>
-  }
-
-  const { user, startup, hasTeam, teamCode, teamName } = data
-
-  let completedFields = 0
-  const totalFields = 7 // name, niatId, department, academicYear, collegeId, phone, email
-  if (user?.name) completedFields++
-  if (user?.niatId) completedFields++
-  if (user?.department) completedFields++
-  if (user?.academicYear) completedFields++
-  if (user?.collegeId) completedFields++
-  if (user?.phone) completedFields++
-  if (user?.email) completedFields++
-  
-  const profileCompletion = Math.round((completedFields / totalFields) * 100)
-  const fieldsLeft = totalFields - completedFields
-  const fieldsLeftHint = fieldsLeft > 0 ? `${fieldsLeft} field${fieldsLeft > 1 ? "s" : ""} left` : "All complete!"
-
-  const displayName = user?.name ? user.name.split(" ")[0] : "Student"
+  const { stats, recentStartups, pendingRequests } = data
 
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          Welcome back, {displayName}!
+          Mentor Dashboard
         </h1>
         <p className="text-sm text-muted-foreground text-pretty">
-          Here&apos;s where your startup stands with the EDC today.
+          Welcome to your EDC Mentor Portal. Here's an overview of your activity.
         </p>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {hasTeam && startup ? (
-          <StatCard label="Startup status" value={startup.status} icon={RocketIcon} hint={startup.name} />
-        ) : (
-          <StatCard label="Team status" value={hasTeam ? "No Startup" : "No Team"} icon={UsersIcon} hint="Join or register" />
-        )}
-        <StatCard label="Profile complete" value={`${profileCompletion}%`} icon={UserCircleIcon} hint={fieldsLeftHint} />
-        <StatCard label="Unread alerts" value={0} icon={BellIcon} hint="Notifications" />
-        <StatCard label="Team Code" value={teamCode || 'None'} icon={TrendingUpIcon} hint="Share to invite" />
+        <StatCard label="Active Startups" value={stats.activeStartups} icon={RocketIcon} hint="Currently mentoring" />
+        <StatCard label="Pending Requests" value={stats.pendingRequests} icon={BriefcaseIcon} hint="Awaiting review" />
+        <StatCard label="Unread Messages" value={stats.unreadMessages} icon={MessageSquareIcon} hint="From founders" />
+        <StatCard label="Total Meetings" value={stats.totalMeetings} icon={UsersIcon} hint="This semester" />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
-          {hasTeam ? (
-            startup ? (
-              <Card>
-                <CardHeader className="flex-row items-start justify-between gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2">
-                      <CardTitle>{startup.name}</CardTitle>
-                      <StatusBadge status={startup.status} />
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Startups Under Mentorship</CardTitle>
+                <CardDescription>Startups you are actively guiding.</CardDescription>
+              </div>
+              <Button render={<Link href="/startups" />} nativeButton={false} variant="outline" size="sm">
+                View All
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4">
+                {recentStartups.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+                        <RocketIcon className="size-5 text-primary" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{s.name}</span>
+                        <span className="text-xs text-muted-foreground">{s.industry} • {s.stage}</span>
+                      </div>
                     </div>
-                    <CardDescription>{startup.tagline}</CardDescription>
+                    <Button variant="ghost" size="sm">Manage</Button>
                   </div>
-                  <Button render={<Link href="/startup" />} nativeButton={false} variant="outline" size="sm">
-                    View Startup
-                    <ArrowRightIcon data-icon="inline-end" />
-                  </Button>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-5">
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <Meta label="Industry" value={startup.industry || 'Unknown'} />
-                    <Meta label="Stage" value={startup.stage || 'Unknown'} />
-                    <Meta label="Team" value={teamName} />
-                  </div>
-                  <Separator />
-                  <div className="flex flex-col gap-2">
-                    <span className="text-sm font-medium">Problem Statement</span>
-                    <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
-                      {startup.problem || 'Not provided'}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Team: {teamName}</CardTitle>
-                  <CardDescription>You are part of a team but haven't registered a startup yet.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button render={<Link href="/startup/register" />} nativeButton={false}>
-                    <PlusIcon className="mr-2 size-4" /> Register Startup
-                  </Button>
-                </CardContent>
-              </Card>
-            )
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Card className="hover:border-primary/50 transition-colors">
-                <CardHeader>
-                  <RocketIcon className="size-8 text-primary mb-2" />
-                  <CardTitle>Register a Startup</CardTitle>
-                  <CardDescription>Start a new application and create a team.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button render={<Link href="/startup/register" />} nativeButton={false} className="w-full">
-                    Start Application
-                  </Button>
-                </CardContent>
-              </Card>
-              <Card className="hover:border-primary/50 transition-colors">
-                <CardHeader>
-                  <UsersIcon className="size-8 text-primary mb-2" />
-                  <CardTitle>Join a Team</CardTitle>
-                  <CardDescription>Enter a code to join an existing team.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button render={<Link href="/team" />} nativeButton={false} variant="outline" className="w-full">
-                    Join Team
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Recent Messages</CardTitle>
+                <CardDescription>Latest communications from your teams.</CardDescription>
+              </div>
+              <Button render={<Link href="/messages" />} nativeButton={false} variant="outline" size="sm">
+                Open Inbox
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-3">
+                  <span className="size-2 rounded-full bg-primary" />
+                  <span className="font-medium text-foreground">EcoTrack:</span>
+                  <span className="truncate">"Can we review the pitch deck tomorrow?"</span>
+                </div>
+                <div className="flex items-center gap-3 opacity-60">
+                  <span className="size-2 rounded-full bg-muted-foreground" />
+                  <span className="font-medium text-foreground">HealthAI:</span>
+                  <span className="truncate">"Thanks for the feedback on our architecture!"</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Complete your profile</CardTitle>
-              <CardDescription>A full profile helps reviewers.</CardDescription>
+              <CardTitle className="text-base">Pending Requests</CardTitle>
+              <CardDescription>Teams asking for your mentorship.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{profileCompletion}% complete</span>
-                  <FileTextIcon className="size-4 text-muted-foreground" />
+              {pendingRequests.map(req => (
+                <div key={req.id} className="flex flex-col gap-2 rounded-md border p-3">
+                  <div className="flex justify-between items-start">
+                    <span className="font-medium text-sm">{req.teamName}</span>
+                    <span className="text-xs text-muted-foreground">{req.date}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">Topic: {req.topic}</span>
+                  <div className="flex gap-2 mt-1">
+                    <Button size="sm" className="w-full h-7 text-xs">Accept</Button>
+                    <Button size="sm" variant="outline" className="w-full h-7 text-xs">Decline</Button>
+                  </div>
                 </div>
-                <Progress value={profileCompletion} />
-              </div>
-              <Button render={<Link href="/profile" />} nativeButton={false} variant="outline" size="sm" className="w-full">
-                Update profile
+              ))}
+              <Button render={<Link href="/requests" />} nativeButton={false} variant="ghost" className="w-full text-xs">
+                View all requests
               </Button>
             </CardContent>
           </Card>
-          
-          {hasTeam && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Team Settings</CardTitle>
-                <CardDescription>Manage your team and invites.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button render={<Link href="/team" />} nativeButton={false} variant="outline" size="sm" className="w-full">
-                  Manage Team
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>
   )
 }
 
-function Meta({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium">{value}</span>
-    </div>
-  )
-}
