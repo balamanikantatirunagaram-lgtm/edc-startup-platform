@@ -30,6 +30,9 @@ export async function login(niatId: string, password: string) {
     if (!password || typeof password !== 'string' || password.trim() === '') {
       return { error: "Invalid credentials" }
     }
+    
+    niatId = niatId.trim()
+    password = password.trim()
 
     // 1. Rate Limiting Check
     const ip = (await headers()).get('x-forwarded-for') || 'unknown'

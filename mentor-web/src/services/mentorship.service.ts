@@ -3,23 +3,35 @@
 import { cookies } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 
-function getSupabase() {
+function getSupabase(token?: string) {
   const supabaseUrl = process.env.SUPABASE_URL || ""
   const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || ""
-  return createClient(supabaseUrl, supabaseKey, {
+  
+  const options: any = {
     auth: { persistSession: false, autoRefreshToken: false }
-  })
+  }
+  
+  if (token) {
+    options.global = {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  }
+  
+  return createClient(supabaseUrl, supabaseKey, options)
 }
 
 export async function getMentorDashboardData() {
   try {
-    const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
     
     if (!token) return { error: "Not authenticated" }
     
-    const { data: user, error: userError } = await supabase.auth.getUser(token)
+    const supabase = getSupabase(token)
+    
+    const { data: user, error: userError } = await supabase.auth.getUser()
     if (userError || !user.user) return { error: "Not authenticated" }
 
     const mentorId = user.user.id
@@ -91,7 +103,12 @@ export async function getMentorDashboardData() {
 
 export async function updateRequestStatus(requestId: string, status: 'accepted' | 'declined') {
   try {
-    const supabase = getSupabase()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+    
+    const supabase = getSupabase(token)
+    
     const { error } = await supabase
       .from('mentorship_requests')
       .update({ status })
