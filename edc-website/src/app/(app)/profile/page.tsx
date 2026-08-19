@@ -68,11 +68,15 @@ import {
 import { getMyProfile, updateMyProfile } from "@/services/profile.service"
 import { getGamificationPoints } from "@/services/gamification.service"
 
+import { useAppState } from "@/lib/app-state-context"
+
 // Instead of mock-data, hardcode options or keep if they are constants
 const ACADEMIC_YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Alumni"]
 const DEPARTMENTS = ["Computer Science", "Information Technology", "Electronics", "Electrical", "Mechanical", "Civil", "Other"]
 
 export default function ProfilePage() {
+  const { updateUserProfile } = useAppState()
+  
   const [loading, setLoading] = React.useState(true)
   const [saving, setSaving] = React.useState(false)
   const [qrOpen, setQrOpen] = React.useState(false)
@@ -112,6 +116,19 @@ export default function ProfilePage() {
       setNiatId(profile.niat_id || "")
       setAvatarUrl(profile.avatarUrl || "")
       
+      // Sync fetched data with global state
+      updateUserProfile({
+        fullName: profile.name || "",
+        collegeId: profile.collegeId || "",
+        phone: profile.phone || "",
+        department: profile.department || "",
+        academicYear: profile.academicYear || "",
+        linkedin: profile.linkedin || "",
+        github: profile.github || "",
+        portfolio: profile.portfolio || "",
+        avatarUrl: profile.avatarUrl || ""
+      })
+      
       const { points } = await getGamificationPoints(profile.id)
       const totalPoints = points?.reduce((acc: number, curr: any) => acc + (curr.points || 0), 0) || 0
       setGamificationPoints(totalPoints)
@@ -138,6 +155,7 @@ export default function ProfilePage() {
 
       if (res.publicUrl) {
         setAvatarUrl(res.publicUrl)
+        updateUserProfile({ avatarUrl: res.publicUrl })
         toast.success("Profile picture updated successfully.")
       }
     } catch (err: any) {
@@ -175,6 +193,16 @@ export default function ProfilePage() {
     setSaving(false)
     
     if (res.success) {
+      updateUserProfile({
+        fullName,
+        collegeId,
+        phone,
+        department,
+        academicYear,
+        linkedin,
+        github,
+        portfolio,
+      })
       toast.success("Profile updated successfully.")
     } else {
       toast.error(res.error || "Failed to update profile.")

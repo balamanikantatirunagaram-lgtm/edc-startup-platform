@@ -48,7 +48,6 @@ const baseStudentNav = [
   { title: "Learning Hub", href: "/learning", icon: BookOpenIcon },
   { title: "Document Center", href: "/documents", icon: FileTextIcon },
   { title: "Resources", href: "/resources", icon: ClipboardListIcon },
-  { title: "AI Assistant", href: "/ai-assistant", icon: BotIcon },
   { title: "Internships & Jobs", href: "/jobs", icon: BriefcaseIcon },
   { title: "My Applications", href: "/applications", icon: CheckCircle2Icon },
   { title: "Incubator Connect", href: "/incubators", icon: BuildingIcon },

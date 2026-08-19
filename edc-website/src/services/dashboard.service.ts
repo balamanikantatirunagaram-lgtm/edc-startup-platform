@@ -33,7 +33,11 @@ export async function getDashboardData() {
       academicYear: user.user.user_metadata?.academicYear || '',
       collegeId: user.user.user_metadata?.collegeId || '',
       phone: user.user.user_metadata?.phone || '',
-      email: user.user.user_metadata?.email || user.user.email || ''
+      email: user.user.user_metadata?.email || user.user.email || '',
+      linkedin: user.user.user_metadata?.linkedin || '',
+      github: user.user.user_metadata?.github || '',
+      portfolio: user.user.user_metadata?.portfolio || '',
+      skills: user.user.user_metadata?.skills || []
     }
 
     const { data: member } = await supabase

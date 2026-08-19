@@ -193,6 +193,15 @@ export async function getCurrentUser() {
       niatId: user.user.user_metadata?.niat_id || '',
       name: user.user.user_metadata?.name || '',
       email: user.user.email || '',
+      avatarUrl: user.user.user_metadata?.avatarUrl || '',
+      collegeId: user.user.user_metadata?.collegeId || '',
+      phone: user.user.user_metadata?.phone || '',
+      department: user.user.user_metadata?.department || '',
+      academicYear: user.user.user_metadata?.academicYear || '',
+      linkedin: user.user.user_metadata?.linkedin || '',
+      github: user.user.user_metadata?.github || '',
+      portfolio: user.user.user_metadata?.portfolio || '',
+      skills: user.user.user_metadata?.skills || [],
     }
   } catch (err) {
     return null

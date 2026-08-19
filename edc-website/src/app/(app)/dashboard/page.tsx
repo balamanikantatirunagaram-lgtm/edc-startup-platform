@@ -67,17 +67,19 @@ export default function DashboardPage() {
   const { user, startup, hasTeam, teamCode, teamName } = data
 
   let completedFields = 0
-  const totalFields = 7 // name, niatId, department, academicYear, collegeId, phone, email
-  if (user?.name) completedFields++
-  if (user?.niatId) completedFields++
-  if (user?.department) completedFields++
-  if (user?.academicYear) completedFields++
-  if (user?.collegeId) completedFields++
-  if (user?.phone) completedFields++
-  if (user?.email) completedFields++
+  if (user?.name) completedFields += 10
+  if (user?.collegeId) completedFields += 10
+  if (user?.email) completedFields += 10
+  if (user?.phone) completedFields += 10
+  if (user?.department) completedFields += 10
+  if (user?.academicYear) completedFields += 10
+  if (user?.skills?.length > 0) completedFields += 10
+  if (user?.linkedin) completedFields += 10
+  if (user?.github) completedFields += 10
+  if (user?.portfolio) completedFields += 10
   
-  const profileCompletion = Math.round((completedFields / totalFields) * 100)
-  const fieldsLeft = totalFields - completedFields
+  const profileCompletion = completedFields
+  const fieldsLeft = (100 - profileCompletion) / 10
   const fieldsLeftHint = fieldsLeft > 0 ? `${fieldsLeft} field${fieldsLeft > 1 ? "s" : ""} left` : "All complete!"
 
   const displayName = user?.name ? user.name.split(" ")[0] : "Student"

@@ -84,7 +84,8 @@ export async function createTeam(data: any) {
       // Optional: rollback team creation if this was a real transaction
     } else {
       // Update the team with the startup_id
-      await supabaseAdmin.from('teams').update({ startup_id: startupData.id }).eq('id', teamData.id)
+      const adminClient = getSupabaseAdmin()
+      await adminClient.from('teams').update({ startup_id: startupData.id }).eq('id', teamData.id)
     }
 
     return { success: true, team: teamData }
@@ -122,10 +123,26 @@ export async function joinTeam(code: string) {
       .select('id')
       .eq('student_id', user.user.id)
       .eq('status', 'approved')
-      .maybeSingle()
+      .limit(1).maybeSingle()
 
     if (existing) {
       return { error: "You are already an approved member of a team." }
+    }
+
+    // Check if user already has a pending/invited request for THIS team
+    const { data: pendingForTeam } = await supabaseAdmin
+      .from('team_members')
+      .select('id, status')
+      .eq('team_id', team.id)
+      .eq('student_id', user.user.id)
+      .in('status', ['pending', 'invited'])
+      .limit(1).maybeSingle()
+
+    if (pendingForTeam) {
+      return { error: pendingForTeam.status === 'pending' 
+        ? "You already have a pending request for this team. Please wait for the leader to respond." 
+        : "You have been invited to this team. Check your invitations." 
+      }
     }
 
     const { error } = await supabaseAdmin
@@ -281,7 +298,7 @@ export async function inviteStudent(userId: string, teamId: string) {
       .select('id')
       .eq('student_id', userId)
       .eq('status', 'approved')
-      .maybeSingle()
+      .limit(1).maybeSingle()
       
     if (existing) {
       return { error: "Student is already an approved member of a team." }
@@ -293,7 +310,7 @@ export async function inviteStudent(userId: string, teamId: string) {
       .select('id, status')
       .eq('team_id', teamId)
       .eq('student_id', userId)
-      .maybeSingle()
+      .limit(1).maybeSingle()
 
     if (dupCheck) {
       return { error: `Student already has a ${dupCheck.status} request for this team.` }
@@ -353,10 +370,10 @@ export async function getMyInvitations() {
     const { data: user } = await supabase.auth.getUser(token)
     if (!user.user) return { invitations: [] }
 
-    const authSupabase = getAuthenticatedSupabase(token)
+    const supabaseAdmin = getSupabaseAdmin()
 
     // Fetch team_members where status = 'invited' and student_id = user.id
-    const { data, error } = await authSupabase
+    const { data, error } = await supabaseAdmin
       .from('team_members')
       .select('id, team_id, created_at, teams(name)')
       .eq('student_id', user.user.id)
@@ -428,14 +445,14 @@ export async function getMyTeamStatus() {
     const { data: user } = await supabase.auth.getUser(token)
     if (!user.user) return { hasTeam: false }
 
-    const authSupabase = getAuthenticatedSupabase(token)
+    const supabaseAdmin = getSupabaseAdmin()
 
-    const { data: member } = await authSupabase
+    const { data: member } = await supabaseAdmin
       .from('team_members')
       .select('team_id, teams(id, name, code, leader_id)')
       .eq('student_id', user.user.id)
       .eq('status', 'approved')
-      .maybeSingle()
+      .limit(1).maybeSingle()
 
     if (!member) {
       return { hasTeam: false }
@@ -466,9 +483,9 @@ export async function getMyPendingRequests() {
     const { data: user } = await supabase.auth.getUser(token)
     if (!user.user) return { requests: [] }
 
-    const authSupabase = getAuthenticatedSupabase(token)
+    const supabaseAdmin = getSupabaseAdmin()
 
-    const { data, error } = await authSupabase
+    const { data, error } = await supabaseAdmin
       .from('team_members')
       .select('id, team_id, created_at, status, teams(name)')
       .eq('student_id', user.user.id)

@@ -71,7 +71,34 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       getCurrentUser().then(user => {
         if (user && user.name) {
           setCurrentUser(prev => {
-            const next = { ...prev, fullName: user.name, niatId: user.niatId, email: user.email }
+            const next = { 
+              ...prev, 
+              fullName: user.name, 
+              niatId: user.niatId, 
+              email: user.email,
+              avatarUrl: user.avatarUrl,
+              collegeId: user.collegeId,
+              phone: user.phone,
+              department: user.department,
+              academicYear: user.academicYear,
+              linkedin: user.linkedin,
+              github: user.github,
+              portfolio: user.portfolio,
+            }
+            
+            let completedFields = 0
+            if (next.fullName) completedFields += 10
+            if (next.collegeId) completedFields += 10
+            if (next.phone) completedFields += 10
+            if (next.email) completedFields += 10
+            if (next.department) completedFields += 10
+            if (next.academicYear) completedFields += 10
+            if (next.skills && next.skills.length > 0) completedFields += 10
+            if (next.linkedin) completedFields += 10
+            if (next.github) completedFields += 10
+            if (next.portfolio) completedFields += 10
+            next.profileCompletion = completedFields
+
             localStorage.setItem("edc_user", JSON.stringify(next))
             return next
           })
@@ -96,16 +123,17 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       // Calculate completion dynamically
       const fullProfile = { ...prev, ...profile }
       let completedFields = 0
-      const totalFields = 8
-      if (fullProfile.fullName) completedFields++
-      if (fullProfile.collegeId) completedFields++
-      if (fullProfile.phone) completedFields++
-      if (fullProfile.email) completedFields++
-      if (fullProfile.department) completedFields++
-      if (fullProfile.academicYear) completedFields++
-      if (fullProfile.linkedin) completedFields++
-      if (fullProfile.github || fullProfile.portfolio) completedFields++
-      fullProfile.profileCompletion = Math.round((completedFields / totalFields) * 100)
+      if (fullProfile.fullName) completedFields += 10
+      if (fullProfile.collegeId) completedFields += 10
+      if (fullProfile.phone) completedFields += 10
+      if (fullProfile.email) completedFields += 10
+      if (fullProfile.department) completedFields += 10
+      if (fullProfile.academicYear) completedFields += 10
+      if (fullProfile.skills && fullProfile.skills.length > 0) completedFields += 10
+      if (fullProfile.linkedin) completedFields += 10
+      if (fullProfile.github) completedFields += 10
+      if (fullProfile.portfolio) completedFields += 10
+      fullProfile.profileCompletion = completedFields
 
       sync("edc_user", fullProfile)
 
