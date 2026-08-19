@@ -1,6 +1,19 @@
 "use server"
 
-import { getAuthenticatedSupabase } from "@/lib/supabase/client"
+import { createClient } from "@supabase/supabase-js"
+import { cookies } from "next/headers"
+
+async function getAuthenticatedSupabase() {
+  const supabase = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_PUBLISHABLE_KEY || "", {
+    auth: { persistSession: false, autoRefreshToken: false }
+  })
+  const cookieStore = await cookies()
+  const token = cookieStore.get('sb-access-token')?.value
+  if (token) {
+    await supabase.auth.setSession({ access_token: token, refresh_token: '' })
+  }
+  return supabase
+}
 
 export async function getNotifications() {
   try {

@@ -548,7 +548,7 @@ export default function StartupCommandCenter() {
                         <div className="space-y-1">
                           <div className="font-semibold">{app.students?.name}</div>
                           <div className="text-sm text-muted-foreground">Applied for: <span className="font-medium text-foreground">{app.job_postings?.title}</span></div>
-                          <div className="text-sm text-muted-foreground">Dept: {app.students?.department} • Year: {app.students?.academicYear}</div>
+                          <div className="text-sm text-muted-foreground">Dept: {app.students?.department} • Year: {app.students?.academic_year}</div>
                           <div className="text-sm mt-2 p-2 bg-muted rounded-md italic">"{app.cover_letter}"</div>
                           {app.resume_url && (
                             <a href={app.resume_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">View Resume</a>

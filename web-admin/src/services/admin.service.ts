@@ -137,6 +137,21 @@ export async function updateStartupStatus(id: string, status: string, feedback?:
         })
     }
     
+    // Phase 3 Notifications: Notify startup leader
+    const { data: startupData } = await supabase
+      .from('startups')
+      .select('teams(leader_id)')
+      .eq('id', id)
+      .single()
+      
+    const leaderId = (startupData?.teams as any)?.leader_id
+    if (leaderId) {
+      const { createNotification } = require('./notification.service')
+      await createNotification(leaderId, 'journey_update', {
+        message: `Your startup status has been updated to ${status}.`
+      })
+    }
+    
     return { success: true }
   } catch (err: any) {
     return { error: err.message }
@@ -202,6 +217,21 @@ export async function getStartupJourneyAdmin(startupId: string) {
       
     if (error) return { error: error.message }
     return { stages: data || [] }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+export async function getTeamMembersAdmin(teamId: string) {
+  noStore()
+  try {
+    const supabase = getAdminSupabase()
+    const { data, error } = await supabase
+      .from('team_members')
+      .select('*, students(name, email, department)')
+      .eq('team_id', teamId)
+      
+    if (error) return { error: error.message }
+    return { members: data || [] }
   } catch (err: any) {
     return { error: err.message }
   }

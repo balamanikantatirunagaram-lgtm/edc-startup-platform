@@ -73,11 +73,12 @@ export async function postJobAdmin(jobData: any) {
 
 export async function getJobApplications(jobId: string) {
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: applications, error } = await supabaseAdmin
       .from('job_applications')
       .select(`
         *,
-        students(id, name, email, phone, department, academicYear)
+        students(id, name, email, phone, department, academic_year)
       `)
       .eq('job_id', jobId)
       .order('applied_at', { ascending: false });

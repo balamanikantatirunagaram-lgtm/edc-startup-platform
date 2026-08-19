@@ -69,7 +69,7 @@ export default function DocumentCenterPage() {
       setUploadOpen(false)
       setTitle("")
       setFile(null)
-      load()
+      fetchDocuments()
     }
   }
 
@@ -80,14 +80,12 @@ export default function DocumentCenterPage() {
       toast.error(res.error)
     } else {
       toast.success("Document deleted")
-      load()
+      fetchDocuments()
     }
   }
 
   const filteredDocs = documents.filter(doc => {
-    const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesTab = activeTab === "All" || doc.doc_type === activeTab
-    return matchesSearch && matchesTab
+    return activeTab === "All" || doc.doc_type === activeTab
   })
 
   return (

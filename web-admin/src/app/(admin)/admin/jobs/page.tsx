@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Trash2, Briefcase, MapPin, DollarSign, ExternalLink, Loader2, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { getAllJobPostings, deleteJobPosting, postJobAdmin } from "@/services/jobs.service"
+import { getAllJobPostings, deleteJobPosting, postJobAdmin, getJobApplications } from "@/services/jobs.service"
 import { getAllStartups } from "@/services/admin.service"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
@@ -228,8 +228,13 @@ export default function AdminJobsPage() {
                 <p className="text-sm line-clamp-4 flex-1 text-muted-foreground mb-4">
                   {job.description}
                 </p>
-                <div className="text-xs text-muted-foreground border-t pt-3 mt-auto">
-                  Posted on {new Date(job.created_at).toLocaleDateString()}
+                <div className="flex justify-between items-center border-t pt-3 mt-auto">
+                  <div className="text-xs text-muted-foreground">
+                    Posted {new Date(job.created_at).toLocaleDateString()}
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => handleViewApps(job)}>
+                    View Applicants
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -253,7 +258,7 @@ export default function AdminJobsPage() {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <div className="font-semibold text-lg">{app.students?.name}</div>
-                      <div className="text-sm text-muted-foreground">{app.students?.department} • Year {app.students?.academicYear}</div>
+                      <div className="text-sm text-muted-foreground">{app.students?.department} • Year {app.students?.academic_year}</div>
                       <div className="text-sm text-muted-foreground">{app.students?.email} • {app.students?.phone}</div>
                     </div>
                     <Badge variant="outline" className="uppercase bg-background">{app.status}</Badge>

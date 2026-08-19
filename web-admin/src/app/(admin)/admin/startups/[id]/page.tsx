@@ -33,7 +33,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { getAllStartups, updateStartupStatus, getStartupDocumentsAdmin, getStartupJourneyAdmin } from "@/services/admin.service"
+import { getAllStartups, updateStartupStatus, getStartupDocumentsAdmin, getStartupJourneyAdmin, getTeamMembersAdmin } from "@/services/admin.service"
 
 export default function AdminStartupReviewPage({
   params,
@@ -46,6 +46,7 @@ export default function AdminStartupReviewPage({
   const [startup, setStartup] = React.useState<any>(null)
   const [documents, setDocuments] = React.useState<any[]>([])
   const [journeyStages, setJourneyStages] = React.useState<any[]>([])
+  const [teamMembers, setTeamMembers] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
   const [status, setStatus] = React.useState("Under Review")
   const [reviewer, setReviewer] = React.useState("")
@@ -60,12 +61,17 @@ export default function AdminStartupReviewPage({
       if (found) {
         setStartup(found)
         setStatus(found.status || "Under Review")
+        
+        if (found.teams?.id) {
+          const tmRes = await getTeamMembersAdmin(found.teams.id)
+          if (tmRes.members) setTeamMembers(tmRes.members)
+        }
       }
       
       const docsRes = await getStartupDocumentsAdmin(id)
       if (docsRes.documents) setDocuments(docsRes.documents)
       
-      const journeyRes = await getStartupJourneyAdmin(id)
+      const journeyRes = await getStartupJourneyAdmin(id as string)
       if (journeyRes.stages) setJourneyStages(journeyRes.stages)
       
       setLoading(false)
@@ -182,6 +188,29 @@ export default function AdminStartupReviewPage({
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Team Roster</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {teamMembers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No team members assigned.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {teamMembers.map((member, idx) => (
+                    <li key={idx} className="flex justify-between items-center text-sm p-3 bg-muted/30 rounded-md border">
+                      <div className="flex flex-col">
+                        <p className="font-medium">{member.students?.name || "Unknown"} <span className="text-xs text-muted-foreground ml-2">({member.role})</span></p>
+                        <p className="text-xs text-muted-foreground">{member.students?.email}</p>
+                      </div>
+                      <span className="text-xs bg-secondary px-2 py-1 rounded-md">{member.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+          
           {/* Documents Section */}
           <Card>
             <CardHeader>

@@ -17,6 +17,11 @@ export async function getAiPrompts() {
 
 export async function chatWithAI(messages: {role: string, content: string}[]) {
   try {
+    if (!process.env.NVIDIA_API_KEY) {
+      console.warn("NVIDIA_API_KEY is not set. Using mock AI response.");
+      return { content: `[MOCK AI RESPONSE - Missing API Key]: That's an interesting point! Let's explore that further.` };
+    }
+
     const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -41,13 +46,13 @@ export async function chatWithAI(messages: {role: string, content: string}[]) {
 
     if (!response.ok) {
       console.error("AI API Error:", await response.text());
-      return { error: "Failed to communicate with AI." };
+      return { content: `[API Error - Check console]: I encountered an error communicating with the API.` };
     }
 
     const data = await response.json();
     return { content: data.choices[0].message.content };
   } catch (err: any) {
     console.error("AI request failed:", err);
-    return { error: err.message };
+    return { content: `[Network Error]: ${err.message}` };
   }
 }

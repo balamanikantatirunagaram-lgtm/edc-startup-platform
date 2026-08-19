@@ -1,13 +1,12 @@
 "use client"
 
 import { chatWithAI } from "@/services/ai.service"
-
 import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { getAiPrompts } from "@/services/ai.service"
-import { SendIcon, SparklesIcon } from "lucide-react"
+import { SendIcon, SparklesIcon, Trash2Icon } from "lucide-react"
 
 export default function AiAssistantPage() {
   const [prompts, setPrompts] = React.useState<any[]>([])
@@ -22,31 +21,54 @@ export default function AiAssistantPage() {
       setLoading(false)
     }
     fetchPrompts()
+    
+    // Load history
+    const saved = localStorage.getItem("ai_chat_history")
+    if (saved) {
+      try {
+        setChat(JSON.parse(saved))
+      } catch(e) {}
+    }
   }, [])
 
   const handleSend = async (text: string) => {
     if (!text.trim()) return
     const newChat = [...chat, { role: "user", content: text }];
     setChat(newChat);
+    localStorage.setItem("ai_chat_history", JSON.stringify(newChat))
     setQuery("");
     
     // Call real AI backend
     const res = await chatWithAI(newChat);
     
     if (res.error) {
-      setChat((prev) => [...prev, { role: "ai", content: "Sorry, I encountered an error. Please try again later." }]);
+      const updatedChat = [...newChat, { role: "ai", content: "Sorry, I encountered an error. Please try again later." }];
+      setChat(updatedChat);
+      localStorage.setItem("ai_chat_history", JSON.stringify(updatedChat))
     } else {
-      setChat((prev) => [...prev, { role: "ai", content: res.content }]);
+      const updatedChat = [...newChat, { role: "ai", content: res.content }];
+      setChat(updatedChat);
+      localStorage.setItem("ai_chat_history", JSON.stringify(updatedChat))
     }
+  }
+
+  const clearHistory = () => {
+    setChat([])
+    localStorage.removeItem("ai_chat_history")
   }
 
   return (
     <div className="flex flex-col gap-6 h-[calc(100vh-100px)] p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">AI Assistant</h1>
-        <p className="text-muted-foreground">
-          Ask questions, get feedback on your pitch, or brainstorm ideas.
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-bold tracking-tight">AI Assistant</h1>
+          <p className="text-muted-foreground">
+            Ask questions, get feedback on your pitch, or brainstorm ideas.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={clearHistory}>
+          <Trash2Icon className="size-4 mr-2" /> Clear History
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-full flex-1 min-h-0">
@@ -58,12 +80,12 @@ export default function AiAssistantPage() {
             <p className="text-sm text-muted-foreground">Loading prompts...</p>
           ) : (
             prompts.map((prompt: any) => (
-              <Card key={prompt.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setQuery(prompt.text)}>
+              <Card key={prompt.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setQuery(prompt.text || prompt.prompt_text)}>
                 <CardHeader className="p-4">
                   <CardTitle className="text-sm">{prompt.title || "Suggested Prompt"}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 text-xs text-muted-foreground">
-                  {prompt.text}
+                  {prompt.text || prompt.prompt_text}
                 </CardContent>
               </Card>
             ))

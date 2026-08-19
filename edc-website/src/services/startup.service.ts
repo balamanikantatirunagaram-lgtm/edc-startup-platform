@@ -376,3 +376,27 @@ export async function advanceJourneyStage(stageName: string, expectedNextStatus:
     return { error: err.message };
   }
 }
+
+export async function searchStartupDocuments(query: string) {
+  try {
+    const { startup, error } = await getMyStartup();
+    if (error || !startup) return { error: error || "No startup found" };
+
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+    const authSupabase = getAuthenticatedSupabase(token)
+
+    const { data, error: docError } = await authSupabase
+      .from('startup_documents')
+      .select('*')
+      .eq('startup_id', startup.id)
+      .ilike('title', `%${query}%`)
+      .order('created_at', { ascending: false });
+
+    if (docError) return { error: docError.message };
+    return { documents: data || [] };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
