@@ -129,25 +129,17 @@ export default function ProfilePage() {
 
     setSaving(true)
     try {
-      const { createClient } = require('@supabase/supabase-js')
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-      const supabase = createClient(supabaseUrl, supabaseKey)
-
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`
+      const { uploadAvatar } = await import("@/services/avatar.service")
+      const formData = new FormData()
+      formData.append("file", file)
       
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file)
+      const res = await uploadAvatar(formData)
+      if (res.error) throw new Error(res.error)
 
-      if (uploadError) throw uploadError
-
-      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
-      
-      setAvatarUrl(data.publicUrl)
-      await updateMyProfile({ avatarUrl: data.publicUrl })
-      toast.success("Profile picture updated successfully.")
+      if (res.publicUrl) {
+        setAvatarUrl(res.publicUrl)
+        toast.success("Profile picture updated successfully.")
+      }
     } catch (err: any) {
       toast.error("Failed to upload avatar: " + err.message)
     } finally {

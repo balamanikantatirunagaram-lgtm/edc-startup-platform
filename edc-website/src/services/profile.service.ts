@@ -48,5 +48,20 @@ export async function updateMyProfile(data: any) {
     return { success: false, error: error.message }
   }
 
+  // Also update public.students table for synchronized relational data
+  const { error: studentError } = await adminAuthClient
+    .from('students')
+    .update({
+      name: data.name || user.user_metadata.name,
+      department: data.department || user.user_metadata.department,
+      academic_year: data.academicYear || user.user_metadata.academic_year
+    })
+    .eq('id', user.id)
+
+  if (studentError) {
+    console.error('Error updating students table:', studentError)
+    // We don't fail the whole request, but we log it.
+  }
+
   return { success: true }
 }
