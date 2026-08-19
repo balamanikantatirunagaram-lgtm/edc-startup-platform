@@ -49,7 +49,7 @@ export default function MessagesPage() {
         table: 'mentor_messages',
       }, (payload) => {
         // If message belongs to active team, reload messages
-        if (payload.new.team_id === activeTeamId) {
+        if (payload.new.team_id === activeTeamId && activeTeamId) {
           loadMessages(activeTeamId)
         }
         // Always reload conversations to update snippets/unread counts

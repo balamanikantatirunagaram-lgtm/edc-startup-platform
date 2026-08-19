@@ -190,7 +190,7 @@ export async function getTeamRequests() {
       }
     })
 
-    return { success: true, teamId: team.id, requests: enrichedRequests }
+    return { success: true, teamId: member.team_id, requests: enrichedRequests }
   } catch (err: any) {
     return { error: err.message }
   }

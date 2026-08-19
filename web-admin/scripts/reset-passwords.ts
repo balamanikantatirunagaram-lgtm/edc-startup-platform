@@ -14,7 +14,7 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
 })
 
 async function run() {
-  let allStudents = []
+  let allStudents: Array<{ id: string; name?: string; niat_id?: string }> = []
   let from = 0
   const limit = 1000
   

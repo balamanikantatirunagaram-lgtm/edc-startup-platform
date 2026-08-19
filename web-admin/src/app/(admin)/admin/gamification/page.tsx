@@ -142,8 +142,8 @@ export default function AdminGamificationPage() {
                 <CardDescription>Recent points awarded to students.</CardDescription>
               </div>
               <Dialog open={isPointsOpen} onOpenChange={setIsPointsOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="gap-2"><PlusIcon className="size-4" /> Award Points</Button>
+                <DialogTrigger render={<Button size="sm" className="gap-2" />}>
+                  <PlusIcon className="size-4" /> Award Points
                 </DialogTrigger>
                 <DialogContent>
                   <form onSubmit={handleAwardPoints}>
@@ -205,8 +205,8 @@ export default function AdminGamificationPage() {
                 setIsPromptOpen(val)
                 if(!val) { setPromptTitle(""); setPromptContent(""); setPromptContext(""); setEditingPromptId(null) }
               }}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="gap-2"><PlusIcon className="size-4" /> Add Prompt</Button>
+                <DialogTrigger render={<Button size="sm" className="gap-2" />}>
+                  <PlusIcon className="size-4" /> Add Prompt
                 </DialogTrigger>
                 <DialogContent>
                   <form onSubmit={handleSavePrompt}>

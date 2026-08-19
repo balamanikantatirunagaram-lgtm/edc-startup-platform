@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Loader2, MessageSquare, Plus, FileText, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, Loader2, MessageSquare, Plus, FileText, CheckCircle2, ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { addJourneyStageFeedback, getStartupJourney } from "@/services/startup.service" // I need to create this function
@@ -160,7 +160,7 @@ export default function MentorStartupDetailsPage() {
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => window.open(doc.file_url, '_blank')} className="gap-2">
-                      <ArrowUpRight className="h-4 w-4" /> View
+                      <ExternalLink className="h-4 w-4" /> View
                     </Button>
                   </div>
                 ))

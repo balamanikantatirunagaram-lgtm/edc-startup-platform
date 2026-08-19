@@ -40,10 +40,8 @@ export function RequestMentorshipButton({ mentorId }: { mentorId: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full gap-2" variant="default">
+      <DialogTrigger render={<Button className="w-full gap-2" variant="default" />}>
           Request Mentorship
-        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={onSubmit}>

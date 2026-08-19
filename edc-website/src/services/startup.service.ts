@@ -98,6 +98,7 @@ export async function getMyStartup() {
     // Map to UI expectations
     return {
       success: true,
+      teamId,
       isLeader: (memberRecord.teams as any).leader_id === user.user.id,
       startup: {
         id: startupData.id,

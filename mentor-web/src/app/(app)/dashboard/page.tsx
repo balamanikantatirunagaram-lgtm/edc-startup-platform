@@ -85,7 +85,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-4">
-                {recentStartups.map((s) => (
+                {recentStartups.map((s: any) => (
                   <div key={s.id} className="flex items-center justify-between rounded-lg border p-4">
                     <div className="flex items-center gap-4">
                       <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
@@ -137,7 +137,7 @@ export default function DashboardPage() {
               <CardDescription>Teams asking for your mentorship.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              {pendingRequests.map(req => (
+              {pendingRequests.map((req: any) => (
                 <div key={req.id} className="flex flex-col gap-2 rounded-md border p-3">
                   <div className="flex justify-between items-start">
                     <span className="font-medium text-sm">{req.teamName}</span>
@@ -160,4 +160,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-

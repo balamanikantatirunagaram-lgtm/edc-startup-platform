@@ -107,8 +107,13 @@ export default function NetworkPage() {
                 </CardContent>
                 <CardFooter className="flex justify-between border-t pt-4">
                   {startup.website_url ? (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={startup.website_url} target="_blank" rel="noreferrer">Website</a>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      render={<a href={startup.website_url} target="_blank" rel="noreferrer" />}
+                      nativeButton={false}
+                    >
+                      Website
                     </Button>
                   ) : <div />}
                   <Button size="sm" onClick={() => handleRequestMeeting(startup.id)}>

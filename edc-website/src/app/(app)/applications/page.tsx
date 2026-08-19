@@ -55,8 +55,8 @@ export default function ApplicationsPage() {
           <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-xl font-bold mb-2">No applications yet</h3>
           <p className="text-muted-foreground mb-6">Explore the jobs board to find your next opportunity.</p>
-          <Button asChild>
-            <Link href="/jobs">View Jobs</Link>
+          <Button render={<Link href="/jobs" />} nativeButton={false}>
+            View Jobs
           </Button>
         </div>
       ) : (

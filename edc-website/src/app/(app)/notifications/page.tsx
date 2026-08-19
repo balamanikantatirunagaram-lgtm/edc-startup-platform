@@ -169,14 +169,14 @@ export default function NotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <span className={`text-sm font-semibold truncate ${!n.read ? "text-foreground" : "text-muted-foreground"}`}>
-                        {n.title}
+                        {n.payload?.title || n.title || 'Notification'}
                       </span>
                       <span className="text-xs text-muted-foreground shrink-0">
                         {new Date(n.created_at).toLocaleDateString()}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed text-pretty">
-                      {n.message}
+                      {n.payload?.message || n.message || ''}
                     </p>
                     <div className="flex gap-4 mt-2">
                       {!n.read && (

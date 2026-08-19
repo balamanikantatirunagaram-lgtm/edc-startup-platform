@@ -134,10 +134,8 @@ export default function JobsPage() {
         
         {canPostJob && (
           <Dialog open={postOpen} onOpenChange={setPostOpen}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="h-12 px-6 rounded-full shrink-0 w-full sm:w-auto">
+            <DialogTrigger render={<Button size="lg" className="h-12 px-6 rounded-full shrink-0 w-full sm:w-auto" />}>
                 <Plus className="h-5 w-5 mr-2" /> Post a Role
-              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -151,7 +149,7 @@ export default function JobsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <Label className="text-sm font-semibold">Role Type</Label>
-                    <Select value={jobForm.role_type} onValueChange={v => setJobForm({...jobForm, role_type: v})}>
+                    <Select value={jobForm.role_type} onValueChange={v => setJobForm({...jobForm, role_type: v ?? ""})}>
                       <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Internship">Internship</SelectItem>

@@ -75,8 +75,8 @@ export default function StartupCommandCenter() {
         setPortfolioData({
           name: startupRes.startup.name,
           tagline: startupRes.startup.tagline || "",
-          problem: startupRes.startup.problem_statement || "",
-          solution: startupRes.startup.proposed_solution || "",
+          problem: startupRes.startup.problem || "",
+          solution: startupRes.startup.solution || "",
           pitchDeck: startupRes.startup.attachments?.pitchDeck || "",
           website: startupRes.startup.attachments?.website || ""
         })

@@ -29,13 +29,11 @@ export function NotificationBell() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600"></span>
-          )}
-        </Button>
+      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="relative" />}>
+        <Bell className="h-5 w-5" />
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600"></span>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 max-h-[400px] overflow-y-auto">
         <div className="flex items-center justify-between px-4 py-2 font-semibold">

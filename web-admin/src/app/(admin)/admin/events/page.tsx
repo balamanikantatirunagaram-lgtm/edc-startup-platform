@@ -297,11 +297,9 @@ export default function AdminEventsPage() {
           setIsDialogOpen(open)
           if (!open) resetForm()
         }}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto">
+          <DialogTrigger render={<Button className="w-full sm:w-auto" />}>
               <PlusIcon className="mr-2 size-4" />
               Create Event
-            </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleCreate}>

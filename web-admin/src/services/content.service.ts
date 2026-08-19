@@ -50,6 +50,22 @@ export async function createEvent(event: any) {
   const supabase = getAdminSupabase()
   const { error } = await supabase.from('events').insert([event])
   if (error) return { error: error.message }
+  
+  // Notify all students
+  const { data: students } = await supabase.from('students').select('id')
+  if (students && students.length > 0) {
+    const notifications = students.map(student => ({
+      user_id: student.id,
+      type: 'info',
+      payload: {
+        title: 'New Event: ' + event.title,
+        message: `A new event "${event.title}" has been scheduled for ${event.date}.`
+      }
+    }))
+    // Supabase allows bulk inserts up to 1000 rows usually, which should be fine here
+    await supabase.from('notifications').insert(notifications)
+  }
+
   return { success: true }
 }
 
@@ -111,6 +127,21 @@ export async function createResource(resource: any) {
   const supabase = getAdminSupabase()
   const { error } = await supabase.from('resources').insert([resource])
   if (error) return { error: error.message }
+
+  // Notify all students
+  const { data: students } = await supabase.from('students').select('id')
+  if (students && students.length > 0) {
+    const notifications = students.map(student => ({
+      user_id: student.id,
+      type: 'info',
+      payload: {
+        title: 'New Resource Added',
+        message: `A new resource "${resource.title}" has been added to the Learning Hub.`
+      }
+    }))
+    await supabase.from('notifications').insert(notifications)
+  }
+
   return { success: true }
 }
 
@@ -202,6 +233,21 @@ export async function createFundingOpportunity(funding: any) {
   const supabase = getAdminSupabase()
   const { error } = await supabase.from('funding_opportunities').insert([funding])
   if (error) return { error: error.message }
+
+  // Notify all students
+  const { data: students } = await supabase.from('students').select('id')
+  if (students && students.length > 0) {
+    const notifications = students.map(student => ({
+      user_id: student.id,
+      type: 'info',
+      payload: {
+        title: 'New Funding Opportunity',
+        message: `A new funding opportunity "${funding.title}" by ${funding.provider} has been posted.`
+      }
+    }))
+    await supabase.from('notifications').insert(notifications)
+  }
+
   return { success: true }
 }
 

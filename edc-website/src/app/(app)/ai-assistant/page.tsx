@@ -41,15 +41,12 @@ export default function AiAssistantPage() {
     // Call real AI backend
     const res = await chatWithAI(newChat);
     
-    if (res.error) {
-      const updatedChat = [...newChat, { role: "ai", content: "Sorry, I encountered an error. Please try again later." }];
-      setChat(updatedChat);
-      localStorage.setItem("ai_chat_history", JSON.stringify(updatedChat))
-    } else {
-      const updatedChat = [...newChat, { role: "ai", content: res.content }];
-      setChat(updatedChat);
-      localStorage.setItem("ai_chat_history", JSON.stringify(updatedChat))
-    }
+    const updatedChat = [...newChat, {
+      role: "ai",
+      content: res.content || "Sorry, I encountered an error. Please try again later.",
+    }];
+    setChat(updatedChat);
+    localStorage.setItem("ai_chat_history", JSON.stringify(updatedChat))
   }
 
   const clearHistory = () => {

@@ -37,7 +37,7 @@ export async function getJobPostings() {
 
 export async function getMyJobPostings() {
   try {
-    const { startup, error } = await getMyStartup();
+    const { startup, teamId, error } = await getMyStartup();
     if (error || !startup) return { error: error || "No startup found" };
 
     const cookieStore = await cookies()
@@ -60,7 +60,7 @@ export async function getMyJobPostings() {
 
 export async function postJob(jobData: any) {
   try {
-    const { startup, error } = await getMyStartup();
+    const { startup, teamId, error } = await getMyStartup();
     if (error || !startup) return { error: error || "No startup found" };
 
     // Use admin client to ensure we can post safely (bypassing any strict insert RLS if misconfigured)
@@ -193,7 +193,7 @@ export async function getStartupApplications() {
 
 export async function updateApplicationStatus(applicationId: string, status: string) {
   try {
-    const { startup, error } = await getMyStartup();
+    const { startup, teamId, error } = await getMyStartup();
     if (error || !startup) return { error: error || "No startup found" };
 
     const { createClient } = require('@supabase/supabase-js')
@@ -224,7 +224,7 @@ export async function updateApplicationStatus(applicationId: string, status: str
       const { error: teamErr } = await supabaseAdmin
         .from('team_members')
         .insert({
-          team_id: startup.team_id,
+          team_id: teamId,
           student_id: appCheck.student_id,
           status: 'approved',
           role: (appCheck.job_postings as any).role_type || 'Team Member'

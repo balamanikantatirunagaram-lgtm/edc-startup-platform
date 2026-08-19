@@ -33,19 +33,20 @@ export async function getFundingApplications() {
 export async function createFundingOpportunity(payload: any) {
   const supabase = getAdminSupabase()
   const { data, error } = await supabase.from('funding_opportunities').insert(payload).select().single()
-  if (error) throw error
-  return data
+  if (error) return { error: error.message }
+  return { success: true, data }
 }
 
 export async function updateFundingOpportunity(id: string, payload: any) {
   const supabase = getAdminSupabase()
   const { data, error } = await supabase.from('funding_opportunities').update(payload).eq('id', id).select().single()
-  if (error) throw error
-  return data
+  if (error) return { error: error.message }
+  return { success: true, data }
 }
 
 export async function deleteFundingOpportunity(id: string) {
   const supabase = getAdminSupabase()
   const { error } = await supabase.from('funding_opportunities').delete().eq('id', id)
-  if (error) throw error
+  if (error) return { error: error.message }
+  return { success: true }
 }

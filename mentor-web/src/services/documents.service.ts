@@ -4,8 +4,8 @@ import { cookies } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 import { ENV } from "@/config/env.config"
 
-function getAuthenticatedSupabase() {
-  const cookieStore = cookies()
+async function getAuthenticatedSupabase() {
+  const cookieStore = await cookies()
   const token = cookieStore.get('sb-access-token')?.value || ""
   
   return createClient(
@@ -24,7 +24,7 @@ function getAuthenticatedSupabase() {
 
 export async function getAllStartupDocuments() {
   try {
-    const supabase = getAuthenticatedSupabase()
+    const supabase = await getAuthenticatedSupabase()
 
     const { data: documents, error } = await supabase
       .from('startup_documents')

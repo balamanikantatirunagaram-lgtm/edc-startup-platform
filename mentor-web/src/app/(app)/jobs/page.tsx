@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Briefcase, MapPin, DollarSign, ExternalLink, Loader2, Search, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { getAllJobPostings, postJobAdmin } from "@/services/jobs.service"
+import { getAllJobPostings, postJobAdmin, getJobApplications } from "@/services/jobs.service"
 import { getAllStartups } from "@/services/startup.service"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
@@ -109,10 +109,8 @@ export default function AdminJobsPage() {
             />
           </div>
           <Dialog open={postOpen} onOpenChange={setPostOpen}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="h-11 px-4 shrink-0">
+            <DialogTrigger render={<Button size="lg" className="h-11 px-4 shrink-0" />}>
                 <Plus className="h-4 w-4 mr-2" /> Post Role
-              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -121,7 +119,7 @@ export default function AdminJobsPage() {
               <form onSubmit={handlePostJob} className="space-y-6 py-4">
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold">Select Startup</Label>
-                  <Select value={jobForm.startup_id} onValueChange={(v) => setJobForm({...jobForm, startup_id: v})}>
+                  <Select value={jobForm.startup_id} onValueChange={(v) => setJobForm({...jobForm, startup_id: v ?? ""})}>
                     <SelectTrigger className="h-11">
                       <SelectValue placeholder="Select the startup..." />
                     </SelectTrigger>
@@ -139,7 +137,7 @@ export default function AdminJobsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <Label className="text-sm font-semibold">Role Type</Label>
-                    <Select value={jobForm.role_type} onValueChange={v => setJobForm({...jobForm, role_type: v})}>
+                    <Select value={jobForm.role_type} onValueChange={v => setJobForm({...jobForm, role_type: v ?? ""})}>
                       <SelectTrigger className="h-11">
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>

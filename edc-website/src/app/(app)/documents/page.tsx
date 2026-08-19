@@ -69,7 +69,7 @@ export default function DocumentCenterPage() {
       setUploadOpen(false)
       setTitle("")
       setFile(null)
-      fetchDocuments()
+      load()
     }
   }
 
@@ -80,7 +80,7 @@ export default function DocumentCenterPage() {
       toast.error(res.error)
     } else {
       toast.success("Document deleted")
-      fetchDocuments()
+      load()
     }
   }
 
@@ -100,10 +100,8 @@ export default function DocumentCenterPage() {
         </div>
         
         <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-          <DialogTrigger asChild>
-            <Button size="lg" className="gap-2 shadow-md hover:shadow-lg transition-all active:scale-95">
+          <DialogTrigger render={<Button size="lg" className="gap-2 shadow-md hover:shadow-lg transition-all active:scale-95" />}>
               <Upload className="h-4 w-4" /> Upload Document
-            </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -116,7 +114,7 @@ export default function DocumentCenterPage() {
               </div>
               <div className="space-y-3">
                 <Label className="text-sm font-semibold">Category</Label>
-                <Select value={docType} onValueChange={setDocType}>
+                <Select value={docType} onValueChange={(value) => setDocType(value ?? '')}>
                   <SelectTrigger className="h-12">
                     <SelectValue />
                   </SelectTrigger>
