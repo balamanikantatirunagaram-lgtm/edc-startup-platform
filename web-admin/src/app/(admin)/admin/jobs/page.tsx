@@ -259,7 +259,7 @@ export default function AdminJobsPage() {
                     <div>
                       <div className="font-semibold text-lg">{app.students?.name}</div>
                       <div className="text-sm text-muted-foreground">{app.students?.department} • Year {app.students?.academic_year}</div>
-                      <div className="text-sm text-muted-foreground">{app.students?.email} • {app.students?.phone}</div>
+                      <div className="text-sm text-muted-foreground">{app.students?.email}</div>
                     </div>
                     <Badge variant="outline" className="uppercase bg-background">{app.status}</Badge>
                   </div>

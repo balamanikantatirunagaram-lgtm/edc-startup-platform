@@ -78,7 +78,7 @@ export async function getJobApplications(jobId: string) {
       .from('job_applications')
       .select(`
         *,
-        students(id, name, email, phone, department, academic_year)
+        students(id, name, email, department, academic_year)
       `)
       .eq('job_id', jobId)
       .order('applied_at', { ascending: false });

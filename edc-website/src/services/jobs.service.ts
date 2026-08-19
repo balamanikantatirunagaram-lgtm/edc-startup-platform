@@ -179,7 +179,7 @@ export async function getStartupApplications() {
       .select(`
         *,
         job_postings!inner(id, title, startup_id),
-        students(id, name, email, phone, department, academic_year)
+        students(id, name, email, department, academic_year)
       `)
       .eq('job_postings.startup_id', startup.id)
       .order('applied_at', { ascending: false });
