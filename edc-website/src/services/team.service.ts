@@ -463,19 +463,42 @@ export async function getMyTeamStatus() {
 
     const { data: member } = await supabaseAdmin
       .from('team_members')
-      .select('team_id, teams(id, name, code, leader_id)')
+      .select('team_id, teams(id, name, code, leader_id, startup_id)')
       .eq('student_id', user.user.id)
       .eq('status', 'approved')
       .limit(1).maybeSingle()
 
-    if (!member) {
+    if (!member || !member.teams) {
       return { hasTeam: false }
     }
 
     const teams = member.teams as any;
+    let startupStatus = 'pending'
+    
+    if (teams.startup_id) {
+      const { data: startup } = await supabaseAdmin
+        .from('startups')
+        .select('status')
+        .eq('id', teams.startup_id)
+        .maybeSingle()
+      if (startup) {
+        startupStatus = startup.status
+      }
+    } else {
+      const { data: startup } = await supabaseAdmin
+        .from('startups')
+        .select('status')
+        .eq('team_id', teams.id)
+        .maybeSingle()
+      if (startup) {
+        startupStatus = startup.status
+      }
+    }
+
     return { 
       hasTeam: true, 
       isLeader: teams.leader_id === user.user.id,
+      startupStatus,
       team: {
         id: teams.id,
         name: teams.name,

@@ -66,7 +66,6 @@ export async function getMyStartup() {
     }
 
     // Fetch team members
-    const supabaseAdmin = getSupabaseAdmin()
     const { data: teamMembersDb } = await supabaseAdmin
       .from('team_members')
       .select('student_id')
@@ -75,7 +74,6 @@ export async function getMyStartup() {
 
     const teamMembers = []
     if (teamMembersDb && teamMembersDb.length > 0) {
-      const supabaseAdmin = getSupabaseAdmin()
       // Paginate to get ALL users, not just the first 50
       let allUsers: any[] = []
       let page = 1

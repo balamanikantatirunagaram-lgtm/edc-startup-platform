@@ -49,7 +49,6 @@ const baseStudentNav = [
   { title: "Resources", href: "/resources", icon: ClipboardListIcon },
   { title: "Internships & Jobs", href: "/jobs", icon: BriefcaseIcon },
   { title: "My Applications", href: "/applications", icon: CheckCircle2Icon },
-  { title: "Incubator Connect", href: "/incubators", icon: BuildingIcon },
   { title: "Funding", href: "/funding", icon: BanknoteIcon },
   { title: "Events", href: "/events", icon: CalendarIcon },
   { title: "Viksit Bharat", href: "/viksit-bharat", icon: GlobeIcon },
@@ -66,18 +65,28 @@ export function AppSidebar() {
 
   useEffect(() => {
     getMyTeamStatus().then(status => {
+      let finalNav = [...baseStudentNav]
+      
+      if (status.startupStatus === 'Incubation Ready') {
+        // Insert Incubator Connect after My Applications
+        const appIndex = finalNav.findIndex(i => i.title === "My Applications")
+        if (appIndex !== -1) {
+          finalNav.splice(appIndex + 1, 0, { title: "Incubator Connect", href: "/incubators", icon: BuildingIcon })
+        }
+      }
+
       if (status.hasTeam) {
         setNavItems([
-          baseStudentNav[0],
+          finalNav[0],
           { title: "My Startup", href: "/startup", icon: RocketIcon },
-          ...baseStudentNav.slice(1)
+          ...finalNav.slice(1)
         ])
       } else {
         setNavItems([
-          baseStudentNav[0],
+          finalNav[0],
           { title: "Register Startup", href: "/startup/register", icon: RocketIcon },
           { title: "Team Connect", href: "/team", icon: UsersIcon },
-          ...baseStudentNav.slice(1)
+          ...finalNav.slice(1)
         ])
       }
     })
