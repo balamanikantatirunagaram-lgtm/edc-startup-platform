@@ -10,23 +10,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter
+} from "@/components/ui/sheet"
 import { getCourses, createCourse, deleteCourse, updateCourse, uploadCourseFile } from "@/services/learning.service"
 
 export default function AdminLearningHubPage() {
   const [courses, setCourses] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
   
-  // Dialogs
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
+  // Sheet state
+  const [isSheetOpen, setIsSheetOpen] = React.useState(false)
+  const [isEditSheetOpen, setIsEditSheetOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isUploading, setIsUploading] = React.useState(false)
   const [editingId, setEditingId] = React.useState<string | null>(null)
@@ -88,7 +88,7 @@ export default function AdminLearningHubPage() {
       toast.error(res.error)
     } else {
       toast.success("Course created! Click on it to add video modules.")
-      setIsDialogOpen(false)
+      setIsSheetOpen(false)
       resetForm()
       load()
     }
@@ -106,7 +106,7 @@ export default function AdminLearningHubPage() {
       toast.error(res.error)
     } else {
       toast.success("Course updated successfully!")
-      setIsEditDialogOpen(false)
+      setIsEditSheetOpen(false)
       resetForm()
       load()
     }
@@ -120,7 +120,7 @@ export default function AdminLearningHubPage() {
     setInstructor(course.instructor || "")
     setDescription(course.description || "")
     setThumbnailUrl(course.thumbnail_url || "")
-    setIsEditDialogOpen(true)
+    setIsEditSheetOpen(true)
   }
 
   const handleDelete = async (id: string, name: string) => {
@@ -134,32 +134,27 @@ export default function AdminLearningHubPage() {
   }
 
   const formFieldsUI = (
-    <div className="grid gap-4 py-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-muted-foreground">Course Title</label>
-          <Input placeholder="e.g. Startup Basics 101" value={title} onChange={e => setTitle(e.target.value)} required />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-muted-foreground">Category</label>
-          <Input placeholder="e.g. Masterclass, Tech, Legal" value={category} onChange={e => setCategory(e.target.value)} required />
-        </div>
+    <div className="flex flex-col gap-5 py-6">
+      <div className="space-y-1">
+        <label className="text-xs font-semibold text-muted-foreground">Course Title</label>
+        <Input placeholder="e.g. Startup Basics 101" value={title} onChange={e => setTitle(e.target.value)} required />
       </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-muted-foreground">Instructor Name</label>
-          <Input placeholder="e.g. John Doe" value={instructor} onChange={e => setInstructor(e.target.value)} required />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-semibold text-muted-foreground">Total Duration</label>
-          <Input placeholder="e.g. 2h 15m" value={duration} onChange={e => setDuration(e.target.value)} />
-        </div>
+      <div className="space-y-1">
+        <label className="text-xs font-semibold text-muted-foreground">Category</label>
+        <Input placeholder="e.g. Masterclass, Tech, Legal" value={category} onChange={e => setCategory(e.target.value)} required />
+      </div>
+      <div className="space-y-1">
+        <label className="text-xs font-semibold text-muted-foreground">Instructor Name</label>
+        <Input placeholder="e.g. John Doe" value={instructor} onChange={e => setInstructor(e.target.value)} required />
+      </div>
+      <div className="space-y-1">
+        <label className="text-xs font-semibold text-muted-foreground">Total Duration</label>
+        <Input placeholder="e.g. 2h 15m" value={duration} onChange={e => setDuration(e.target.value)} />
       </div>
 
       <div className="space-y-1">
         <label className="text-xs font-semibold text-muted-foreground">Thumbnail Image</label>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <Input 
             type="file" 
             accept="image/*" 
@@ -167,7 +162,7 @@ export default function AdminLearningHubPage() {
             onChange={handleImageUpload}
             disabled={isUploading}
           />
-          {isUploading && <Loader2 className="animate-spin size-4 mt-2.5 text-muted-foreground" />}
+          {isUploading && <Loader2 className="animate-spin size-4 text-muted-foreground" />}
         </div>
         {thumbnailUrl && <p className="text-[10px] text-green-600 truncate mt-1">✓ Thumbnail uploaded</p>}
       </div>
@@ -176,7 +171,7 @@ export default function AdminLearningHubPage() {
         <label className="text-xs font-semibold text-muted-foreground">Course Description</label>
         <Textarea 
           placeholder="What will students learn?" 
-          className="min-h-[100px]"
+          className="min-h-[120px]"
           value={description} 
           onChange={e => setDescription(e.target.value)} 
           required 
@@ -187,63 +182,65 @@ export default function AdminLearningHubPage() {
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card p-6 rounded-xl border shadow-sm">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Learning Hub</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Learning Hub</h1>
           <p className="text-sm text-muted-foreground">Manage structured courses, masterclasses, and tutorial videos.</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open)
-          if (!open) resetForm()
-        }}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto">
-              <PlusIcon className="mr-2 size-4" />
-              Create Course
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-            <form onSubmit={handleCreate}>
-              <DialogHeader>
-                <DialogTitle>Create New Course</DialogTitle>
-                <DialogDescription>
-                  Setup the course container. You can add video modules to it in the next step.
-                </DialogDescription>
-              </DialogHeader>
-              
-              {formFieldsUI}
+        <div>
+          <Sheet open={isSheetOpen} onOpenChange={(open) => {
+            setIsSheetOpen(open)
+            if (!open) resetForm()
+          }}>
+            <SheetTrigger asChild>
+              <Button>
+                <PlusIcon className="mr-2 size-4" />
+                Create Course
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="overflow-y-auto w-full sm:max-w-md">
+              <form onSubmit={handleCreate}>
+                <SheetHeader>
+                  <SheetTitle>Create New Course</SheetTitle>
+                  <SheetDescription>
+                    Setup the course container. You can add video modules to it in the next step.
+                  </SheetDescription>
+                </SheetHeader>
+                
+                {formFieldsUI}
 
-              <DialogFooter>
-                <Button type="submit" disabled={isSubmitting || isUploading}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Course
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <SheetFooter className="mt-4">
+                  <Button type="submit" disabled={isSubmitting || isUploading} className="w-full">
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Create Course
+                  </Button>
+                </SheetFooter>
+              </form>
+            </SheetContent>
+          </Sheet>
+        </div>
       </section>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-        setIsEditDialogOpen(open)
+      <Sheet open={isEditSheetOpen} onOpenChange={(open) => {
+        setIsEditSheetOpen(open)
         if (!open) resetForm()
       }}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <SheetContent className="overflow-y-auto w-full sm:max-w-md">
           <form onSubmit={handleEdit}>
-            <DialogHeader>
-              <DialogTitle>Edit Course Details</DialogTitle>
-            </DialogHeader>
+            <SheetHeader>
+              <SheetTitle>Edit Course Details</SheetTitle>
+            </SheetHeader>
             {formFieldsUI}
-            <DialogFooter>
-              <Button type="submit" disabled={isSubmitting || isUploading}>
+            <SheetFooter className="mt-4">
+              <Button type="submit" disabled={isSubmitting || isUploading} className="w-full">
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Update Course
               </Button>
-            </DialogFooter>
+            </SheetFooter>
           </form>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       <Card>
         <CardHeader>
@@ -279,10 +276,13 @@ export default function AdminLearningHubPage() {
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button asChild variant="secondary" size="sm">
-                        <Link href={`/admin/learning-hub/${course.id}`}>
-                          Manage Modules
-                        </Link>
+                      <Button
+                        render={<Link href={`/admin/learning-hub/${course.id}`} />}
+                        nativeButton={false}
+                        variant="secondary"
+                        size="sm"
+                      >
+                        Manage Modules
                       </Button>
                     </div>
                   </div>
