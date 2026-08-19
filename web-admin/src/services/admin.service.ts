@@ -20,6 +20,7 @@ export async function getAllStartups() {
       .select(`
         *,
         teams!startups_team_id_fkey (
+          id,
           name,
           leader_id
         )
@@ -29,11 +30,124 @@ export async function getAllStartups() {
       console.error('Error fetching startups:', error)
       return []
     }
+
+    if (!startups || startups.length === 0) return []
+
+    // Enrich with leader name and member count
+    const enriched = await Promise.all(startups.map(async (s: any) => {
+      let leaderName = 'Unknown'
+      let leaderEmail = ''
+      let memberCount = 0
+
+      if (s.teams?.leader_id) {
+        const { data: leader } = await supabase
+          .from('students')
+          .select('name, email')
+          .eq('id', s.teams.leader_id)
+          .limit(1)
+          .maybeSingle()
+        if (leader) {
+          leaderName = leader.name || 'Unknown'
+          leaderEmail = leader.email || ''
+        }
+      }
+
+      if (s.teams?.id) {
+        const { count } = await supabase
+          .from('team_members')
+          .select('id', { count: 'exact', head: true })
+          .eq('team_id', s.teams.id)
+          .eq('status', 'approved')
+        memberCount = count || 0
+      }
+
+      return { ...s, leaderName, leaderEmail, memberCount }
+    }))
     
-    return startups || []
+    return enriched
   } catch (err) {
     console.error(err)
     return []
+  }
+}
+
+export async function deleteStartupAdmin(startupId: string) {
+  noStore()
+  try {
+    const supabase = getAdminSupabase()
+
+    // Get the startup to find team_id
+    const { data: startup } = await supabase
+      .from('startups')
+      .select('id, team_id')
+      .eq('id', startupId)
+      .single()
+
+    if (!startup) return { error: 'Startup not found' }
+
+    const teamId = startup.team_id
+
+    // Delete in order to avoid foreign key constraints
+    await supabase.from('job_applications').delete().in('job_id', 
+      (await supabase.from('job_postings').select('id').eq('startup_id', startupId)).data?.map((j: any) => j.id) || []
+    )
+    await supabase.from('job_postings').delete().eq('startup_id', startupId)
+    await supabase.from('startup_documents').delete().eq('startup_id', startupId)
+    await supabase.from('startup_journey_stages').delete().eq('startup_id', startupId)
+    await supabase.from('startup_impact_scores').delete().eq('startup_id', startupId)
+    await supabase.from('tasks').delete().eq('team_id', teamId)
+    await supabase.from('startups').delete().eq('id', startupId)
+    await supabase.from('team_members').delete().eq('team_id', teamId)
+    await supabase.from('teams').delete().eq('id', teamId)
+
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
+export async function getDuplicateTeamUsers() {
+  noStore()
+  try {
+    const supabase = getAdminSupabase()
+
+    // Find all leaders
+    const { data: teams } = await supabase.from('teams').select('id, name, leader_id, startup_id')
+    if (!teams) return { users: [] }
+
+    // Group teams by leader_id
+    const leaderMap: Record<string, any[]> = {}
+    for (const t of teams) {
+      if (!leaderMap[t.leader_id]) leaderMap[t.leader_id] = []
+      leaderMap[t.leader_id].push(t)
+    }
+
+    // Filter to leaders with more than 1 team
+    const duplicates = Object.entries(leaderMap)
+      .filter(([_, teamsList]) => teamsList.length > 1)
+      .map(([leaderId, teamsList]) => ({ leaderId, teams: teamsList }))
+
+    if (duplicates.length === 0) return { users: [] }
+
+    // Enrich with student names
+    const leaderIds = duplicates.map(d => d.leaderId)
+    const { data: students } = await supabase
+      .from('students')
+      .select('id, name, email')
+      .in('id', leaderIds)
+
+    const enriched = duplicates.map(d => {
+      const student = students?.find(s => s.id === d.leaderId)
+      return {
+        ...d,
+        leaderName: student?.name || 'Unknown',
+        leaderEmail: student?.email || ''
+      }
+    })
+
+    return { users: enriched }
+  } catch (err: any) {
+    return { users: [] }
   }
 }
 

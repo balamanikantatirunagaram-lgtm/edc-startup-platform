@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { SearchIcon, RocketIcon } from "lucide-react"
+import { SearchIcon, RocketIcon, TrashIcon, AlertTriangleIcon, UsersIcon, UserIcon, Loader2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,26 +15,51 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { StatusBadge } from "@/components/shared/StatusBadge"
-import { getAllStartups } from "@/services/admin.service"
+import { getAllStartups, deleteStartupAdmin, getDuplicateTeamUsers } from "@/services/admin.service"
+import { toast } from "sonner"
 
 export default function AdminStartupsPage() {
   const [search, setSearch] = React.useState("")
   const [catFilter, setCatFilter] = React.useState("all")
   const [statusFilter, setStatusFilter] = React.useState("all")
   const [startups, setStartups] = React.useState<any[]>([])
+  const [duplicateUsers, setDuplicateUsers] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [deleting, setDeleting] = React.useState<string | null>(null)
+
+  const loadData = async () => {
+    setLoading(true)
+    const [data, dupes] = await Promise.all([
+      getAllStartups(),
+      getDuplicateTeamUsers()
+    ])
+    setStartups(data)
+    if (dupes.users) setDuplicateUsers(dupes.users)
+    setLoading(false)
+  }
 
   React.useEffect(() => {
-    async function load() {
-      const data = await getAllStartups()
-      setStartups(data)
-    }
-    load()
+    loadData()
   }, [])
+
+  const handleDelete = async (startupId: string, startupName: string) => {
+    if (!confirm(`Are you sure you want to permanently delete "${startupName}" and its entire team? This action cannot be undone.`)) return
+    setDeleting(startupId)
+    const res = await deleteStartupAdmin(startupId)
+    setDeleting(null)
+    if (res.error) {
+      toast.error(res.error)
+    } else {
+      toast.success(`"${startupName}" has been deleted.`)
+      loadData()
+    }
+  }
 
   const filteredStartups = startups.filter((s) => {
     const matchesSearch =
       (s.name?.toLowerCase() || "").includes(search.toLowerCase()) ||
-      (s.teams?.name?.toLowerCase() || "").includes(search.toLowerCase())
+      (s.teams?.name?.toLowerCase() || "").includes(search.toLowerCase()) ||
+      (s.leaderName?.toLowerCase() || "").includes(search.toLowerCase())
 
     const matchesCat = catFilter === "all" || s.industry === catFilter || s.category === catFilter
     const matchesStatus = statusFilter === "all" || (s.status || 'pending') === statusFilter
@@ -42,17 +67,51 @@ export default function AdminStartupsPage() {
     return matchesSearch && matchesCat && matchesStatus
   })
 
-  // get unique categories
   const categories = Array.from(new Set(startups.map(s => s.industry || s.category).filter(Boolean)))
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">Startup Applications</h1>
-          <p className="text-sm text-muted-foreground">Manage and review all campus startup applications.</p>
+          <p className="text-sm text-muted-foreground">Manage and review all campus startup applications. <span className="font-medium text-foreground">{startups.length} total</span></p>
         </div>
       </section>
+
+      {/* Duplicate Teams Warning */}
+      {duplicateUsers.length > 0 && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2 text-destructive">
+              <AlertTriangleIcon className="size-4" />
+              Users with Multiple Teams ({duplicateUsers.length})
+            </CardTitle>
+            <CardDescription>These users lead more than one team. They should delete extra teams to keep one startup each.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {duplicateUsers.map((user: any) => (
+              <div key={user.leaderId} className="p-3 rounded-lg border border-destructive/20 bg-background">
+                <p className="font-medium text-sm">{user.leaderName} <span className="text-xs text-muted-foreground ml-1">{user.leaderEmail}</span></p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {user.teams.map((team: any) => (
+                    <span key={team.id} className="text-xs bg-muted px-2 py-1 rounded-md border">
+                      {team.name} {team.startup_id ? '' : '(no startup)'}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filter toolbar */}
       <Card>
@@ -60,7 +119,7 @@ export default function AdminStartupsPage() {
           <div className="relative flex-1">
             <SearchIcon className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search by startup or team name..."
+              placeholder="Search by startup, team, or leader name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 h-9 text-sm"
@@ -130,14 +189,29 @@ export default function AdminStartupsPage() {
                     <span className="text-muted-foreground block">Stage</span>
                     <span className="font-semibold text-foreground mt-0.5 block">{s.stage}</span>
                   </div>
-                  <div className="col-span-2 mt-1">
-                    <span className="text-muted-foreground block">Team</span>
-                    <span className="font-semibold text-foreground mt-0.5 block">{s.teams?.name}</span>
+                  <div>
+                    <span className="text-muted-foreground flex items-center gap-1"><UserIcon className="size-3" /> Leader</span>
+                    <span className="font-semibold text-foreground mt-0.5 block truncate">{s.leaderName}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground flex items-center gap-1"><UsersIcon className="size-3" /> Team</span>
+                    <span className="font-semibold text-foreground mt-0.5 block">{s.teams?.name} ({s.memberCount})</span>
                   </div>
                 </div>
-                <Button render={<Link href={`/admin/startups/${s.id}`} />} nativeButton={false} size="sm" className="w-full mt-2">
-                  Review Application
-                </Button>
+                <div className="flex gap-2">
+                  <Button render={<Link href={`/admin/startups/${s.id}`} />} nativeButton={false} size="sm" className="flex-1">
+                    Review
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive hover:bg-destructive/10 border-destructive/20"
+                    disabled={deleting === s.id}
+                    onClick={() => handleDelete(s.id, s.name)}
+                  >
+                    {deleting === s.id ? <Loader2Icon className="size-4 animate-spin" /> : <TrashIcon className="size-4" />}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))

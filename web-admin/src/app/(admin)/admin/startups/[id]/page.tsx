@@ -13,6 +13,8 @@ import {
   ClockIcon,
   HistoryIcon,
   Loader2Icon,
+  TrashIcon,
+  UserIcon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -33,7 +35,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { getAllStartups, updateStartupStatus, getStartupDocumentsAdmin, getStartupJourneyAdmin, getTeamMembersAdmin } from "@/services/admin.service"
+import { getAllStartups, updateStartupStatus, getStartupDocumentsAdmin, getStartupJourneyAdmin, getTeamMembersAdmin, deleteStartupAdmin } from "@/services/admin.service"
 
 export default function AdminStartupReviewPage({
   params,
@@ -53,6 +55,7 @@ export default function AdminStartupReviewPage({
   const [feedback, setFeedback] = React.useState("")
   const [nextSteps, setNextSteps] = React.useState("")
   const [submitting, setSubmitting] = React.useState(false)
+  const [deleting, setDeleting] = React.useState(false)
 
   React.useEffect(() => {
     async function loadData() {
@@ -92,6 +95,19 @@ export default function AdminStartupReviewPage({
     }
   }
 
+  const handleDelete = async () => {
+    if (!confirm(`Are you sure you want to permanently delete "${startup?.name}" and its entire team? This action cannot be undone.`)) return
+    setDeleting(true)
+    const res = await deleteStartupAdmin(id)
+    setDeleting(false)
+    if (res.error) {
+      toast.error(res.error)
+    } else {
+      toast.success(`"${startup?.name}" has been deleted.`)
+      router.push("/admin/startups")
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -116,24 +132,39 @@ export default function AdminStartupReviewPage({
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-      <section className="flex items-center gap-3">
-        <Button
-          onClick={() => router.push("/admin/startups")}
-          variant="outline"
-          size="icon"
-          className="size-8"
-        >
-          <ArrowLeftIcon className="size-4" />
-        </Button>
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold tracking-tight">{startup.name}</h1>
-            <StatusBadge status={startup.status} />
+      <section className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => router.push("/admin/startups")}
+            variant="outline"
+            size="icon"
+            className="size-8"
+          >
+            <ArrowLeftIcon className="size-4" />
+          </Button>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold tracking-tight">{startup.name}</h1>
+              <StatusBadge status={startup.status} />
+            </div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <UserIcon className="size-3" />
+              Led by <span className="font-medium text-foreground">{startup.leaderName || 'Unknown'}</span>
+              {startup.leaderEmail && <span className="ml-1">({startup.leaderEmail})</span>}
+              · Team: {startup.teams?.name} · {startup.memberCount || 0} members
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Reviewing application by {startup.teams?.leader_id || "Unknown Leader"}
-          </p>
         </div>
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={deleting}
+          onClick={handleDelete}
+          className="gap-2"
+        >
+          {deleting ? <Loader2Icon className="size-4 animate-spin" /> : <TrashIcon className="size-4" />}
+          Delete Startup
+        </Button>
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -197,15 +228,21 @@ export default function AdminStartupReviewPage({
                 <p className="text-sm text-muted-foreground">No team members assigned.</p>
               ) : (
                 <ul className="space-y-3">
-                  {teamMembers.map((member, idx) => (
-                    <li key={idx} className="flex justify-between items-center text-sm p-3 bg-muted/30 rounded-md border">
-                      <div className="flex flex-col">
-                        <p className="font-medium">{member.students?.name || "Unknown"} <span className="text-xs text-muted-foreground ml-2">({member.role})</span></p>
-                        <p className="text-xs text-muted-foreground">{member.students?.email}</p>
-                      </div>
-                      <span className="text-xs bg-secondary px-2 py-1 rounded-md">{member.status}</span>
-                    </li>
-                  ))}
+                  {teamMembers.map((member: any, idx: number) => {
+                    const isLeader = member.student_id === startup.teams?.leader_id
+                    return (
+                      <li key={idx} className={`flex justify-between items-center text-sm p-3 rounded-md border ${isLeader ? 'bg-primary/5 border-primary/20' : 'bg-muted/30'}`}>
+                        <div className="flex flex-col">
+                          <p className="font-medium">
+                            {member.students?.name || "Unknown"}
+                            {isLeader && <span className="text-xs bg-primary/10 text-primary ml-2 px-2 py-0.5 rounded-full font-semibold">👑 Leader</span>}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{member.students?.email} · {member.students?.department || 'N/A'}</p>
+                        </div>
+                        <span className="text-xs bg-secondary px-2 py-1 rounded-md">{member.status}</span>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </CardContent>

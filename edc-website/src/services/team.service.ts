@@ -39,6 +39,20 @@ export async function createTeam(data: any) {
     if (userError || !user.user) return { error: "Not authenticated" }
 
     const authSupabase = getAuthenticatedSupabase(token)
+    const adminClient = getSupabaseAdmin()
+
+    // Check if user already has a team
+    const { data: existingTeam } = await adminClient
+      .from('team_members')
+      .select('id')
+      .eq('student_id', user.user.id)
+      .eq('status', 'approved')
+      .limit(1)
+      .maybeSingle()
+
+    if (existingTeam) {
+      return { error: "You are already a member of a team. You cannot create a new one." }
+    }
 
     // Generate a random 5 digit code
     const code = Math.floor(10000 + Math.random() * 90000).toString()
