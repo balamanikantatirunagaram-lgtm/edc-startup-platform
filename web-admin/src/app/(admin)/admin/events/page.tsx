@@ -198,8 +198,7 @@ export default function AdminEventsPage() {
     setLoadingRegs(false)
   }
 
-  // Helper function to render the form fields (so we don't repeat them for Create and Edit)
-  const FormFields = () => (
+  const formFieldsUI = (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
@@ -313,7 +312,7 @@ export default function AdminEventsPage() {
                 </DialogDescription>
               </DialogHeader>
               
-              <FormFields />
+              {formFieldsUI}
 
               <DialogFooter>
                 <Button type="submit" disabled={isSubmitting || isUploading || isGeneratingAI || isRewritingAI}>
@@ -338,7 +337,7 @@ export default function AdminEventsPage() {
                 </DialogDescription>
               </DialogHeader>
 
-              <FormFields />
+              {formFieldsUI}
 
               <DialogFooter>
                 <Button type="submit" disabled={isSubmitting || isUploading || isGeneratingAI || isRewritingAI}>

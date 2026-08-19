@@ -2,9 +2,11 @@
 
 export async function generateEventDescription(title: string, type: string, location: string, date: string) {
   try {
+    const mockContent = `Join us for ${title}, a ${type} event at ${location} on ${date}. It's going to be an amazing opportunity to connect, learn, and grow alongside industry leaders and peers.`
+
     if (!process.env.NVIDIA_API_KEY) {
       console.warn("NVIDIA_API_KEY is not set. Using mock AI response.");
-      return { content: `[MOCK AI]: Join us for ${title}, a ${type} event at ${location} on ${date}. It's going to be an amazing opportunity to connect and learn!` };
+      return { content: `[MOCK AI]: ${mockContent}` };
     }
 
     const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
@@ -30,6 +32,10 @@ export async function generateEventDescription(title: string, type: string, loca
     });
 
     if (!response.ok) {
+      if (response.status === 403 || response.status === 401) {
+        console.warn("NVIDIA API Key invalid or unauthorized. Falling back to mock.");
+        return { content: `[AI Fallback - Invalid API Key]: ${mockContent}` };
+      }
       return { error: `API Error: ${response.status}` };
     }
 
@@ -42,9 +48,11 @@ export async function generateEventDescription(title: string, type: string, loca
 
 export async function rewriteEventDescription(currentDescription: string) {
   try {
+    const mockContent = `${currentDescription} (Enhanced by AI to be more professional and exciting)`
+
     if (!process.env.NVIDIA_API_KEY) {
       console.warn("NVIDIA_API_KEY is not set. Using mock AI response.");
-      return { content: `[MOCK AI REWRITE]: ${currentDescription} (Enhanced by AI)` };
+      return { content: `[MOCK AI REWRITE]: ${mockContent}` };
     }
 
     const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
@@ -70,6 +78,10 @@ export async function rewriteEventDescription(currentDescription: string) {
     });
 
     if (!response.ok) {
+      if (response.status === 403 || response.status === 401) {
+        console.warn("NVIDIA API Key invalid or unauthorized. Falling back to mock.");
+        return { content: `[AI Fallback - Invalid API Key]: ${mockContent}` };
+      }
       return { error: `API Error: ${response.status}` };
     }
 
