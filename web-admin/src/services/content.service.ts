@@ -67,6 +67,33 @@ export async function deleteEvent(id: string) {
   return { success: true }
 }
 
+export async function uploadEventBanner(formData: FormData) {
+  try {
+    const file = formData.get('file') as File
+    if (!file) return { error: "No file provided" }
+
+    const supabase = getAdminSupabase()
+    
+    // Ensure bucket exists
+    await supabase.storage.createBucket('event-banners', { public: true }).catch(() => {})
+
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('event-banners')
+      .upload(fileName, file)
+
+    if (uploadError) return { error: uploadError.message }
+
+    const { data } = supabase.storage.from('event-banners').getPublicUrl(fileName)
+    
+    return { success: true, url: data.publicUrl }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
 // ─── Resources ───────────────────────────────────────────────────────────────
 
 export async function getResources() {

@@ -91,24 +91,7 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Switch View</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="Student view"
-                  render={
-                    <Link href="/dashboard">
-                      <GraduationCapIcon />
-                      <span>Student view</span>
-                    </Link>
-                  }
-                />
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+
       </SidebarContent>
 
       <SidebarFooter className="p-3">
