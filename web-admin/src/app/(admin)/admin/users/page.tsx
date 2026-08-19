@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { getAllStudents, toggleStudentSuspension, resetStudentPassword } from "@/services/admin.service"
+import { getAllStudents, toggleStudentSuspension, resetStudentPassword, getStudentProfileAdmin } from "@/services/admin.service"
 import { getMentors, createMentor, deleteMentor, updateMentor } from "@/services/content.service"
 import { IAdminStudent } from "@/types"
 
@@ -41,6 +41,23 @@ function StudentsTab() {
   const [resettingUser, setResettingUser] = React.useState<{id: string, name: string} | null>(null)
   const [newPassword, setNewPassword] = React.useState("")
   const [resetting, setResetting] = React.useState(false)
+
+  const [profileDialogOpen, setProfileDialogOpen] = React.useState(false)
+  const [viewingStudent, setViewingStudent] = React.useState<any>(null)
+  const [loadingProfile, setLoadingProfile] = React.useState(false)
+
+  const handleViewProfile = async (student: IAdminStudent) => {
+    setViewingStudent(student)
+    setProfileDialogOpen(true)
+    setLoadingProfile(true)
+    const res = await getStudentProfileAdmin(student.id)
+    if (res.error) {
+      toast.error(res.error)
+    } else {
+      setViewingStudent({ ...student, ...res.data })
+    }
+    setLoadingProfile(false)
+  }
 
   const fetchStudents = async () => {
     setLoading(true)
@@ -202,6 +219,13 @@ function StudentsTab() {
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-2">
                           <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleViewProfile(student)}
+                          >
+                            View Profile
+                          </Button>
+                          <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
@@ -216,7 +240,7 @@ function StudentsTab() {
                             variant={student.isSuspended ? "default" : "destructive"}
                             size="sm"
                             disabled={toggling === student.id}
-                            onClick={() => handleToggleSuspension(student.id, student.isSuspended)}
+                            onClick={() => handleToggleSuspension(student.id, !!student.isSuspended)}
                           >
                             {toggling === student.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {student.isSuspended ? "Activate" : "Suspend"}
@@ -258,6 +282,113 @@ function StudentsTab() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Founder Profile</DialogTitle>
+            <DialogDescription>Full details registered by the student.</DialogDescription>
+          </DialogHeader>
+          
+          {loadingProfile ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="animate-spin text-muted-foreground size-8" />
+            </div>
+          ) : viewingStudent ? (
+            <div className="flex flex-col gap-6 py-4">
+              <div className="flex items-center gap-4">
+                {viewingStudent.avatarUrl ? (
+                  <img src={viewingStudent.avatarUrl} alt={viewingStudent.name} className="size-16 rounded-full object-cover border" />
+                ) : (
+                  <div className="size-16 rounded-full bg-muted flex items-center justify-center font-bold text-xl">
+                    {viewingStudent.name?.charAt(0) || '?'}
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-xl font-bold">{viewingStudent.name}</h3>
+                  <p className="text-sm text-muted-foreground">{viewingStudent.email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground font-medium">NIAT ID</span>
+                  <span>{viewingStudent.niatId || 'N/A'}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground font-medium">College ID</span>
+                  <span>{viewingStudent.collegeId || 'N/A'}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground font-medium">Department</span>
+                  <span>{viewingStudent.department || 'N/A'}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground font-medium">Academic Year</span>
+                  <span>{viewingStudent.academicYear || 'N/A'}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground font-medium">Phone</span>
+                  <span>{viewingStudent.phone || 'N/A'}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground font-medium">Joined</span>
+                  <span>{viewingStudent.created_at ? new Date(viewingStudent.created_at).toLocaleDateString() : 'N/A'}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <h4 className="font-semibold border-b pb-1">Links & Socials</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground font-medium">Portfolio</span>
+                    {viewingStudent.portfolio ? (
+                      <a href={viewingStudent.portfolio.startsWith('http') ? viewingStudent.portfolio : `https://${viewingStudent.portfolio}`} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">
+                        {viewingStudent.portfolio}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground italic">Not provided</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground font-medium">GitHub</span>
+                    {viewingStudent.github ? (
+                      <a href={viewingStudent.github.startsWith('http') ? viewingStudent.github : `https://github.com/${viewingStudent.github}`} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">
+                        {viewingStudent.github}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground italic">Not provided</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground font-medium">LinkedIn</span>
+                    {viewingStudent.linkedin ? (
+                      <a href={viewingStudent.linkedin.startsWith('http') ? viewingStudent.linkedin : `https://linkedin.com/in/${viewingStudent.linkedin}`} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">
+                        {viewingStudent.linkedin}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground italic">Not provided</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {viewingStudent.skills && viewingStudent.skills.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <h4 className="font-semibold border-b pb-1">Skills</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {viewingStudent.skills.map((skill: string) => (
+                      <span key={skill} className="px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>
@@ -355,10 +486,8 @@ function MentorsTab() {
           setIsDialogOpen(open)
           if (!open) resetForm()
         }}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <PlusIcon className="size-4" /> Add Mentor
-            </Button>
+          <DialogTrigger render={<Button className="gap-2" />}>
+            <PlusIcon className="size-4" /> Add Mentor
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <form onSubmit={handleSubmit}>
