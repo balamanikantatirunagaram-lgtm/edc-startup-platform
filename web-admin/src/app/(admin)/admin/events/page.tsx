@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { getEventsAdmin, createEvent, deleteEvent, updateEvent, getEventRegistrations } from "@/services/admin.service"
+import { getEventsAdmin, createEvent, deleteEvent, updateEvent, getEventRegistrations } from "@/services/events.service"
 import { uploadEventBanner } from "@/services/content.service"
 import { generateEventDescription, rewriteEventDescription } from "@/services/ai.service"
 
