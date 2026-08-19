@@ -182,6 +182,7 @@ export async function getAllStudents(): Promise<IAdminStudent[]> {
       }
       if (!data || data.length === 0) break
       allStudents = [...allStudents, ...data]
+      if (allStudents.length > 0) console.log("SAMPLE STUDENT:", allStudents[0])
       if (data.length < 1000) break
       page++
     }
@@ -346,6 +347,18 @@ export async function getTeamMembersAdmin(teamId: string) {
       
     if (error) return { error: error.message }
     return { members: data || [] }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
+export async function getStudentProfileAdmin(studentId: string) {
+  try {
+    const supabase = getAdminSupabase()
+    const { data: { user }, error } = await supabase.auth.admin.getUserById(studentId)
+    if (error || !user) return { error: error?.message || "User not found" }
+    
+    return { data: user.user_metadata }
   } catch (err: any) {
     return { error: err.message }
   }
