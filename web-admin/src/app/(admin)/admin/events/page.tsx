@@ -23,6 +23,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { getEventsAdmin, createEvent, deleteEvent, updateEvent, getEventRegistrations } from "@/services/events.service"
 import { uploadEventBanner } from "@/services/content.service"
@@ -296,11 +297,9 @@ export default function AdminEventsPage() {
             setIsSheetOpen(open)
             if (!open) resetForm()
           }}>
-            <SheetTrigger asChild>
-              <Button>
-                <PlusIcon className="mr-2 size-4" />
-                Create Event
-              </Button>
+            <SheetTrigger render={<Button />}>
+              <PlusIcon className="mr-2 size-4" />
+              Create Event
             </SheetTrigger>
             <SheetContent className="overflow-y-auto w-full sm:max-w-md">
               <form onSubmit={handleCreate}>
@@ -412,7 +411,7 @@ export default function AdminEventsPage() {
                         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => openEdit(event)}>
                           <EditIcon className="size-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(event.id)}>
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(event.id, event.title)}>
                           <Trash2Icon className="size-4" />
                         </Button>
                       </td>

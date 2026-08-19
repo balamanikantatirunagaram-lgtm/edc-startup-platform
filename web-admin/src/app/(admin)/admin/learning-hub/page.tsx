@@ -193,11 +193,9 @@ export default function AdminLearningHubPage() {
             setIsSheetOpen(open)
             if (!open) resetForm()
           }}>
-            <SheetTrigger asChild>
-              <Button>
-                <PlusIcon className="mr-2 size-4" />
-                Create Course
-              </Button>
+            <SheetTrigger render={<Button />}>
+              <PlusIcon className="mr-2 size-4" />
+              Create Course
             </SheetTrigger>
             <SheetContent className="overflow-y-auto w-full sm:max-w-md">
               <form onSubmit={handleCreate}>
@@ -277,13 +275,11 @@ export default function AdminLearningHubPage() {
                     )}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Button
-                        asChild
+                        render={<Link href={`/admin/learning-hub/${course.id}`} />}
                         variant="secondary"
                         size="sm"
                       >
-                        <Link href={`/admin/learning-hub/${course.id}`}>
-                          Manage Modules
-                        </Link>
+                        Manage Modules
                       </Button>
                     </div>
                   </div>

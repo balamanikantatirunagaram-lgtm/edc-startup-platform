@@ -105,10 +105,8 @@ export default function AdminResourcesPage() {
             setIsSheetOpen(open)
             if (!open) resetForm()
           }}>
-            <SheetTrigger asChild>
-              <Button className="gap-2">
-                <PlusIcon className="size-4" /> Add Resource
-              </Button>
+            <SheetTrigger render={<Button className="gap-2" />}>
+              <PlusIcon className="size-4" /> Add Resource
             </SheetTrigger>
             <SheetContent className="sm:max-w-md overflow-y-auto w-full">
               <form onSubmit={handleSubmit}>

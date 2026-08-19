@@ -81,11 +81,9 @@ export default function AdminOverviewPage() {
                 <CardTitle className="text-base">Pending Applications</CardTitle>
                 <CardDescription>Startups waiting for review or feedback.</CardDescription>
               </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/admin/startups">
-                  All Startups
-                  <ArrowRightIcon className="size-3.5 ml-1 inline" />
-                </Link>
+              <Button render={<Link href="/admin/startups" />} variant="outline" size="sm">
+                All Startups
+                <ArrowRightIcon className="size-3.5 ml-1 inline" />
               </Button>
             </CardHeader>
             <CardContent className="p-0">
@@ -106,10 +104,8 @@ export default function AdminOverviewPage() {
                           Team: {s.teams?.name || 'Unknown'} · {s.industry || s.category}
                         </span>
                       </div>
-                      <Button asChild size="sm" variant="ghost">
-                        <Link href={`/admin/startups/${s.id}`}>
-                          Review
-                        </Link>
+                      <Button render={<Link href={`/admin/startups/${s.id}`} />} size="sm" variant="ghost">
+                        Review
                       </Button>
                     </div>
                   ))}

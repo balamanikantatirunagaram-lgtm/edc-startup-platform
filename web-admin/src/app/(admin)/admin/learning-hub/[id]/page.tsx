@@ -128,14 +128,12 @@ export default function AdminCourseModulesPage({ params }: { params: Promise<{ i
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Button
-            asChild
+            render={<Link href="/admin/learning-hub" />}
             variant="outline"
             size="icon"
             className="size-8"
           >
-            <Link href="/admin/learning-hub">
-              <ArrowLeftIcon className="size-4" />
-            </Link>
+            <ArrowLeftIcon className="size-4" />
           </Button>
           <div className="flex flex-col gap-0.5">
             <h1 className="text-xl font-semibold tracking-tight">{course.title}</h1>

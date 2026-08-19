@@ -199,10 +199,8 @@ export default function AdminStartupsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button asChild size="sm" className="flex-1">
-                    <Link href={`/admin/startups/${s.id}`}>
-                      Review
-                    </Link>
+                  <Button render={<Link href={`/admin/startups/${s.id}`} />} size="sm" className="flex-1">
+                    Review
                   </Button>
                   <Button
                     variant="outline"
