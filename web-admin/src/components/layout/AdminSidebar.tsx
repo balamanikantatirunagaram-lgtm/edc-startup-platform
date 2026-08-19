@@ -38,6 +38,7 @@ const adminNav = [
   { title: "Students", href: "/admin/students", icon: UsersIcon },
   { title: "Startups", href: "/admin/startups", icon: ClipboardListIcon },
   { title: "Events", href: "/admin/events", icon: CalendarIcon },
+  { title: "Learning Hub", href: "/admin/learning-hub", icon: GraduationCapIcon },
   { title: "Resources", href: "/admin/resources", icon: LibraryIcon },
   { title: "Mentors", href: "/admin/mentors", icon: UsersIcon },
   { title: "Mentorships", href: "/admin/mentorships", icon: GraduationCapIcon },
