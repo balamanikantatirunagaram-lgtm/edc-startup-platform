@@ -44,7 +44,6 @@ const adminNav = [
   { title: "Funding", href: "/admin/funding", icon: BanknoteIcon },
   { title: "Network", href: "/admin/network", icon: UsersIcon },
   { title: "Document Center", href: "/admin/documents", icon: FileTextIcon },
-  { title: "Incubators", href: "/admin/incubators", icon: BuildingIcon },
   { title: "Jobs", href: "/admin/jobs", icon: BriefcaseIcon },
   { title: "Viksit Bharat", href: "/admin/viksit-bharat", icon: GlobeIcon },
   { title: "Impact", href: "/admin/impact", icon: GlobeIcon },
