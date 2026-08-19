@@ -38,13 +38,14 @@ export async function getMyStartup() {
     const { data: user } = await supabase.auth.getUser(token)
     if (!user.user) return { error: "Not authenticated" }
 
-    const authSupabase = getAuthenticatedSupabase(token)
+    const supabaseAdmin = getSupabaseAdmin()
     // Find the team the user is an approved member of
-    const { data: memberRecord } = await authSupabase
+    const { data: memberRecord } = await supabaseAdmin
       .from('team_members')
       .select('team_id, teams(id, name, leader_id)')
       .eq('student_id', user.user.id)
       .eq('status', 'approved')
+      .limit(1)
       .maybeSingle()
       
     if (!memberRecord || !memberRecord.team_id) {
@@ -54,7 +55,7 @@ export async function getMyStartup() {
     const teamId = memberRecord.team_id
 
     // Fetch the startup
-    const { data: startupData } = await authSupabase
+    const { data: startupData } = await supabaseAdmin
       .from('startups')
       .select('*')
       .eq('team_id', teamId)
@@ -136,13 +137,15 @@ export async function updateMyStartup(data: any) {
     if (!user.user) return { error: "Not authenticated" }
 
     const authSupabase = getAuthenticatedSupabase(token)
+    const supabaseAdmin = getSupabaseAdmin()
 
     // Find the team
-    const { data: memberRecord } = await authSupabase
+    const { data: memberRecord } = await supabaseAdmin
       .from('team_members')
       .select('team_id')
       .eq('student_id', user.user.id)
       .eq('status', 'approved')
+      .limit(1)
       .maybeSingle()
       
     if (!memberRecord || !memberRecord.team_id) {
@@ -191,13 +194,13 @@ export async function deleteMyStartup() {
     const authSupabase = getAuthenticatedSupabase(token)
 
     // Find the specific team they are currently active in
-    const { data: memberRecord } = await authSupabase
+    const { data: memberRecord } = await supabaseAdmin
       .from('team_members')
       .select('team_id, teams(leader_id)')
       .eq('student_id', user.user.id)
       .eq('status', 'approved')
       .limit(1)
-      .single()
+      .maybeSingle()
       
     if (!memberRecord || !memberRecord.team_id) {
       return { error: "You are not an active member of any team." }

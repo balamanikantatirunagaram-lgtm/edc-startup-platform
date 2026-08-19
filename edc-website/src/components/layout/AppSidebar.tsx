@@ -15,7 +15,6 @@ import {
   BanknoteIcon,
   BriefcaseIcon,
   FileTextIcon,
-  BotIcon,
   BookOpenIcon,
   BuildingIcon,
   GlobeIcon,
