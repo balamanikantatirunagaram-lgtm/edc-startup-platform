@@ -4,23 +4,12 @@ export function BrandMark({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground",
+        "flex size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden",
         className,
       )}
       aria-hidden="true"
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        className="size-4.5"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M5 19c0-6 4-11 11-13-2 6-7 10-11 13Z" />
-        <path d="M5 19c3 0 6-1 8-3" />
-      </svg>
+      <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
     </div>
   )
 }

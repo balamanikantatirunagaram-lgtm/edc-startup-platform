@@ -11,7 +11,9 @@ import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { getCourseDetails, enrollInCourse, updateCourseProgress } from "@/services/learning.service"
 
-export default function CoursePlayerPage({ params }: { params: { id: string } }) {
+export default function CoursePlayerPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = React.use(params)
+  const courseId = resolvedParams.id
   const [data, setData] = React.useState<any>(null)
   const [loading, setLoading] = React.useState(true)
   const [enrolling, setEnrolling] = React.useState(false)
@@ -21,23 +23,23 @@ export default function CoursePlayerPage({ params }: { params: { id: string } })
 
   React.useEffect(() => {
     async function load() {
-      const res = await getCourseDetails(params.id)
+      const res = await getCourseDetails(courseId)
       setData(res)
       setLoading(false)
     }
     load()
-  }, [params.id])
+  }, [courseId])
 
   const handleEnroll = async () => {
     setEnrolling(true)
-    const res = await enrollInCourse(params.id)
+    const res = await enrollInCourse(courseId)
     setEnrolling(false)
     if (res.error) {
       toast.error(res.error)
     } else {
       toast.success("Successfully enrolled! You can now track your progress.")
       // Reload to get enrollment data
-      const updated = await getCourseDetails(params.id)
+      const updated = await getCourseDetails(courseId)
       setData(updated)
     }
   }
@@ -54,7 +56,7 @@ export default function CoursePlayerPage({ params }: { params: { id: string } })
     const newProgress = Math.min(100, Math.round(currentProgress + step))
     const isCompleted = newProgress >= 100
     
-    const res = await updateCourseProgress(params.id, newProgress, isCompleted)
+    const res = await updateCourseProgress(courseId, newProgress, isCompleted)
     if (res.error) {
       toast.error(res.error)
     } else {

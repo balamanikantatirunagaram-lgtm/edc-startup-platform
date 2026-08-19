@@ -19,7 +19,9 @@ import {
 } from "@/components/ui/dialog"
 import { getCourse, addCourseModule, deleteCourseModule, uploadCourseFile } from "@/services/learning.service"
 
-export default function AdminCourseModulesPage({ params }: { params: { id: string } }) {
+export default function AdminCourseModulesPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = React.use(params)
+  const courseId = resolvedParams.id
   const [course, setCourse] = React.useState<any>(null)
   const [loading, setLoading] = React.useState(true)
   
@@ -37,10 +39,10 @@ export default function AdminCourseModulesPage({ params }: { params: { id: strin
 
   const load = React.useCallback(async () => {
     setLoading(true)
-    const data = await getCourse(params.id)
+    const data = await getCourse(courseId)
     setCourse(data)
     setLoading(false)
-  }, [params.id])
+  }, [courseId])
 
   React.useEffect(() => {
     load()
@@ -89,7 +91,7 @@ export default function AdminCourseModulesPage({ params }: { params: { id: strin
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    const res = await addCourseModule(editingId, params.id, {
+    const res = await addCourseModule(editingId, courseId, {
       title, description, video_url: videoUrl, order_index: orderIndex
     })
     setIsSubmitting(false)
