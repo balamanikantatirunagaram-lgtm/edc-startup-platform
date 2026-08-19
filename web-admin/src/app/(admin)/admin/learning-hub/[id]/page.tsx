@@ -126,13 +126,14 @@ export default function AdminCourseModulesPage({ params }: { params: { id: strin
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Button
-            render={<Link href="/admin/learning-hub" />}
-            nativeButton={false}
+            asChild
             variant="outline"
             size="icon"
             className="size-8"
           >
-            <ArrowLeftIcon className="size-4" />
+            <Link href="/admin/learning-hub">
+              <ArrowLeftIcon className="size-4" />
+            </Link>
           </Button>
           <div className="flex flex-col gap-0.5">
             <h1 className="text-xl font-semibold tracking-tight">{course.title}</h1>
