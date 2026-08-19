@@ -83,11 +83,16 @@ export default function TeamConnectPage() {
 
   return (
     <div className="flex flex-col gap-8 max-w-2xl mx-auto mt-10 w-full px-4">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Team Connect</h1>
-        <p className="text-muted-foreground">
-          You don't have a team yet. Enter a code to request access, or check your pending invitations.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-semibold tracking-tight">Team Connect</h1>
+          <p className="text-muted-foreground">
+            Enter a code to join an existing team, or create a new one.
+          </p>
+        </div>
+        <Button onClick={() => router.push("/startup/register")} className="shrink-0 w-full md:w-auto">
+          Create New Team
+        </Button>
       </div>
 
       {invitations.length > 0 && (

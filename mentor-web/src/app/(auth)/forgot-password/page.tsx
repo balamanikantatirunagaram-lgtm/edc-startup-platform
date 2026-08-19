@@ -20,7 +20,7 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = React.useState(false)
   const [step, setStep] = React.useState<1 | 2>(1)
   
-  const [niatId, setNiatId] = React.useState("")
+  const [username, setUsername] = React.useState("")
   const [question, setQuestion] = React.useState("")
 
   async function onStepOneSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
     setLoading(true)
     
     try {
-      const res = await getSecurityQuestion(niatId)
+      const res = await getSecurityQuestion(username)
       if (res.error) {
         toast.error(res.error)
         setLoading(false)
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
     const password = String(data.get("password") ?? "")
 
     try {
-      const res = await resetPasswordWithSecurityAnswer(niatId, answer, password)
+      const res = await resetPasswordWithSecurityAnswer(username, answer, password)
       if (res.error) {
         toast.error(res.error)
         setLoading(false)
@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
           Reset your password
         </h2>
         <p className="text-sm text-muted-foreground text-pretty">
-          {step === 1 ? "Enter your NIAT ID to retrieve your security question." : "Answer your security question to reset your password."}
+          {step === 1 ? "Enter your username to retrieve your security question." : "Answer your security question to reset your password."}
         </p>
       </div>
 
@@ -83,18 +83,18 @@ export default function ForgotPasswordPage() {
         <form onSubmit={onStepOneSubmit}>
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="niatId">NIAT ID</FieldLabel>
+              <FieldLabel htmlFor="username">Username</FieldLabel>
               <Input
-                id="niatId"
-                name="niatId"
-                placeholder="NIAT2023CS045"
-                value={niatId}
-                onChange={(e) => setNiatId(e.target.value)}
+                id="username"
+                name="username"
+                placeholder="mentor_john"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </Field>
             
-            <Button type="submit" size="lg" disabled={loading || !niatId}>
+            <Button type="submit" size="lg" disabled={loading || !username}>
               {loading ? "Searching…" : "Find Account"}
             </Button>
           </FieldGroup>

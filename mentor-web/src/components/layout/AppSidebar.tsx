@@ -14,6 +14,8 @@ import {
   CalendarIcon,
   BanknoteIcon,
   BriefcaseIcon,
+  FileTextIcon,
+  GlobeIcon,
 } from "lucide-react"
 
 import { Brand } from "@/components/layout/Brand"
@@ -36,8 +38,14 @@ import { useAppState } from "@/lib/app-state-context"
 
 const mentorNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
+  { title: "Network", href: "/network", icon: UsersIcon },
+  { title: "Funding Apps", href: "/applications", icon: BanknoteIcon },
+  { title: "Meetings", href: "/meetings", icon: CalendarIcon },
   { title: "Mentoring Requests", href: "/requests", icon: BriefcaseIcon },
   { title: "My Startups", href: "/startups", icon: RocketIcon },
+  { title: "Document Center", href: "/documents", icon: FileTextIcon },
+  { title: "Job Board", href: "/jobs", icon: BriefcaseIcon },
+  { title: "Viksit Bharat", href: "/viksit-bharat", icon: GlobeIcon },
   { title: "Messages", href: "/messages", icon: BellIcon },
   { title: "Profile", href: "/profile", icon: UserIcon },
   { title: "Settings", href: "/settings", icon: SettingsIcon },
@@ -87,7 +95,6 @@ export function AppSidebar() {
         <div className="flex flex-col gap-2">
           <div className="rounded-lg border bg-card p-3 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">EDC Cell · v1</p>
-            <p className="mt-0.5">MVP preview — demo data only.</p>
           </div>
         </div>
       </SidebarFooter>

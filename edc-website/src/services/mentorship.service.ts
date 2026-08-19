@@ -68,3 +68,61 @@ export async function requestMentorship(mentorId: string, topic: string, descrip
     return { error: err.message || "An unexpected error occurred." }
   }
 }
+
+export async function getMyMentorshipRequests() {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { requests: [] }
+    
+    const supabase = getSupabase(token)
+    
+    const { data: user, error: userError } = await supabase.auth.getUser()
+    if (userError || !user.user) return { requests: [] }
+
+    const { data: member } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('student_id', user.user.id)
+      .eq('status', 'approved')
+      .maybeSingle()
+
+    if (!member || !member.team_id) return { requests: [] }
+
+    // Use admin client to bypass RLS if needed, though students should be able to read their own team's requests
+    const supabaseAdmin = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_SECRET_KEY || "", {
+      auth: { persistSession: false, autoRefreshToken: false }
+    })
+
+    const { data: requests, error } = await supabaseAdmin
+      .from('mentorship_requests')
+      .select('id, mentor_id, topic, description, status, created_at')
+      .eq('team_id', member.team_id)
+      .order('created_at', { ascending: false })
+
+    if (error || !requests) return { requests: [] }
+
+    // Fetch mentor details from mentors table
+    const mentorIds = requests.map(r => r.mentor_id)
+    const { data: mentors } = await supabaseAdmin
+      .from('mentors')
+      .select('id, name, role, company, image')
+      .in('id', mentorIds)
+
+    const enrichedRequests = requests.map(req => {
+      const mentor = mentors?.find(m => m.id === req.mentor_id)
+      return {
+        ...req,
+        mentorName: mentor?.name || 'Unknown Mentor',
+        mentorRole: mentor?.role || '',
+        mentorCompany: mentor?.company || '',
+        mentorImage: mentor?.image || null
+      }
+    })
+
+    return { requests: enrichedRequests }
+  } catch (err: any) {
+    console.error(err)
+    return { requests: [] }
+  }
+}

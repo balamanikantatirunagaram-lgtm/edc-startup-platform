@@ -54,7 +54,7 @@ export default function StartupsPage() {
                 <CardTitle>{startup.name}</CardTitle>
                 <CardDescription>{startup.industry} • {startup.stage}</CardDescription>
               </div>
-              <Button variant="outline" size="sm">Manage</Button>
+              <Button variant="outline" size="sm" onClick={() => window.location.href = `/startups/${startup.id}`}>Manage</Button>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2 mt-2">

@@ -24,6 +24,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       redirect('/login')
     }
 
+    // Role-based protection: block mentors and admins from accessing student portal
+    const role = authData.user.user_metadata?.role
+    if (role === 'mentor' || role === 'admin') {
+      redirect('/login?error=student_only')
+    }
+
     // Check suspension status from the students table
     const { data: student } = await supabase
       .from('students')

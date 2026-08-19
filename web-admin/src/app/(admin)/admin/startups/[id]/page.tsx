@@ -33,7 +33,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { getAllStartups, updateStartupStatus } from "@/services/admin.service"
+import { getAllStartups, updateStartupStatus, getStartupDocumentsAdmin, getStartupJourneyAdmin } from "@/services/admin.service"
 
 export default function AdminStartupReviewPage({
   params,
@@ -44,6 +44,8 @@ export default function AdminStartupReviewPage({
   const { id } = React.use(params)
 
   const [startup, setStartup] = React.useState<any>(null)
+  const [documents, setDocuments] = React.useState<any[]>([])
+  const [journeyStages, setJourneyStages] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
   const [status, setStatus] = React.useState("Under Review")
   const [reviewer, setReviewer] = React.useState("")
@@ -52,20 +54,29 @@ export default function AdminStartupReviewPage({
   const [submitting, setSubmitting] = React.useState(false)
 
   React.useEffect(() => {
-    getAllStartups().then(res => {
-      const found = Array.isArray(res) ? res.find((s: any) => s.id === id) : undefined
+    async function loadData() {
+      const allStartups = await getAllStartups()
+      const found = Array.isArray(allStartups) ? allStartups.find((s: any) => s.id === id) : undefined
       if (found) {
         setStartup(found)
         setStatus(found.status || "Under Review")
       }
+      
+      const docsRes = await getStartupDocumentsAdmin(id)
+      if (docsRes.documents) setDocuments(docsRes.documents)
+      
+      const journeyRes = await getStartupJourneyAdmin(id)
+      if (journeyRes.stages) setJourneyStages(journeyRes.stages)
+      
       setLoading(false)
-    })
+    }
+    loadData()
   }, [id])
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
-    const res = await updateStartupStatus(id, status)
+    const res = await updateStartupStatus(id as string, status, feedback, nextSteps, reviewer)
     setSubmitting(false)
     if (res.error) {
       toast.error(res.error)
@@ -168,6 +179,58 @@ export default function AdminStartupReviewPage({
                   <span className="text-sm font-medium mt-0.5 block">{startup.teams?.name || "N/A"}</span>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Documents Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Uploaded Documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {documents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No documents uploaded.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {documents.map((doc, idx) => (
+                    <li key={idx} className="flex justify-between items-center text-sm p-3 bg-muted/30 rounded-md border">
+                      <div>
+                        <p className="font-medium">{doc.title}</p>
+                        <p className="text-xs text-muted-foreground">{doc.doc_type}</p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => window.open(doc.file_url, '_blank')}>View</Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Journey Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Startup Journey Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {journeyStages.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No journey stages initiated.</p>
+              ) : (
+                <div className="space-y-4">
+                  {journeyStages.map((stage, idx) => (
+                    <div key={idx} className="flex flex-col gap-1 text-sm border-b pb-3 last:border-0 last:pb-0">
+                      <div className="flex justify-between font-medium">
+                        <span>{stage.stage_name}</span>
+                        <StatusBadge status={stage.status} />
+                      </div>
+                      {stage.feedback && (
+                        <p className="text-xs text-muted-foreground mt-1 bg-muted p-2 rounded">
+                          Feedback: {stage.feedback}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

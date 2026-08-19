@@ -111,3 +111,37 @@ export async function registerForEvent(eventId: string) {
     return { error: err.message }
   }
 }
+
+export async function getCourses() {
+  noStore()
+  const supabase = getSupabase()
+  const { data, error } = await supabase.from('courses').select('*').order('created_at', { ascending: false })
+  if (error) {
+    console.error('getCourses error:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function getMyCourseEnrollments() {
+  noStore()
+  try {
+    const supabase = getSupabase()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return []
+    const { data: user } = await supabase.auth.getUser(token)
+    if (!user.user) return []
+
+    const authSupabase = getAuthenticatedSupabase(token)
+    const { data, error } = await authSupabase
+      .from('course_enrollments')
+      .select('course_id, progress, completed')
+      .eq('student_id', user.user.id)
+
+    if (error) return []
+    return data || []
+  } catch {
+    return []
+  }
+}

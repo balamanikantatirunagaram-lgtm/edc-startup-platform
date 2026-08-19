@@ -66,6 +66,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { getMyProfile, updateMyProfile } from "@/services/profile.service"
+import { getGamificationPoints } from "@/services/gamification.service"
 
 // Instead of mock-data, hardcode options or keep if they are constants
 const ACADEMIC_YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Alumni"]
@@ -90,6 +91,7 @@ export default function ProfilePage() {
   const [portfolio, setPortfolio] = React.useState("")
   const [niatId, setNiatId] = React.useState("")
   const [avatarUrl, setAvatarUrl] = React.useState("")
+  const [gamificationPoints, setGamificationPoints] = React.useState(0)
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -109,6 +111,10 @@ export default function ProfilePage() {
       setSkills(profile.skills || [])
       setNiatId(profile.niat_id || "")
       setAvatarUrl(profile.avatarUrl || "")
+      
+      const { points } = await getGamificationPoints(profile.id)
+      const totalPoints = points?.reduce((acc: number, curr: any) => acc + (curr.points || 0), 0) || 0
+      setGamificationPoints(totalPoints)
     }
     setLoading(false)
   }
@@ -117,18 +123,36 @@ export default function ProfilePage() {
     fetchProfile()
   }, [])
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onloadend = async () => {
-      const base64String = reader.result as string
-      setAvatarUrl(base64String)
-      await updateMyProfile({ avatarUrl: base64String })
+    setSaving(true)
+    try {
+      const { createClient } = require('@supabase/supabase-js')
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+      const supabase = createClient(supabaseUrl, supabaseKey)
+
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file)
+
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
+      
+      setAvatarUrl(data.publicUrl)
+      await updateMyProfile({ avatarUrl: data.publicUrl })
       toast.success("Profile picture updated successfully.")
+    } catch (err: any) {
+      toast.error("Failed to upload avatar: " + err.message)
+    } finally {
+      setSaving(false)
     }
-    reader.readAsDataURL(file)
   }
 
   function addSkill(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -221,6 +245,9 @@ export default function ProfilePage() {
                 <span className="text-sm text-muted-foreground">{niatId || 'No NIAT ID'}</span>
               </div>
               {department && <Badge variant="secondary">{department}</Badge>}
+              <Badge variant="default" className="bg-amber-500 hover:bg-amber-600 text-white mt-1">
+                {gamificationPoints} Points
+              </Badge>
               <div className="flex flex-col gap-2 w-full mt-2">
                 <Button
                   type="button"

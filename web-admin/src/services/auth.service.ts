@@ -45,7 +45,15 @@ export async function login(username: string, password: string) {
       }
     }
 
-    // 2. Fetch User
+    // 2. Role-based checks based on username
+    if (username.toUpperCase().startsWith('NIAT') || username.toLowerCase().includes('@student')) {
+      return { error: "You are a student. Please use the student portal." }
+    }
+    if (username.toLowerCase().includes('@mentor') || username.toLowerCase().startsWith('mentor_')) {
+      return { error: "You are a mentor. Please use the mentor portal." }
+    }
+
+    // 3. Fetch User
     const supabase = getSupabaseAdmin()
     const { data: admin, error } = await supabase
       .from('admins')
@@ -107,6 +115,7 @@ export async function login(username: string, password: string) {
     return { success: true, name: admin.username }
   } catch (err: any) {
     console.error("Admin Login Error:", err)
+    require('fs').appendFileSync('./logs/error.log', new Date().toISOString() + ': ' + (err?.stack || String(err)) + '\n');
     return { error: "An unexpected error occurred" }
   }
 }

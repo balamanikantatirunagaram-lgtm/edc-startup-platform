@@ -20,6 +20,7 @@ import { PasswordInput } from "@/components/shared/PasswordInput"
 export default function LoginPage() {
   const router = useRouter()
   const [loading, setLoading] = React.useState(false)
+  const [isPending, startTransition] = React.useTransition()
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -28,39 +29,32 @@ export default function LoginPage() {
     const username = String(data.get("username") ?? "")
     const password = String(data.get("password") ?? "")
 
-    try {
-      const res = await login(username, password)
-      
-      if (res.error) {
-        toast.error(res.error)
+    startTransition(async () => {
+      try {
+        const res = await login(username, password)
+        
+        if (res.error) {
+          toast.error(res.error)
+          setLoading(false)
+          return
+        }
+
+        // Update the mock state's localStorage so the dashboard shows the real name
+        // This is now handled by AppStateContext fetching real data on mount.
+
+        if (res.isFirstLogin) {
+          toast.info("First login — please set up a new password and security question.")
+          router.push("/first-login")
+        } else {
+          toast.success(`Welcome back, ${res.name}.`)
+          router.push("/dashboard")
+        }
+      } catch (err) {
+        console.error("Client Catch Error:", err)
+        toast.error(err instanceof Error ? err.message : "An unexpected error occurred. Check console.")
         setLoading(false)
-        return
       }
-
-      // Update the mock state's localStorage so the dashboard shows the real name
-      localStorage.setItem('edc_user', JSON.stringify({
-        id: "u_mentor_logged_in",
-        fullName: res.name,
-        username: username,
-        role: "mentor",
-        email: `${username.toLowerCase()}@mentor.com`,
-        active: true,
-        passwordChanged: true,
-        profileCompletion: 100
-      }));
-
-      if (res.isFirstLogin) {
-        toast.info("First login — please set up a new password and security question.")
-        router.push("/first-login")
-      } else {
-        toast.success(`Welcome back, ${res.name}.`)
-        router.push("/dashboard")
-      }
-    } catch (err) {
-      console.error("Client Catch Error:", err)
-      toast.error("An unexpected error occurred.")
-      setLoading(false)
-    }
+    })
   }
 
   return (

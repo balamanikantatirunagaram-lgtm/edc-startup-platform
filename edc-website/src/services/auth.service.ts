@@ -46,6 +46,11 @@ export async function login(niatId: string, password: string) {
       }
     }
 
+    const isMentor = niatId.toLowerCase().includes('mentor') || niatId.toLowerCase().includes('@mentor');
+    if (isMentor) {
+      return { error: "You are a mentor. Please use the mentor portal." }
+    }
+
     const supabase = getSupabase()
     const email = `${niatId.toLowerCase()}@student.tartup.local`
 

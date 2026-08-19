@@ -112,7 +112,7 @@ export async function getAdminStats() {
   }
 }
 
-export async function updateStartupStatus(id: string, status: string) {
+export async function updateStartupStatus(id: string, status: string, feedback?: string, nextSteps?: string, reviewer?: string) {
   try {
     const supabase = getAdminSupabase()
     const { error } = await supabase
@@ -123,6 +123,20 @@ export async function updateStartupStatus(id: string, status: string) {
     if (error) {
       return { error: error.message }
     }
+    
+    // Also record it in journey stages
+    if (feedback || nextSteps) {
+      const combinedFeedback = `${feedback ? `Feedback: ${feedback}\n` : ''}${nextSteps ? `Next Steps: ${nextSteps}` : ''}`
+      await supabase
+        .from('startup_journey_stages')
+        .insert({
+          startup_id: id,
+          stage_name: `Status Update: ${status}`,
+          status: 'completed',
+          feedback: combinedFeedback
+        })
+    }
+    
     return { success: true }
   } catch (err: any) {
     return { error: err.message }
@@ -154,6 +168,40 @@ export async function resetStudentPassword(userId: string, newPassword: string) 
     const { error } = await supabase.auth.admin.updateUserById(userId, { password: newPassword })
     if (error) return { error: error.message }
     return { success: true }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
+export async function getStartupDocumentsAdmin(startupId: string) {
+  noStore()
+  try {
+    const supabase = getAdminSupabase()
+    const { data, error } = await supabase
+      .from('startup_documents')
+      .select('*')
+      .eq('startup_id', startupId)
+      .order('created_at', { ascending: false })
+      
+    if (error) return { error: error.message }
+    return { documents: data || [] }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
+export async function getStartupJourneyAdmin(startupId: string) {
+  noStore()
+  try {
+    const supabase = getAdminSupabase()
+    const { data, error } = await supabase
+      .from('startup_journey_stages')
+      .select('*')
+      .eq('startup_id', startupId)
+      .order('created_at', { ascending: true })
+      
+    if (error) return { error: error.message }
+    return { stages: data || [] }
   } catch (err: any) {
     return { error: err.message }
   }

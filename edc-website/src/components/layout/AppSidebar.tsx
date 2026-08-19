@@ -14,6 +14,14 @@ import {
   CalendarIcon,
   BanknoteIcon,
   BriefcaseIcon,
+  FileTextIcon,
+  BotIcon,
+  BookOpenIcon,
+  BuildingIcon,
+  GlobeIcon,
+  TrophyIcon,
+  LogOutIcon,
+  CheckCircle2Icon
 } from "lucide-react"
 
 import { Brand } from "@/components/layout/Brand"
@@ -37,9 +45,16 @@ import { useAppState } from "@/lib/app-state-context"
 const baseStudentNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
   { title: "Mentor Connect", href: "/mentors", icon: BriefcaseIcon },
+  { title: "Learning Hub", href: "/learning", icon: BookOpenIcon },
+  { title: "Document Center", href: "/documents", icon: FileTextIcon },
   { title: "Resources", href: "/resources", icon: ClipboardListIcon },
+  { title: "AI Assistant", href: "/ai-assistant", icon: BotIcon },
+  { title: "Internships & Jobs", href: "/jobs", icon: BriefcaseIcon },
+  { title: "My Applications", href: "/applications", icon: CheckCircle2Icon },
+  { title: "Incubator Connect", href: "/incubators", icon: BuildingIcon },
   { title: "Funding", href: "/funding", icon: BanknoteIcon },
   { title: "Events", href: "/events", icon: CalendarIcon },
+  { title: "Viksit Bharat", href: "/viksit-bharat", icon: GlobeIcon },
   { title: "Profile", href: "/profile", icon: UserIcon },
   { title: "Settings", href: "/settings", icon: SettingsIcon },
 ]
@@ -129,7 +144,6 @@ export function AppSidebar() {
         <div className="flex flex-col gap-2">
           <div className="rounded-lg border bg-card p-3 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">EDC Cell · v1</p>
-            <p className="mt-0.5">MVP preview — demo data only.</p>
           </div>
         </div>
       </SidebarFooter>

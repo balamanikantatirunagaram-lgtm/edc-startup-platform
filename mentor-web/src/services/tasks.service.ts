@@ -12,12 +12,25 @@ function getSupabase() {
   })
 }
 
+function getAuthenticatedSupabase(token: string) {
+  const supabaseUrl = process.env.SUPABASE_URL || ""
+  const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || ""
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } }
+  })
+}
+
 export async function getTeamTasks() {
   try {
     const status = await getMyTeamStatus()
     if (!status.hasTeam) return { tasks: [] }
 
-    const supabase = getSupabase()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { tasks: [] }
+
+    const supabase = getAuthenticatedSupabase(token)
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
@@ -36,7 +49,11 @@ export async function createTask(title: string, description: string, assignedTo:
     const status = await getMyTeamStatus()
     if (!status.hasTeam || !status.isLeader) return { error: "Not authorized" }
 
-    const supabase = getSupabase()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+
+    const supabase = getAuthenticatedSupabase(token)
     const { error } = await supabase
       .from('tasks')
       .insert({
@@ -59,7 +76,11 @@ export async function updateTaskStatus(taskId: string, newStatus: string) {
     const teamStatus = await getMyTeamStatus()
     if (!teamStatus.hasTeam) return { error: "Not authorized" }
 
-    const supabase = getSupabase()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+
+    const supabase = getAuthenticatedSupabase(token)
     const { error } = await supabase
       .from('tasks')
       .update({ status: newStatus })

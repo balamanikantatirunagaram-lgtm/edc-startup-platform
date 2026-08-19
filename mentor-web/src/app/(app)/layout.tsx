@@ -24,15 +24,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       redirect('/login')
     }
 
-    // Check suspension status from the students table
-    const { data: student } = await supabase
-      .from('students')
-      .select('is_suspended')
-      .eq('id', authData.user.id)
-      .single()
-
-    if (student?.is_suspended) {
-      redirect('/suspended')
+    // Role-based protection: only allow mentors
+    const role = authData.user.user_metadata?.role
+    if (role !== 'mentor') {
+      redirect('/login?error=mentor_only')
     }
   }
 

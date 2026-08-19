@@ -109,12 +109,59 @@ export async function updateRequestStatus(requestId: string, status: 'accepted' 
     
     const supabase = getSupabase(token)
     
+    // Get the request details first
+    const { data: request } = await supabase
+      .from('mentorship_requests')
+      .select('team_id, mentor_id')
+      .eq('id', requestId)
+      .single()
+
     const { error } = await supabase
       .from('mentorship_requests')
       .update({ status })
       .eq('id', requestId)
 
     if (error) throw error
+
+    // Send notification
+    if (request && request.team_id) {
+      // Need a service role client to bypass RLS for fetching teams/users reliably if mentor can't see team details
+      const supabaseAdmin = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_SECRET_KEY || "", {
+        auth: { persistSession: false, autoRefreshToken: false }
+      })
+      
+      const { data: team } = await supabaseAdmin
+        .from('teams')
+        .select('leader_id')
+        .eq('id', request.team_id)
+        .single()
+        
+      const { data: mentorRes } = await supabaseAdmin.auth.admin.getUserById(request.mentor_id)
+      const mentor = mentorRes?.user
+      
+      const mentorName = mentor?.user_metadata?.name || mentor?.user_metadata?.full_name || 'A mentor'
+
+      if (team && team.leader_id) {
+        const { createNotification } = await import('./notifications.service')
+        
+        if (status === 'accepted') {
+          await createNotification(
+            team.leader_id, 
+            'Mentorship Request Accepted!', 
+            `${mentorName} has agreed to advise your startup. Check your dashboard to start chatting.`, 
+            'success'
+          )
+        } else if (status === 'declined') {
+          await createNotification(
+            team.leader_id, 
+            'Mentorship Request Declined', 
+            `Unfortunately, ${mentorName} is currently unavailable to take on new mentees.`, 
+            'error'
+          )
+        }
+      }
+    }
+
     return { success: true }
   } catch (error: any) {
     return { error: error.message }

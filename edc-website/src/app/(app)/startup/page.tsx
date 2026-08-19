@@ -4,6 +4,8 @@ import * as React from "react"
 import { getMyStartup, updateMyStartup, deleteMyStartup } from "@/services/startup.service"
 import { getTeamTasks, createTask, updateTaskStatus } from "@/services/tasks.service"
 import { getMyTeamStatus, getTeamRequests, handleTeamRequest, searchStudentsByNiat, inviteStudent, removeTeamMember } from "@/services/team.service"
+import { getStartupApplications, updateApplicationStatus } from "@/services/jobs.service"
+import { getMyMentorshipRequests } from "@/services/mentorship.service"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -12,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2Icon, RocketIcon, UsersIcon, ListTodoIcon, SearchIcon, SendIcon, CheckIcon, XIcon, UserMinusIcon, TrashIcon } from "lucide-react"
+import { Loader2Icon, RocketIcon, UsersIcon, ListTodoIcon, SearchIcon, SendIcon, CheckIcon, XIcon, UserMinusIcon, TrashIcon, BriefcaseIcon, GraduationCapIcon } from "lucide-react"
 import QRCode from "react-qr-code"
 
 export default function StartupCommandCenter() {
@@ -40,6 +42,13 @@ export default function StartupCommandCenter() {
   const [newTaskAssignee, setNewTaskAssignee] = React.useState("")
   const [isCreatingTask, setIsCreatingTask] = React.useState(false)
 
+  // Recruitment States
+  const [applications, setApplications] = React.useState<any[]>([])
+  const [updatingApp, setUpdatingApp] = React.useState<string | null>(null)
+
+  // Mentor States
+  const [mentorRequests, setMentorRequests] = React.useState<any[]>([])
+
   React.useEffect(() => {
     loadEverything()
   }, [])
@@ -59,26 +68,36 @@ export default function StartupCommandCenter() {
     const tStatus = await getMyTeamStatus()
     setStatus(tStatus)
 
-    if (tStatus.hasTeam) {
-      const [startupRes, reqsRes, tasksRes] = await Promise.all([
-        getMyStartup(),
-        tStatus.isLeader ? getTeamRequests() : Promise.resolve({ requests: [] }),
-        getTeamTasks()
-      ])
-
+    if (tStatus?.hasTeam) {
+      const startupRes = await getMyStartup()
       if (startupRes.startup) {
         setCurrentStartup(startupRes.startup)
         setPortfolioData({
+          name: startupRes.startup.name,
           tagline: startupRes.startup.tagline || "",
-          problem: startupRes.startup.problem || "",
-          solution: startupRes.startup.solution || "",
+          problem: startupRes.startup.problem_statement || "",
+          solution: startupRes.startup.proposed_solution || "",
           pitchDeck: startupRes.startup.attachments?.pitchDeck || "",
-          website: startupRes.startup.attachments?.website || "",
+          website: startupRes.startup.attachments?.website || ""
         })
+
+        // Fetch applications if leader
+        if (tStatus.isLeader) {
+          const appsRes = await getStartupApplications()
+          if (appsRes.applications) setApplications(appsRes.applications)
+        }
       }
-      
-      if (reqsRes.requests) setRequests(reqsRes.requests)
+
+      const tasksRes = await getTeamTasks()
       if (tasksRes.tasks) setTasks(tasksRes.tasks)
+
+      if (tStatus.isLeader) {
+        const reqsRes = await getTeamRequests()
+        if (reqsRes.requests) setRequests(reqsRes.requests)
+      }
+
+      const mentorsRes = await getMyMentorshipRequests()
+      if (mentorsRes.requests) setMentorRequests(mentorsRes.requests)
     }
     
     setLoading(false)
@@ -190,6 +209,18 @@ export default function StartupCommandCenter() {
     }
   }
 
+  // --- RECRUITMENT LOGIC ---
+  const handleApplicationStatus = async (appId: string, newStatus: string) => {
+    setUpdatingApp(appId)
+    const res = await updateApplicationStatus(appId, newStatus)
+    setUpdatingApp(null)
+    if (res.error) toast.error(res.error)
+    else {
+      toast.success(`Application marked as ${newStatus}.`)
+      setApplications(prev => prev.map(app => app.id === appId ? { ...app, status: newStatus } : app))
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
@@ -210,6 +241,7 @@ export default function StartupCommandCenter() {
   }
 
   const isLeader = status.isLeader
+  const tabColumns = isLeader ? 5 : 4
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto mt-6 px-4 pb-20 w-full">
@@ -224,17 +256,29 @@ export default function StartupCommandCenter() {
       </div>
 
       <Tabs defaultValue="portfolio" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-12">
-          <TabsTrigger value="portfolio" className="h-full gap-2"><RocketIcon className="size-4" /> Portfolio</TabsTrigger>
+        <TabsList className={`grid w-full h-12`} style={{ gridTemplateColumns: `repeat(${tabColumns}, minmax(0, 1fr))` }}>
+          <TabsTrigger value="portfolio" className="h-full gap-2"><RocketIcon className="size-4 hidden sm:block" /> Portfolio</TabsTrigger>
           <TabsTrigger value="team" className="h-full gap-2">
-            <UsersIcon className="size-4" /> Team & Invites
+            <UsersIcon className="size-4 hidden sm:block" /> Team
             {requests.length > 0 && (
               <span className="ml-1 bg-red-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
                 {requests.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="h-full gap-2"><ListTodoIcon className="size-4" /> Tasks</TabsTrigger>
+          <TabsTrigger value="tasks" className="h-full gap-2"><ListTodoIcon className="size-4 hidden sm:block" /> Tasks</TabsTrigger>
+          <TabsTrigger value="mentors" className="h-full gap-2">
+            <GraduationCapIcon className="size-4 hidden sm:block" /> Mentors
+          </TabsTrigger>
+          {isLeader && (
+            <TabsTrigger value="recruitment" className="h-full gap-2"><BriefcaseIcon className="size-4 hidden sm:block" /> Jobs
+            {applications.filter(a => a.status === 'pending').length > 0 && (
+              <span className="ml-1 bg-blue-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                {applications.filter(a => a.status === 'pending').length}
+              </span>
+            )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* PORTFOLIO TAB */}
@@ -487,6 +531,110 @@ export default function StartupCommandCenter() {
             )}
           </div>
         </TabsContent>
+        {isLeader && (
+          <TabsContent value="recruitment" className="mt-6 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Job Applications</CardTitle>
+                <CardDescription>Review students who applied for your roles.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {applications.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground">No applications received yet.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {applications.map((app) => (
+                      <div key={app.id} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 border rounded-xl bg-card">
+                        <div className="space-y-1">
+                          <div className="font-semibold">{app.students?.name}</div>
+                          <div className="text-sm text-muted-foreground">Applied for: <span className="font-medium text-foreground">{app.job_postings?.title}</span></div>
+                          <div className="text-sm text-muted-foreground">Dept: {app.students?.department} • Year: {app.students?.academicYear}</div>
+                          <div className="text-sm mt-2 p-2 bg-muted rounded-md italic">"{app.cover_letter}"</div>
+                          {app.resume_url && (
+                            <a href={app.resume_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">View Resume</a>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <span className="text-xs font-semibold uppercase px-2 py-1 bg-secondary rounded-md">{app.status}</span>
+                          {app.status === 'pending' || app.status === 'reviewed' ? (
+                            <div className="flex gap-2 mt-2">
+                              <Button size="sm" variant="outline" className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200" onClick={() => handleApplicationStatus(app.id, 'accepted')} disabled={updatingApp === app.id}>Accept</Button>
+                              <Button size="sm" variant="outline" className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200" onClick={() => handleApplicationStatus(app.id, 'rejected')} disabled={updatingApp === app.id}>Reject</Button>
+                            </div>
+                          ) : (
+                            <Button size="sm" variant="ghost" onClick={() => handleApplicationStatus(app.id, 'reviewed')} disabled={updatingApp === app.id}>Reset to Reviewed</Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+        <TabsContent value="mentors" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Mentors</CardTitle>
+              <CardDescription>Mentors you have requested to connect with.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {mentorRequests.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground">
+                  <GraduationCapIcon className="size-10 mx-auto mb-3 opacity-20" />
+                  <p>No mentors requested yet.</p>
+                  <Button variant="link" onClick={() => window.location.href = '/mentors'}>Browse Mentors</Button>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {mentorRequests.map(req => (
+                    <Card key={req.id} className="overflow-hidden">
+                      <CardHeader className="bg-muted/30 pb-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex gap-3 items-center">
+                            {req.mentorImage ? (
+                               <img src={req.mentorImage} alt={req.mentorName} className="size-10 rounded-full object-cover border" />
+                            ) : (
+                              <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
+                                {req.mentorName.charAt(0)}
+                              </div>
+                            )}
+                            <div>
+                              <CardTitle className="text-base">{req.mentorName}</CardTitle>
+                              <CardDescription className="text-xs">{req.mentorRole} @ {req.mentorCompany}</CardDescription>
+                            </div>
+                          </div>
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                            req.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                            req.status === 'declined' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {req.status.toUpperCase()}
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-4">
+                        <p className="font-medium text-sm mb-1">{req.topic}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{req.description}</p>
+                        {req.status === 'accepted' ? (
+                          <Button className="w-full" variant="default" onClick={() => window.location.href=`/startup/messages/${req.mentor_id}`}>
+                            Message Mentor
+                          </Button>
+                        ) : (
+                          <Button className="w-full" variant="outline" disabled>
+                            {req.status === 'pending' ? 'Awaiting Response...' : 'Declined'}
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </Tabs>
     </div>
   )

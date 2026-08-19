@@ -43,6 +43,11 @@ export async function login(username: string, password: string) {
       }
     }
 
+    const isStudent = username.toUpperCase().startsWith('NIAT') || username.toLowerCase().includes('@student');
+    if (isStudent) {
+      return { error: "You are a student. Please use the student portal." }
+    }
+
     const supabase = getSupabase()
     const email = `${username.toLowerCase()}@mentor.com`
 
@@ -61,7 +66,8 @@ export async function login(username: string, password: string) {
     }
 
     if (data.user?.user_metadata?.role !== 'mentor') {
-      return { error: "Account not found" }
+      // In case they somehow logged in but aren't a mentor
+      return { error: "You are a student. Please use the student portal." }
     }
     
     rateLimitMap.delete(limitKey)
@@ -82,6 +88,7 @@ export async function login(username: string, password: string) {
     return { success: true, isFirstLogin, name }
   } catch (err: any) {
     console.error("Login Error:", err)
+    require('fs').appendFileSync('./logs/error.log', new Date().toISOString() + ': ' + (err?.stack || String(err)) + '\n');
     return { error: err?.message || String(err) }
   }
 }
@@ -133,9 +140,9 @@ async function getUserByEmail(email: string) {
   return null;
 }
 
-export async function getSecurityQuestion(niatId: string) {
+export async function getSecurityQuestion(username: string) {
   try {
-    const email = `${niatId.toLowerCase()}@student.tartup.local`
+    const email = `${username.toLowerCase()}@mentor.com`
     const user = await getUserByEmail(email)
     
     if (!user) return { error: "User not found" }
@@ -150,10 +157,10 @@ export async function getSecurityQuestion(niatId: string) {
   }
 }
 
-export async function resetPasswordWithSecurityAnswer(niatId: string, answer: string, newPassword: string) {
+export async function resetPasswordWithSecurityAnswer(username: string, answer: string, newPassword: string) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
-    const email = `${niatId.toLowerCase()}@student.tartup.local`
+    const email = `${username.toLowerCase()}@mentor.com`
     const user = await getUserByEmail(email)
     
     if (!user) return { error: "User not found" }

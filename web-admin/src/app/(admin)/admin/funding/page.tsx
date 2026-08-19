@@ -17,10 +17,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { getFundingOpportunities, createFundingOpportunity, deleteFundingOpportunity, updateFundingOpportunity } from "@/services/content.service"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { getFundingOpportunities, createFundingOpportunity, deleteFundingOpportunity, updateFundingOpportunity, getFundingApplications } from "@/services/funding.service"
 
 export default function AdminFundingPage() {
   const [funding, setFunding] = React.useState<any[]>([])
+  const [applications, setApplications] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -38,8 +40,12 @@ export default function AdminFundingPage() {
 
   const load = React.useCallback(async () => {
     setLoading(true)
-    const data = await getFundingOpportunities()
-    setFunding(data)
+    const [fundData, appData] = await Promise.all([
+      getFundingOpportunities(),
+      getFundingApplications()
+    ])
+    setFunding(fundData)
+    setApplications(appData)
     setLoading(false)
   }, [])
 
@@ -155,12 +161,19 @@ export default function AdminFundingPage() {
         </Dialog>
       </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">All Funding Opportunities ({funding.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
+      <Tabs defaultValue="opportunities">
+        <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+          <TabsTrigger value="opportunities">Funding Opportunities</TabsTrigger>
+          <TabsTrigger value="applications">Applications</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="opportunities" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">All Funding Opportunities ({funding.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {loading ? (
             <div className="p-8 flex justify-center items-center">
                <Loader2 className="animate-spin text-muted-foreground size-6" />
             </div>
@@ -208,6 +221,44 @@ export default function AdminFundingPage() {
           )}
         </CardContent>
       </Card>
+      </TabsContent>
+
+      <TabsContent value="applications" className="mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Applications ({applications.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-muted-foreground size-6" /></div>
+            ) : applications.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground italic text-sm">No applications found.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b bg-muted/30 text-xs font-semibold text-muted-foreground uppercase">
+                      <th className="p-4">Startup ID</th>
+                      <th className="p-4">Opportunity</th>
+                      <th className="p-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y text-sm">
+                    {applications.map((item) => (
+                      <tr key={item.id} className="hover:bg-muted/10 transition-colors">
+                        <td className="p-4 font-medium">{item.startup_id}</td>
+                        <td className="p-4 text-muted-foreground">{item.funding_opportunities?.title || item.opportunity_id}</td>
+                        <td className="p-4">{item.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+      </Tabs>
     </div>
   )
 }

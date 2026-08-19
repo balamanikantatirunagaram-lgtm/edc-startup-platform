@@ -19,6 +19,29 @@ function getSupabaseAdmin() {
   })
 }
 
+export async function getAllStartups() {
+  try {
+    const supabase = getSupabaseAdmin()
+    const { data: startups, error } = await supabase
+      .from('startups')
+      .select('*')
+
+    if (error) return { error: error.message }
+    return startups
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
+function getAuthenticatedSupabase(token: string) {
+  const supabaseUrl = process.env.SUPABASE_URL || ""
+  const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || ""
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } }
+  })
+}
+
 export async function getMyStartup() {
   try {
     const supabase = getSupabase()
@@ -29,8 +52,9 @@ export async function getMyStartup() {
     const { data: user } = await supabase.auth.getUser(token)
     if (!user.user) return { error: "Not authenticated" }
 
+    const authSupabase = getAuthenticatedSupabase(token)
     // Find the team the user is an approved member of
-    const { data: memberRecord } = await supabase
+    const { data: memberRecord } = await authSupabase
       .from('team_members')
       .select('team_id, teams(id, name, leader_id)')
       .eq('student_id', user.user.id)
@@ -44,7 +68,7 @@ export async function getMyStartup() {
     const teamId = memberRecord.team_id
 
     // Fetch the startup
-    const { data: startupData } = await supabase
+    const { data: startupData } = await authSupabase
       .from('startups')
       .select('*')
       .eq('team_id', teamId)
@@ -55,7 +79,8 @@ export async function getMyStartup() {
     }
 
     // Fetch team members
-    const { data: teamMembersDb } = await supabase
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data: teamMembersDb } = await supabaseAdmin
       .from('team_members')
       .select('student_id')
       .eq('team_id', teamId)
@@ -123,8 +148,9 @@ export async function updateMyStartup(data: any) {
     const { data: user } = await supabase.auth.getUser(token)
     if (!user.user) return { error: "Not authenticated" }
 
+    const authSupabase = getAuthenticatedSupabase(token)
     // Find the team
-    const { data: memberRecord } = await supabase
+    const { data: memberRecord } = await authSupabase
       .from('team_members')
       .select('team_id')
       .eq('student_id', user.user.id)
@@ -148,7 +174,7 @@ export async function updateMyStartup(data: any) {
       if (data.attachments.documents !== undefined) updatePayload.documents = data.attachments.documents
     }
 
-    const { error } = await supabase
+    const { error } = await authSupabase
       .from('startups')
       .update(updatePayload)
       .eq('team_id', memberRecord.team_id)
@@ -202,6 +228,76 @@ export async function deleteMyStartup() {
     await supabaseAdmin.from('team_members').delete().eq('team_id', teamId)
     await supabaseAdmin.from('teams').delete().eq('id', teamId)
 
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
+export async function getStartupDocuments(startupId: string) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    
+    const { data: documents, error } = await supabaseAdmin
+      .from('startup_documents')
+      .select('*')
+      .eq('startup_id', startupId)
+      .order('created_at', { ascending: false })
+
+    if (error) return { error: error.message }
+    return { documents }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
+export async function getStartupJourney(startupId: string) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    
+    const { data: stages, error } = await supabaseAdmin
+      .from('startup_journey_stages')
+      .select('*')
+      .eq('startup_id', startupId)
+      .order('created_at', { ascending: false })
+
+    if (error) return { error: error.message }
+    return { stages }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
+export async function addJourneyStageFeedback(stageId: string, feedback: string) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+    
+    const supabase = getSupabase()
+    const { data: user } = await supabase.auth.getUser(token)
+    if (!user.user) return { error: "Not authenticated" }
+
+    // Use admin client to bypass RLS, appending feedback to existing
+    const { data: existingStage, error: getErr } = await supabaseAdmin
+      .from('startup_journey_stages')
+      .select('feedback')
+      .eq('id', stageId)
+      .single()
+
+    if (getErr) return { error: getErr.message }
+
+    const mentorName = user.user.user_metadata?.name || 'Mentor'
+    const newFeedback = `${existingStage.feedback ? existingStage.feedback + '\n\n' : ''}[${new Date().toLocaleDateString()}] ${mentorName}:\n${feedback}`
+
+    const { error: updateErr } = await supabaseAdmin
+      .from('startup_journey_stages')
+      .update({ feedback: newFeedback })
+      .eq('id', stageId)
+
+    if (updateErr) return { error: updateErr.message }
+    
     return { success: true }
   } catch (err: any) {
     return { error: err.message }

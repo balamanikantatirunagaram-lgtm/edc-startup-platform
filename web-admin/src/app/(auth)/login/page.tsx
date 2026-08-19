@@ -18,6 +18,7 @@ import { PasswordInput } from "@/components/shared/PasswordInput"
 export default function LoginPage() {
   const router = useRouter()
   const [loading, setLoading] = React.useState(false)
+  const [isPending, startTransition] = React.useTransition()
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -26,21 +27,24 @@ export default function LoginPage() {
     const username = String(data.get("username") ?? "")
     const password = String(data.get("password") ?? "")
 
-    try {
-      const res = await login(username, password)
-      
-      if (res.error) {
-        toast.error(res.error)
-        setLoading(false)
-        return
-      }
+    startTransition(async () => {
+      try {
+        const res = await login(username, password)
+        
+        if (res.error) {
+          toast.error(res.error)
+          setLoading(false)
+          return
+        }
 
-      toast.success(`Welcome back, ${res.name}.`)
-      router.push("/admin")
-    } catch (err) {
-      toast.error("An unexpected error occurred.")
-      setLoading(false)
-    }
+        toast.success(`Welcome back, ${res.name}.`)
+        router.push("/admin")
+      } catch (err) {
+        console.error("Client Catch Error:", err)
+        toast.error(err instanceof Error ? err.message : "An unexpected error occurred. Check console.")
+        setLoading(false)
+      }
+    })
   }
 
   return (

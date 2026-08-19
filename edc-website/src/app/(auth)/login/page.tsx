@@ -20,6 +20,7 @@ import { PasswordInput } from "@/components/shared/PasswordInput"
 export default function LoginPage() {
   const router = useRouter()
   const [loading, setLoading] = React.useState(false)
+  const [isPending, startTransition] = React.useTransition()
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -37,30 +38,6 @@ export default function LoginPage() {
         return
       }
 
-      // Update the mock state's localStorage so the dashboard shows the real name
-      const existingUserStr = localStorage.getItem('edc_user');
-      const existingUser = existingUserStr ? JSON.parse(existingUserStr) : {
-        id: "u_logged_in",
-        fullName: "Student",
-        niatId: "Unknown",
-        collegeId: "",
-        phone: "",
-        email: "",
-        department: "",
-        academicYear: "",
-        skills: [],
-        role: "student",
-        active: true,
-        passwordChanged: true,
-        profileCompletion: 20
-      };
-      
-      localStorage.setItem('edc_user', JSON.stringify({ 
-        ...existingUser, 
-        fullName: res.name, 
-        niatId: niatId 
-      }));
-
       if (res.isFirstLogin) {
         toast.info("First login — please set up a new password and security question.")
         router.push("/first-login")
@@ -69,7 +46,8 @@ export default function LoginPage() {
         router.push("/dashboard")
       }
     } catch (err) {
-      toast.error("An unexpected error occurred.")
+      console.error("Client Catch Error:", err)
+      toast.error(err instanceof Error ? `Fetch Error: ${err.message}` : "An unexpected error occurred. Check console.")
       setLoading(false)
     }
   }

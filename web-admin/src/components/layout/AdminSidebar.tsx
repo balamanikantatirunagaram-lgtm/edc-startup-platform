@@ -13,6 +13,9 @@ import {
   GraduationCapIcon,
   ShieldCheckIcon,
   LogOutIcon,
+  FileTextIcon,
+  BuildingIcon,
+  GlobeIcon,
 } from "lucide-react"
 
 import { Brand } from "@/components/layout/Brand"
@@ -37,7 +40,15 @@ const adminNav = [
   { title: "Events", href: "/admin/events", icon: CalendarIcon },
   { title: "Resources", href: "/admin/resources", icon: LibraryIcon },
   { title: "Mentors", href: "/admin/mentors", icon: UsersIcon },
+  { title: "Mentorships", href: "/admin/mentorships", icon: GraduationCapIcon },
   { title: "Funding", href: "/admin/funding", icon: BanknoteIcon },
+  { title: "Network", href: "/admin/network", icon: UsersIcon },
+  { title: "Document Center", href: "/admin/documents", icon: FileTextIcon },
+  { title: "Incubators", href: "/admin/incubators", icon: BuildingIcon },
+  { title: "Jobs", href: "/admin/jobs", icon: BriefcaseIcon },
+  { title: "Viksit Bharat", href: "/admin/viksit-bharat", icon: GlobeIcon },
+  { title: "Impact", href: "/admin/impact", icon: GlobeIcon },
+  { title: "Gamification", href: "/admin/gamification", icon: ShieldCheckIcon },
 ]
 
 export function AdminSidebar() {
@@ -114,7 +125,6 @@ export function AdminSidebar() {
           </button>
           <div className="rounded-lg border bg-card p-3 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">EDC Cell · Admin Panel</p>
-            <p className="mt-0.5">MVP preview — demo data only.</p>
           </div>
         </div>
       </SidebarFooter>
