@@ -84,7 +84,7 @@ export async function createTeam(data: any) {
       // Optional: rollback team creation if this was a real transaction
     } else {
       // Update the team with the startup_id
-      await authSupabase.from('teams').update({ startup_id: startupData.id }).eq('id', teamData.id)
+      await supabaseAdmin.from('teams').update({ startup_id: startupData.id }).eq('id', teamData.id)
     }
 
     return { success: true, team: teamData }
@@ -220,7 +220,7 @@ export async function handleTeamRequest(requestId: string, status: 'approved' | 
     // Verify user is leader or target student
     const { data: request } = await supabaseAdmin.from('team_members').select('team_id, student_id').eq('id', requestId).single()
     if (!request) return { error: "Request not found" }
-    const { data: team } = await authSupabase.from('teams').select('id, name').eq('id', request.team_id).eq('leader_id', user.user.id).single()
+    const { data: team } = await supabaseAdmin.from('teams').select('id, name').eq('id', request.team_id).eq('leader_id', user.user.id).single()
     const isTargetStudent = request.student_id === user.user.id
     if (!team && !isTargetStudent) return { error: "Not authorized" }
 
@@ -390,7 +390,7 @@ export async function removeTeamMember(studentId: string, teamId: string) {
     const supabaseAdmin = getSupabaseAdmin()
 
     // Verify leader
-    const { data: team } = await authSupabase.from('teams').select('leader_id').eq('id', teamId).single()
+    const { data: team } = await supabaseAdmin.from('teams').select('leader_id').eq('id', teamId).single()
     if (!team || team.leader_id !== user.user.id) {
       return { error: "Only the leader can remove members." }
     }
@@ -448,5 +448,39 @@ export async function getMyTeamStatus() {
     }
   } catch (err) {
     return { hasTeam: false }
+  }
+}
+
+export async function getMyPendingRequests() {
+  try {
+    const supabase = getSupabase()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { requests: [] }
+
+    const { data: user } = await supabase.auth.getUser(token)
+    if (!user.user) return { requests: [] }
+
+    const authSupabase = getAuthenticatedSupabase(token)
+
+    const { data, error } = await authSupabase
+      .from('team_members')
+      .select('id, team_id, created_at, status, teams(name)')
+      .eq('student_id', user.user.id)
+      .eq('status', 'pending')
+
+    if (error || !data) return { requests: [] }
+
+    return { 
+      requests: data.map((req: any) => ({
+        id: req.id,
+        teamId: req.team_id,
+        teamName: req.teams?.name || 'A team',
+        createdAt: req.created_at,
+        status: req.status
+      }))
+    }
+  } catch (err: any) {
+    return { requests: [] }
   }
 }

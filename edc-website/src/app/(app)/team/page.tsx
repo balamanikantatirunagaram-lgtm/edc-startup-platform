@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { joinTeam, getMyTeamStatus, getMyInvitations, respondToInvitation } from "@/services/team.service"
+import { joinTeam, getMyTeamStatus, getMyInvitations, respondToInvitation, getMyPendingRequests } from "@/services/team.service"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { QRScanner } from "@/components/shared/QrScanner"
@@ -18,6 +18,7 @@ export default function TeamConnectPage() {
   const [loading, setLoading] = useState(false)
   const [statusLoading, setStatusLoading] = useState(true)
   const [invitations, setInvitations] = useState<any[]>([])
+  const [pendingRequests, setPendingRequests] = useState<any[]>([])
   const router = useRouter()
 
   useEffect(() => {
@@ -27,16 +28,18 @@ export default function TeamConnectPage() {
         router.replace("/startup")
       } else {
         setStatusLoading(false)
-        loadInvitations()
+        loadData()
       }
     })
   }, [router])
 
-  const loadInvitations = async () => {
-    const res = await getMyInvitations()
-    if (res.invitations) {
-      setInvitations(res.invitations)
-    }
+  const loadData = async () => {
+    const [invRes, pendRes] = await Promise.all([
+      getMyInvitations(),
+      getMyPendingRequests()
+    ])
+    if (invRes.invitations) setInvitations(invRes.invitations)
+    if (pendRes.requests) setPendingRequests(pendRes.requests)
   }
 
   const handleJoin = async (teamCode: string) => {
@@ -50,6 +53,7 @@ export default function TeamConnectPage() {
       toast.error(res.error)
     } else if (res.success) {
       toast.success(`Join request sent to ${res.teamName}!`)
+      loadData()
     }
   }
 
@@ -115,6 +119,28 @@ export default function TeamConnectPage() {
                   <Button variant="default" size="icon" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleInviteResponse(inv.id, 'approved')}>
                     <CheckIcon className="size-4" />
                   </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {pendingRequests.length > 0 && (
+        <Card className="border-orange-500/30 shadow-sm">
+          <CardHeader>
+            <CardTitle>Pending Join Requests</CardTitle>
+            <CardDescription>You have requested to join these teams.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {pendingRequests.map(req => (
+              <div key={req.id} className="flex items-center justify-between p-4 rounded-xl border bg-card">
+                <div className="flex flex-col">
+                  <span className="font-medium text-lg">{req.teamName}</span>
+                  <span className="text-xs text-muted-foreground">Requested on {new Date(req.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="px-3 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 rounded-full text-xs font-medium border border-orange-200 dark:border-orange-800">
+                  Pending Approval
                 </div>
               </div>
             ))}
