@@ -35,12 +35,11 @@ import { logout } from "@/services/auth.service"
 
 const adminNav = [
   { title: "Overview", href: "/admin", icon: LayoutDashboardIcon },
-  { title: "Students", href: "/admin/students", icon: UsersIcon },
+  { title: "Users", href: "/admin/users", icon: UsersIcon },
   { title: "Startups", href: "/admin/startups", icon: ClipboardListIcon },
   { title: "Events", href: "/admin/events", icon: CalendarIcon },
   { title: "Learning Hub", href: "/admin/learning-hub", icon: GraduationCapIcon },
   { title: "Resources", href: "/admin/resources", icon: LibraryIcon },
-  { title: "Mentors", href: "/admin/mentors", icon: UsersIcon },
   { title: "Mentorships", href: "/admin/mentorships", icon: GraduationCapIcon },
   { title: "Funding", href: "/admin/funding", icon: BanknoteIcon },
   { title: "Network", href: "/admin/network", icon: UsersIcon },
