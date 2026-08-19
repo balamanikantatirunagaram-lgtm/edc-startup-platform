@@ -277,12 +277,13 @@ export default function AdminLearningHubPage() {
                     )}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Button
-                        render={<Link href={`/admin/learning-hub/${course.id}`} />}
-                        nativeButton={false}
+                        asChild
                         variant="secondary"
                         size="sm"
                       >
-                        Manage Modules
+                        <Link href={`/admin/learning-hub/${course.id}`}>
+                          Manage Modules
+                        </Link>
                       </Button>
                     </div>
                   </div>
