@@ -166,25 +166,24 @@ export async function getTeamRequests() {
 
     const supabaseAdmin = getSupabaseAdmin()
 
-    // Find the team the user is actively leading
-    const { data: member } = await supabaseAdmin
-      .from('team_members')
-      .select('team_id')
-      .eq('student_id', user.user.id)
-      .eq('status', 'approved')
-      .limit(1)
-      .maybeSingle()
+    // Find teams the user is leading
+    const { data: teams } = await supabaseAdmin
+      .from('teams')
+      .select('id')
+      .eq('leader_id', user.user.id)
 
-    if (!member) return { requests: [] }
+    if (!teams || teams.length === 0) return { requests: [] }
+
+    const teamIds = teams.map((t: any) => t.id)
 
     const { data: requests, error: reqError } = await supabaseAdmin
       .from('team_members')
       .select('*')
-      .eq('team_id', member.team_id)
+      .in('team_id', teamIds)
       .in('status', ['pending', 'invited'])
 
     if (reqError || !requests || requests.length === 0) {
-      return { success: true, teamId: member.team_id, requests: [] }
+      return { success: true, teamId: teamIds[0], requests: [] }
     }
 
     const studentIds = requests.map((r: any) => r.student_id)
@@ -201,7 +200,7 @@ export async function getTeamRequests() {
       }
     })
 
-    return { success: true, teamId: team.id, requests: enrichedRequests }
+    return { success: true, teamId: teamIds[0], requests: enrichedRequests }
   } catch (err: any) {
     return { error: err.message }
   }
@@ -214,14 +213,20 @@ export async function handleTeamRequest(requestId: string, status: 'approved' | 
     const token = cookieStore.get('sb-access-token')?.value
     if (!token) return { error: "Not authenticated" }
 
-    const authSupabase = getAuthenticatedSupabase(token)
+    const { data: { user } } = await supabase.auth.getUser(token)
+    if (!user) return { error: "Not authenticated" }
+
     const supabaseAdmin = getSupabaseAdmin()
 
     // Verify user is leader or target student
     const { data: request } = await supabaseAdmin.from('team_members').select('team_id, student_id').eq('id', requestId).single()
     if (!request) return { error: "Request not found" }
-    const { data: team } = await supabaseAdmin.from('teams').select('id, name').eq('id', request.team_id).eq('leader_id', user.user.id).single()
-    const isTargetStudent = request.student_id === user.user.id
+    
+    // Use admin client to bypass strict RLS that might be breaking leader lookup
+    const { data: teams } = await supabaseAdmin.from('teams').select('id, name').eq('leader_id', user.id)
+    const team = teams?.find(t => t.id === request.team_id)
+    
+    const isTargetStudent = request.student_id === user.id
     if (!team && !isTargetStudent) return { error: "Not authorized" }
 
     const { error } = await supabaseAdmin
