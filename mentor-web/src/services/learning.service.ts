@@ -1,6 +1,7 @@
 "use server"
 
 import { getAuthenticatedSupabase } from "@/lib/supabase/client"
+import { cookies } from "next/headers"
 
 export async function getAllCourses() {
   const supabase = await getAuthenticatedSupabase()
