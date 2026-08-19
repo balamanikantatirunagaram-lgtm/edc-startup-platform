@@ -48,7 +48,6 @@ const baseStudentNav = [
   { title: "Document Center", href: "/documents", icon: FileTextIcon },
   { title: "Resources", href: "/resources", icon: ClipboardListIcon },
   { title: "Internships & Jobs", href: "/jobs", icon: BriefcaseIcon },
-  { title: "My Applications", href: "/applications", icon: CheckCircle2Icon },
   { title: "Funding", href: "/funding", icon: BanknoteIcon },
   { title: "Events", href: "/events", icon: CalendarIcon },
   { title: "Viksit Bharat", href: "/viksit-bharat", icon: GlobeIcon },

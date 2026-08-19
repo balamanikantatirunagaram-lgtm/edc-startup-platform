@@ -16,6 +16,7 @@ import {
   BriefcaseIcon,
   FileTextIcon,
   GlobeIcon,
+  BookOpenIcon,
 } from "lucide-react"
 
 import { Brand } from "@/components/layout/Brand"
@@ -36,9 +37,11 @@ import { useEffect, useState } from "react"
 import { getMyTeamStatus } from "@/services/team.service"
 import { useAppState } from "@/lib/app-state-context"
 
-const mentorNav = [
+const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
   { title: "Network", href: "/network", icon: UsersIcon },
+  { title: "Learning Hub", href: "/learning", icon: BookOpenIcon },
+  { title: "Resources", href: "/resources", icon: FileTextIcon },
   { title: "Funding Apps", href: "/applications", icon: BanknoteIcon },
   { title: "Meetings", href: "/meetings", icon: CalendarIcon },
   { title: "Mentoring Requests", href: "/requests", icon: BriefcaseIcon },

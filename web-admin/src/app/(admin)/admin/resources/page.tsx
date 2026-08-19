@@ -9,20 +9,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter
+} from "@/components/ui/sheet"
 import { getResources, createResource, deleteResource, updateResource } from "@/services/content.service"
 
 export default function AdminResourcesPage() {
   const [resources, setResources] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+  const [isSheetOpen, setIsSheetOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   // Form State
@@ -66,7 +66,7 @@ export default function AdminResourcesPage() {
       toast.error(res.error)
     } else {
       toast.success(editingId ? "Resource updated successfully" : "Resource created successfully")
-      setIsDialogOpen(false)
+      setIsSheetOpen(false)
       load()
       resetForm()
     }
@@ -77,9 +77,9 @@ export default function AdminResourcesPage() {
     setCategory(item.category)
     setDescription(item.description || "")
     setLink(item.link)
-    setIcon(item.icon)
+    setIcon(item.icon || "FileText")
     setEditingId(item.id)
-    setIsDialogOpen(true)
+    setIsSheetOpen(true)
   }
 
   const handleDelete = async (id: string) => {
@@ -95,44 +95,57 @@ export default function AdminResourcesPage() {
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-      <section className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Manage Resources</h1>
-          <p className="text-sm text-muted-foreground">Add and remove learning resources for students.</p>
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card p-6 rounded-xl border shadow-sm">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold tracking-tight">Manage Resources</h1>
+          <p className="text-sm text-muted-foreground">Add and remove external links, templates, and learning materials.</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open)
-          if (!open) resetForm()
-        }}>
-          <DialogTrigger render={
-            <Button className="gap-2">
-              <PlusIcon className="size-4" /> Add Resource
-            </Button>
-          } />
-          <DialogContent className="sm:max-w-[425px]">
-            <form onSubmit={handleSubmit}>
-              <DialogHeader>
-                <DialogTitle>{editingId ? "Edit Resource" : "Add New Resource"}</DialogTitle>
-                <DialogDescription>
-                  {editingId ? "Update details for the resource material." : "Enter details for the new resource material."}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <Input placeholder="Title (e.g. Y Combinator Startup Library)" value={title} onChange={e => setTitle(e.target.value)} required />
-                <Input placeholder="Category (e.g. Guides)" value={category} onChange={e => setCategory(e.target.value)} required />
-                <Input placeholder="Link URL" value={link} onChange={e => setLink(e.target.value)} required />
-                <Input placeholder="Icon Name (e.g. FileText, Video, Link)" value={icon} onChange={e => setIcon(e.target.value)} required />
-                <Textarea placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} required />
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {editingId ? "Update Resource" : "Save Resource"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div>
+          <Sheet open={isSheetOpen} onOpenChange={(open) => {
+            setIsSheetOpen(open)
+            if (!open) resetForm()
+          }}>
+            <SheetTrigger asChild>
+              <Button className="gap-2">
+                <PlusIcon className="size-4" /> Add Resource
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="sm:max-w-md overflow-y-auto w-full">
+              <form onSubmit={handleSubmit}>
+                <SheetHeader>
+                  <SheetTitle>{editingId ? "Edit Resource" : "Add New Resource"}</SheetTitle>
+                  <SheetDescription>
+                    {editingId ? "Update details for the resource material." : "Enter details for the new resource material."}
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="flex flex-col gap-5 py-6">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground">Title</label>
+                    <Input placeholder="e.g. Y Combinator Startup Library" value={title} onChange={e => setTitle(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground">Category</label>
+                    <Input placeholder="e.g. Guides, Templates" value={category} onChange={e => setCategory(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground">Resource Link (URL)</label>
+                    <Input placeholder="https://..." value={link} onChange={e => setLink(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground">Description</label>
+                    <Textarea className="min-h-[100px]" placeholder="Briefly describe this resource..." value={description} onChange={e => setDescription(e.target.value)} required />
+                  </div>
+                </div>
+                <SheetFooter>
+                  <Button type="submit" disabled={isSubmitting} className="w-full">
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {editingId ? "Update Resource" : "Save Resource"}
+                  </Button>
+                </SheetFooter>
+              </form>
+            </SheetContent>
+          </Sheet>
+        </div>
       </section>
 
       <Card>
