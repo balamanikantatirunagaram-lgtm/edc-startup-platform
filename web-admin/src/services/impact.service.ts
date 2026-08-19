@@ -26,3 +26,16 @@ export async function getImpactScores() {
     scores: scores || []
   }
 }
+
+export async function createImpactCategory(payload: { name: string, description: string }) {
+  const supabase = getAdminSupabase()
+  const { data, error } = await supabase.from('viksit_bharat_categories').insert(payload).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteImpactCategory(id: string) {
+  const supabase = getAdminSupabase()
+  const { error } = await supabase.from('viksit_bharat_categories').delete().eq('id', id)
+  if (error) throw error
+}

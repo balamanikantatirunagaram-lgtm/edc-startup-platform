@@ -16,7 +16,7 @@ export async function getGamificationPoints() {
   const supabase = getAdminSupabase()
   const { data, error } = await supabase.from('gamification_points').select(`
     *,
-    student_profiles(*)
+    students(*)
   `).order('created_at', { ascending: false })
   if (error) console.error(error)
   return data || []
