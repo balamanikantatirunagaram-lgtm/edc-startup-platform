@@ -37,17 +37,22 @@ export async function getCourseDetails(courseId: string) {
   }
 
   // Get enrollment status
-  const { data: { session } } = await supabase.auth.getSession()
+  const cookieStore = await cookies()
+  const token = cookieStore.get('sb-access-token')?.value
+  
   let enrollment = null
-  if (session?.user?.id) {
-    const { data: enrollData } = await supabase
-      .from('course_enrollments')
-      .select('*')
-      .eq('course_id', courseId)
-      .eq('student_id', session.user.id)
-      .maybeSingle()
-      
-    enrollment = enrollData
+  if (token) {
+    const { data: userData } = await supabase.auth.getUser(token)
+    if (userData?.user?.id) {
+      const { data: enrollData } = await supabase
+        .from('course_enrollments')
+        .select('*')
+        .eq('course_id', courseId)
+        .eq('student_id', userData.user.id)
+        .maybeSingle()
+        
+      enrollment = enrollData
+    }
   }
 
   return { course, enrollment }
@@ -55,14 +60,18 @@ export async function getCourseDetails(courseId: string) {
 
 export async function enrollInCourse(courseId: string) {
   const supabase = await getAuthenticatedSupabase()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.user?.id) return { error: "Not authenticated" }
+  const cookieStore = await cookies()
+  const token = cookieStore.get('sb-access-token')?.value
+  if (!token) return { error: "Not authenticated" }
+  
+  const { data: userData } = await supabase.auth.getUser(token)
+  if (!userData?.user?.id) return { error: "Not authenticated" }
 
   const { error } = await supabase
     .from('course_enrollments')
     .insert([{ 
       course_id: courseId, 
-      student_id: session.user.id,
+      student_id: userData.user.id,
       progress: 0,
       completed: false
     }])
@@ -77,14 +86,18 @@ export async function enrollInCourse(courseId: string) {
 
 export async function updateCourseProgress(courseId: string, progress: number, completed: boolean = false) {
   const supabase = await getAuthenticatedSupabase()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.user?.id) return { error: "Not authenticated" }
+  const cookieStore = await cookies()
+  const token = cookieStore.get('sb-access-token')?.value
+  if (!token) return { error: "Not authenticated" }
+  
+  const { data: userData } = await supabase.auth.getUser(token)
+  if (!userData?.user?.id) return { error: "Not authenticated" }
 
   const { error } = await supabase
     .from('course_enrollments')
     .update({ progress, completed })
     .eq('course_id', courseId)
-    .eq('student_id', session.user.id)
+    .eq('student_id', userData.user.id)
     
   if (error) return { error: error.message }
   return { success: true }
