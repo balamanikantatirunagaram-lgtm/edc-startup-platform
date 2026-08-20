@@ -13,7 +13,6 @@ import {
   Presentation,
   Rocket,
   ArrowRight,
-  Sparkles,
   CheckCircle2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -138,10 +137,6 @@ export default function StartupFlow() {
       <section className="relative overflow-hidden pt-20 pb-16 sm:pt-28 sm:pb-20 border-b">
         <div className="absolute inset-x-0 top-0 h-96 -z-10 bg-gradient-to-b from-primary/10 via-primary/5 to-transparent"></div>
         <div className="container mx-auto px-4 md:px-6 max-w-5xl text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>End-to-End Incubation Framework</span>
-          </div>
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">
             The EDC <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">Startup Flow</span>
           </h1>
