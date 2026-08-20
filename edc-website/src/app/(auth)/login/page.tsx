@@ -91,12 +91,6 @@ export default function LoginPage() {
               First time here? Enter your default password to set a new one.
             </FieldDescription>
           </Field>
-          <Field orientation="horizontal">
-            <Checkbox id="remember" name="remember" />
-            <FieldLabel htmlFor="remember" className="font-normal">
-              Keep me signed in for 30 days
-            </FieldLabel>
-          </Field>
           <Button type="submit" size="lg" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>

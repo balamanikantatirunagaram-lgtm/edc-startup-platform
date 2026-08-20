@@ -74,12 +74,6 @@ export default function LoginPage() {
             <FieldLabel htmlFor="password">Password</FieldLabel>
             <PasswordInput id="password" name="password" required />
           </Field>
-          <Field orientation="horizontal">
-            <Checkbox id="remember" name="remember" />
-            <FieldLabel htmlFor="remember" className="font-normal">
-              Keep me signed in for 30 days
-            </FieldLabel>
-          </Field>
           <Button type="submit" size="lg" disabled={loading}>
             {loading ? "Authenticating…" : "Sign In"}
           </Button>

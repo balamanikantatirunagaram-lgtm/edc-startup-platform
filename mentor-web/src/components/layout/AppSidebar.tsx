@@ -36,6 +36,9 @@ import {
 import { useEffect, useState } from "react"
 import { getMyTeamStatus } from "@/services/team.service"
 import { useAppState } from "@/lib/app-state-context"
+import { logout } from "@/services/auth.service"
+import { Button } from "@/components/ui/button"
+import { LogOutIcon } from "lucide-react"
 
 const mentorNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
@@ -95,11 +98,20 @@ export function AppSidebar() {
 
       </SidebarContent>
       <SidebarFooter className="p-3">
-        <div className="flex flex-col gap-2">
-          <div className="rounded-lg border bg-card p-3 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground">EDC Cell · v1</p>
-          </div>
-        </div>
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 transition-colors h-10 px-3 rounded-lg text-sm font-medium"
+          onClick={async () => {
+            localStorage.removeItem("edc_user")
+            localStorage.removeItem("edc_startup")
+            localStorage.removeItem("edc_notifications")
+            await logout()
+            window.location.href = '/login'
+          }}
+        >
+          <LogOutIcon className="size-4" />
+          <span>Sign Out</span>
+        </Button>
       </SidebarFooter>
     </Sidebar>
   )
