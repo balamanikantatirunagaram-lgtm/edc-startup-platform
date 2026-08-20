@@ -10,6 +10,9 @@ const publicRoutes = [
   '/forgot-password',
   '/reset-password',
   '/suspended',
+  '/about',
+  '/our-team',
+  '/contact',
 ]
 
 export async function proxy(request: NextRequest) {
