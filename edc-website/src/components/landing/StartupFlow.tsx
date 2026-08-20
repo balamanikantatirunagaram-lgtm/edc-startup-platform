@@ -12,7 +12,6 @@ import {
   Coins,
   Presentation,
   Rocket,
-  ArrowRight,
   CheckCircle2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -149,9 +148,8 @@ export default function StartupFlow() {
               asChild
               className="h-13 px-8 text-base font-semibold bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 transition-all duration-200 group rounded-xl"
             >
-              <Link href="/startup">
+              <Link href="/startup" className="flex items-center justify-center">
                 <span>Register Your Startup</span>
-                <ArrowRight className="ml-2.5 h-4 w-4 group-hover:translate-x-1.5 transition-transform duration-200" />
               </Link>
             </Button>
             <Button 
@@ -236,9 +234,8 @@ export default function StartupFlow() {
                 asChild 
                 className="h-13 px-8 text-base font-semibold shadow-lg shadow-black/10 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 rounded-xl group"
               >
-                <Link href="/startup">
+                <Link href="/startup" className="flex items-center justify-center">
                   <span>Get Started Today</span>
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1.5 transition-transform duration-200" />
                 </Link>
               </Button>
             </div>
