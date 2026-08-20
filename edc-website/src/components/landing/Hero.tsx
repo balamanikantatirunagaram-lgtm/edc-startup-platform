@@ -26,17 +26,16 @@ export default function Hero() {
             <Link href="/startup" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
-                className="w-full sm:w-auto h-13 px-8 text-base font-semibold bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 transition-all duration-200 group rounded-xl"
+                className="w-full sm:w-auto h-13 px-8 text-base font-semibold bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 transition-all duration-200 rounded-xl justify-center text-center"
               >
-                <span>Register Your Startup</span>
-                <ArrowRight className="ml-2.5 h-4 w-4 group-hover:translate-x-1.5 transition-transform duration-200" />
+                Register Your Startup
               </Button>
             </Link>
             <Link href="/team" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto h-13 px-8 text-base font-medium rounded-xl border-border/80 hover:bg-muted/80 hover:-translate-y-0.5 transition-all duration-200"
+                className="w-full sm:w-auto h-13 px-8 text-base font-medium rounded-xl border-border/80 hover:bg-muted/80 hover:-translate-y-0.5 transition-all duration-200 justify-center text-center"
               >
                 Join a Team
               </Button>
