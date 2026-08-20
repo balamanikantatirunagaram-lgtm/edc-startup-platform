@@ -69,12 +69,17 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
       // Always fetch real user on load and override mock data
       getCurrentUser().then(user => {
-        if (user && user.name) {
+        if (user && (user.name || user.niatId)) {
           setCurrentUser(prev => {
-            const next = { ...prev, fullName: user.name, niatId: user.niatId, email: user.email }
+            const next = { ...prev, fullName: user.name || user.niatId, niatId: user.niatId, email: user.email }
             localStorage.setItem("edc_user", JSON.stringify(next))
             return next
           })
+        } else if (!user) {
+          localStorage.removeItem("edc_user")
+          localStorage.removeItem("edc_startup")
+          setCurrentUser(initialUser)
+          setCurrentStartup(initialStartup)
         }
       }).catch(console.error)
     } catch (e) {

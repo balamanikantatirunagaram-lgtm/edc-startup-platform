@@ -65,30 +65,19 @@ export async function getMyStartup() {
       return { noStartup: true }
     }
 
-    // Fetch team members
+    // Fetch team members with student profile directly from database (avoiding slow auth admin listUsers pagination)
     const { data: teamMembersDb } = await supabaseAdmin
       .from('team_members')
-      .select('student_id')
+      .select('student_id, students(id, name, niat_id)')
       .eq('team_id', teamId)
       .eq('status', 'approved')
 
     const teamMembers = []
     if (teamMembersDb && teamMembersDb.length > 0) {
-      // Paginate to get ALL users, not just the first 50
-      let allUsers: any[] = []
-      let page = 1
-      while (true) {
-        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
-        if (!usersData?.users || usersData.users.length === 0) break
-        allUsers = [...allUsers, ...usersData.users]
-        if (usersData.users.length < 1000) break
-        page++
-      }
-      
       for (const m of teamMembersDb) {
-        const u = allUsers.find(usr => usr.id === m.student_id)
+        const student = (m as any).students
         teamMembers.push({
-          name: u?.user_metadata?.name || u?.user_metadata?.niat_id || 'Unknown Member',
+          name: student?.name || student?.niat_id || 'Unknown Member',
           role: m.student_id === (memberRecord.teams as any).leader_id ? 'Team Leader' : 'Team Member',
           id: m.student_id
         })

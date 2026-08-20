@@ -119,6 +119,9 @@ export function AppHeader() {
             <DropdownMenuItem
               variant="destructive"
               onClick={async () => {
+                localStorage.removeItem("edc_user")
+                localStorage.removeItem("edc_startup")
+                localStorage.removeItem("edc_notifications")
                 await logout()
                 window.location.href = '/login'
               }}

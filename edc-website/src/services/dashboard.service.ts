@@ -26,14 +26,21 @@ export async function getDashboardData() {
       return { error: "Not authenticated" }
     }
 
+    // Fetch student info from students table to ensure consistent and fresh profile name
+    const { data: studentDb } = await supabase
+      .from('students')
+      .select('name, niat_id, department, academic_year, email')
+      .eq('id', user.user.id)
+      .maybeSingle()
+
     const userData = {
-      name: user.user.user_metadata?.name || '',
-      niatId: user.user.user_metadata?.niat_id || '',
-      department: user.user.user_metadata?.department || '',
-      academicYear: user.user.user_metadata?.academicYear || '',
+      name: user.user.user_metadata?.name || studentDb?.name || user.user.user_metadata?.niat_id || studentDb?.niat_id || '',
+      niatId: user.user.user_metadata?.niat_id || studentDb?.niat_id || '',
+      department: user.user.user_metadata?.department || studentDb?.department || '',
+      academicYear: user.user.user_metadata?.academicYear || studentDb?.academic_year || '',
       collegeId: user.user.user_metadata?.collegeId || '',
       phone: user.user.user_metadata?.phone || '',
-      email: user.user.user_metadata?.email || user.user.email || '',
+      email: user.user.user_metadata?.email || studentDb?.email || user.user.email || '',
       linkedin: user.user.user_metadata?.linkedin || '',
       github: user.user.user_metadata?.github || '',
       portfolio: user.user.user_metadata?.portfolio || '',

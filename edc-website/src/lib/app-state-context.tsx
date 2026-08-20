@@ -69,11 +69,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
       // Always fetch real user on load and override mock data
       getCurrentUser().then(user => {
-        if (user && user.name) {
+        if (user && (user.name || user.niatId)) {
           setCurrentUser(prev => {
             const next = { 
               ...prev, 
-              fullName: user.name, 
+              fullName: user.name || user.niatId, 
               niatId: user.niatId, 
               email: user.email,
               avatarUrl: user.avatarUrl,
@@ -84,6 +84,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
               linkedin: user.linkedin,
               github: user.github,
               portfolio: user.portfolio,
+              skills: user.skills || [],
             }
             
             let completedFields = 0
@@ -102,6 +103,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem("edc_user", JSON.stringify(next))
             return next
           })
+        } else if (!user) {
+          // If no authenticated user, clear user localStorage to prevent cross-account pollution
+          localStorage.removeItem("edc_user")
+          localStorage.removeItem("edc_startup")
+          setCurrentUser(initialUser)
+          setCurrentStartup(initialStartup)
         }
       }).catch(console.error)
     } catch (e) {

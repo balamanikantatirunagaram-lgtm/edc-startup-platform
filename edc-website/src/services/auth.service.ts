@@ -189,15 +189,21 @@ export async function getCurrentUser() {
     const { data: user, error } = await supabase.auth.getUser(token)
     if (error || !user.user) return null
 
+    const { data: studentDb } = await supabase
+      .from('students')
+      .select('name, niat_id, department, academic_year, email')
+      .eq('id', user.user.id)
+      .maybeSingle()
+
     return {
-      niatId: user.user.user_metadata?.niat_id || '',
-      name: user.user.user_metadata?.name || '',
-      email: user.user.email || '',
+      niatId: user.user.user_metadata?.niat_id || studentDb?.niat_id || '',
+      name: user.user.user_metadata?.name || studentDb?.name || user.user.user_metadata?.niat_id || studentDb?.niat_id || '',
+      email: user.user.user_metadata?.email || studentDb?.email || user.user.email || '',
       avatarUrl: user.user.user_metadata?.avatarUrl || '',
       collegeId: user.user.user_metadata?.collegeId || '',
       phone: user.user.user_metadata?.phone || '',
-      department: user.user.user_metadata?.department || '',
-      academicYear: user.user.user_metadata?.academicYear || '',
+      department: user.user.user_metadata?.department || studentDb?.department || '',
+      academicYear: user.user.user_metadata?.academicYear || studentDb?.academic_year || '',
       linkedin: user.user.user_metadata?.linkedin || '',
       github: user.user.user_metadata?.github || '',
       portfolio: user.user.user_metadata?.portfolio || '',

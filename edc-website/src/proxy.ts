@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 // Routes accessible without authentication
 const publicRoutes = [
   '/',
+  '/startup-flow',
   '/login',
   '/first-login',
   '/forgot-password',
