@@ -114,7 +114,7 @@ export default function JobsPage() {
       case 'rejected':
         return { color: 'bg-red-100 text-red-800 border-red-200', icon: XCircle }
       case 'reviewed':
-        return { color: 'bg-blue-100 text-blue-800 border-blue-200', icon: Clock }
+        return { color: 'bg-muted text-muted-foreground border-border', icon: Clock }
       default:
         return { color: 'bg-orange-100 text-orange-800 border-orange-200', icon: Clock }
     }
@@ -125,7 +125,7 @@ export default function JobsPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div className="flex flex-col">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-            Internships & <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">Jobs</span>
+            Internships & <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-foreground/60">Jobs</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
             Discover opportunities at top student startups or post openings for your own team.

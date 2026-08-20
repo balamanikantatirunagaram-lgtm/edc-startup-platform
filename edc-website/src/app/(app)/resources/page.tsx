@@ -31,9 +31,9 @@ export default function StudentResourcesPage() {
 
   const getIcon = (name: string) => {
     switch (name?.toLowerCase()) {
-      case 'video': return <VideoIcon className="size-5 text-purple-500" />
-      case 'link': return <LinkIcon className="size-5 text-blue-500" />
-      case 'book': return <BookOpenIcon className="size-5 text-orange-500" />
+      case 'video': return <VideoIcon className="size-5 text-foreground" />
+      case 'link': return <LinkIcon className="size-5 text-muted-foreground" />
+      case 'book': return <BookOpenIcon className="size-5 text-foreground" />
       case 'filetext':
       default: return <FileTextIcon className="size-5 text-primary" />
     }

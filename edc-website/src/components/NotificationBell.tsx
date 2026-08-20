@@ -52,7 +52,7 @@ export function NotificationBell() {
                 <span className={`text-sm ${!n.read ? "font-semibold" : ""}`}>
                   {n.type.replace('_', ' ')}
                 </span>
-                {!n.read && <span className="h-2 w-2 rounded-full bg-blue-500 mt-1" />}
+                {!n.read && <span className="h-2 w-2 rounded-full bg-primary mt-1" />}
               </div>
               <span className="text-xs text-muted-foreground line-clamp-2">
                 {n.payload?.message || JSON.stringify(n.payload)}

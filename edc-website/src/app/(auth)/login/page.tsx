@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { login } from "@/services/auth.service"
 
+import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -54,6 +55,20 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      <div>
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="-ml-3 text-muted-foreground hover:text-foreground mb-2"
+        >
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </Link>
+        </Button>
+      </div>
+
       <div className="flex flex-col gap-2">
         <h2 className="text-2xl font-semibold tracking-tight text-balance">
           Sign in to your account

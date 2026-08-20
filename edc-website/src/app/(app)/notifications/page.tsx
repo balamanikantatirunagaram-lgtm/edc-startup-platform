@@ -81,7 +81,7 @@ export default function NotificationsPage() {
   const getIcon = (type: string) => {
     switch (type) {
       case "feedback":
-        return <MessageSquareIcon className="size-4 text-blue-500" />
+        return <MessageSquareIcon className="size-4 text-muted-foreground" />
       case "success":
       case "approved":
         return <RocketIcon className="size-4 text-green-500 animate-bounce" />

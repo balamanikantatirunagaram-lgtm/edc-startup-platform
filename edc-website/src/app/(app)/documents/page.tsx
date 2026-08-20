@@ -15,10 +15,10 @@ import { getStartupDocuments, addStartupDocument, deleteStartupDocument } from "
 import { toast } from "sonner"
 
 const DOC_TYPES = [
-  { value: "Pitch Deck", icon: Presentation, color: "text-blue-500", bg: "bg-blue-500/10" },
-  { value: "Legal", icon: Scale, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  { value: "Financial", icon: CircleDollarSign, color: "text-amber-500", bg: "bg-amber-500/10" },
-  { value: "BMC", icon: Shapes, color: "text-purple-500", bg: "bg-purple-500/10" },
+  { value: "Pitch Deck", icon: Presentation, color: "text-foreground", bg: "bg-muted" },
+  { value: "Legal", icon: Scale, color: "text-foreground", bg: "bg-muted" },
+  { value: "Financial", icon: CircleDollarSign, color: "text-foreground", bg: "bg-muted" },
+  { value: "BMC", icon: Shapes, color: "text-foreground", bg: "bg-muted" },
 ]
 
 export default function DocumentCenterPage() {

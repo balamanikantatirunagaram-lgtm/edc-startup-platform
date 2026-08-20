@@ -273,7 +273,7 @@ export default function StartupCommandCenter() {
           {isLeader && (
             <TabsTrigger value="recruitment" className="h-full gap-2"><BriefcaseIcon className="size-4 hidden sm:block" /> Jobs
             {applications.filter(a => a.status === 'pending').length > 0 && (
-              <span className="ml-1 bg-blue-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+              <span className="ml-1 bg-primary text-primary-foreground text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
                 {applications.filter(a => a.status === 'pending').length}
               </span>
             )}

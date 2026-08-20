@@ -173,7 +173,7 @@ export default function StartupJourneyPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">AK</div>
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold text-foreground">AK</div>
                 <div>
                   <p className="font-medium text-sm">Akash Kumar</p>
                   <p className="text-xs text-muted-foreground">Business Strategy</p>

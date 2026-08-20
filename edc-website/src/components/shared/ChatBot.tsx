@@ -83,7 +83,7 @@ export function ChatBot() {
       {/* Floating button */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="fixed bottom-6 right-6 z-50 size-14 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
+        className="fixed bottom-6 right-6 z-50 size-14 rounded-full bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
         aria-label="Open EDC AI Chat"
       >
         {open
@@ -96,7 +96,7 @@ export function ChatBot() {
       {open && (
         <div className="fixed bottom-24 right-6 z-50 w-[360px] max-h-[600px] flex flex-col rounded-2xl border border-border/60 bg-background shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
           {/* Header */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+          <div className="flex items-center gap-3 px-4 py-3 bg-primary text-primary-foreground">
             <div className="size-8 rounded-full bg-white/20 flex items-center justify-center">
               <BotIcon className="size-4" />
             </div>
@@ -119,8 +119,8 @@ export function ChatBot() {
               >
                 <div className={`size-7 rounded-full flex items-center justify-center shrink-0 ${
                   msg.role === "user"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gradient-to-br from-violet-500 to-indigo-600 text-white"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-primary text-primary-foreground"
                 }`}>
                   {msg.role === "user"
                     ? <UserIcon className="size-3.5" />
@@ -129,7 +129,7 @@ export function ChatBot() {
                 </div>
                 <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
                   msg.role === "user"
-                    ? "bg-indigo-600 text-white rounded-tr-sm"
+                    ? "bg-primary text-primary-foreground rounded-tr-sm"
                     : "bg-background border border-border/50 text-foreground rounded-tl-sm shadow-sm"
                 }`}>
                   {renderContent(msg.content)}
@@ -138,7 +138,7 @@ export function ChatBot() {
             ))}
             {loading && (
               <div className="flex gap-2">
-                <div className="size-7 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center">
+                <div className="size-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
                   <BotIcon className="size-3.5" />
                 </div>
                 <div className="bg-background border border-border/50 rounded-2xl rounded-tl-sm px-3 py-2 shadow-sm">
@@ -159,12 +159,12 @@ export function ChatBot() {
               onKeyDown={handleKeyDown}
               placeholder="Ask anything about your startup..."
               disabled={loading}
-              className="flex-1 text-sm bg-muted/40 rounded-xl px-3 py-2 border border-border/50 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all disabled:opacity-50"
+              className="flex-1 text-sm bg-muted/40 rounded-xl px-3 py-2 border border-border/50 outline-none focus:border-ring focus:ring-1 focus:ring-ring/30 transition-all disabled:opacity-50"
             />
             <button
               onClick={sendMessage}
               disabled={loading || !input.trim()}
-              className="size-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="size-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               <SendIcon className="size-4" />
             </button>
