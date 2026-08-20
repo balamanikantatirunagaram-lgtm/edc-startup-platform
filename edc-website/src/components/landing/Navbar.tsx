@@ -16,6 +16,9 @@ export default function Navbar() {
         </div>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
+            <Link href="/startup-flow" className="text-sm font-medium hover:underline underline-offset-4 px-4">
+              Startup Flow
+            </Link>
             <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4 px-4">
               About Us
             </Link>

@@ -14,8 +14,22 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2Icon, RocketIcon, UsersIcon, ListTodoIcon, SearchIcon, SendIcon, CheckIcon, XIcon, UserMinusIcon, TrashIcon, BriefcaseIcon, GraduationCapIcon } from "lucide-react"
+import { Loader2Icon, RocketIcon, UsersIcon, ListTodoIcon, SearchIcon, SendIcon, CheckIcon, XIcon, UserMinusIcon, TrashIcon, BriefcaseIcon, GraduationCapIcon, RouteIcon, CheckCircle2Icon, ClockIcon } from "lucide-react"
 import QRCode from "react-qr-code"
+
+const JOURNEY_MILESTONES = [
+  { step: 1, title: 'Student with a Startup Idea', category: 'Ideation', desc: 'Identify core problem, validate customer pain points, and brainstorm solution' },
+  { step: 2, title: 'EDC Startup Registration', category: 'Registration', desc: 'Form student team and register startup application in EDC portal' },
+  { step: 3, title: 'Initial Idea Screening', category: 'Screening', desc: 'Screening evaluation by EDC review panel on market feasibility' },
+  { step: 4, title: 'Research & Development Team', category: 'R&D', desc: 'Market sizing, competitor analysis, IP research and technical architecture' },
+  { step: 5, title: 'Business Strategy Team', category: 'Strategy', desc: 'Business Model Canvas, unit economics, and go-to-market strategy' },
+  { step: 6, title: 'Product Development Team', category: 'Product', desc: 'Build and test Minimum Viable Product (MVP) with early user feedback' },
+  { step: 7, title: 'Legal & Compliance Team', category: 'Legal', desc: 'Entity incorporation, founder agreements, and regulatory compliance' },
+  { step: 8, title: 'Marketing & Branding Team', category: 'Marketing', desc: 'Brand positioning, digital presence, and customer acquisition channels' },
+  { step: 9, title: 'Finance & Funding Team', category: 'Finance', desc: 'Financial modeling, valuation, seed grant support, and budget planning' },
+  { step: 10, title: 'Pitch Preparation', category: 'Pitch Prep', desc: 'Pitch deck refinement, mock investor trials, and storytelling polish' },
+  { step: 11, title: 'Demo Day / Investors / Incubation', category: 'Launchpad', desc: 'Live pitch to angel investors, venture funds, and incubation onboarding' }
+]
 
 export default function StartupCommandCenter() {
   const [loading, setLoading] = React.useState(true)
@@ -241,7 +255,7 @@ export default function StartupCommandCenter() {
   }
 
   const isLeader = status.isLeader
-  const tabColumns = isLeader ? 5 : 4
+  const tabColumns = isLeader ? 6 : 5
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto mt-6 px-4 pb-20 w-full">
@@ -258,6 +272,7 @@ export default function StartupCommandCenter() {
       <Tabs defaultValue="portfolio" className="w-full">
         <TabsList className={`grid w-full h-12`} style={{ gridTemplateColumns: `repeat(${tabColumns}, minmax(0, 1fr))` }}>
           <TabsTrigger value="portfolio" className="h-full gap-2"><RocketIcon className="size-4 hidden sm:block" /> Portfolio</TabsTrigger>
+          <TabsTrigger value="journey" className="h-full gap-2"><RouteIcon className="size-4 hidden sm:block" /> Journey</TabsTrigger>
           <TabsTrigger value="team" className="h-full gap-2">
             <UsersIcon className="size-4 hidden sm:block" /> Team
             {requests.length > 0 && (
@@ -353,6 +368,41 @@ export default function StartupCommandCenter() {
                 </Button>
               </CardFooter>
             )}
+          </Card>
+        </TabsContent>
+
+        {/* JOURNEY TAB */}
+        <TabsContent value="journey" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Incubation Lifecycle Status</CardTitle>
+                <CardDescription>Follow the 10-step EDC venture progression roadmap.</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/startup/journey">Full Tracker</a>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {JOURNEY_MILESTONES.map((m) => (
+                  <div key={m.step} className="flex items-start gap-4 p-3.5 rounded-xl border bg-card/60 hover:bg-muted/20 transition-colors">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs">
+                      {m.step}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-semibold text-sm">{m.title}</h4>
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          {m.category}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{m.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
           </Card>
         </TabsContent>
 

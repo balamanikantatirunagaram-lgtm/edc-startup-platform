@@ -303,3 +303,58 @@ export async function addJourneyStageFeedback(stageId: string, feedback: string)
     return { error: err.message }
   }
 }
+
+export async function updateJourneyStageMentor(startupId: string, stageName: string, status: string, feedback?: string) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+    
+    const supabase = getSupabase()
+    const { data: user } = await supabase.auth.getUser(token)
+    if (!user.user) return { error: "Not authenticated" }
+
+    const mentorName = user.user.user_metadata?.name || 'Mentor'
+
+    const { data: existing } = await supabaseAdmin
+      .from('startup_journey_stages')
+      .select('id, feedback')
+      .eq('startup_id', startupId)
+      .eq('stage_name', stageName)
+      .maybeSingle()
+
+    if (existing) {
+      const updatedFeedback = feedback
+        ? `${existing.feedback ? existing.feedback + '\n\n' : ''}[${new Date().toLocaleDateString()}] ${mentorName}:\n${feedback}`
+        : existing.feedback
+
+      const { error } = await supabaseAdmin
+        .from('startup_journey_stages')
+        .update({
+          status,
+          feedback: updatedFeedback,
+          completed_at: status === 'completed' || status === 'Approved' ? new Date().toISOString() : null
+        })
+        .eq('id', existing.id)
+
+      if (error) return { error: error.message }
+    } else {
+      const { error } = await supabaseAdmin
+        .from('startup_journey_stages')
+        .insert({
+          startup_id: startupId,
+          stage_name: stageName,
+          status,
+          feedback: feedback ? `[${new Date().toLocaleDateString()}] ${mentorName}:\n${feedback}` : null,
+          completed_at: status === 'completed' || status === 'Approved' ? new Date().toISOString() : null
+        })
+
+      if (error) return { error: error.message }
+    }
+
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}

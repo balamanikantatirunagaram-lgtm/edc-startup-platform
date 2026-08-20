@@ -37,7 +37,7 @@ import { useEffect, useState } from "react"
 import { getMyTeamStatus } from "@/services/team.service"
 import { useAppState } from "@/lib/app-state-context"
 
-const navItems = [
+const mentorNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
   { title: "Network", href: "/network", icon: UsersIcon },
   { title: "Learning Hub", href: "/learning", icon: BookOpenIcon },

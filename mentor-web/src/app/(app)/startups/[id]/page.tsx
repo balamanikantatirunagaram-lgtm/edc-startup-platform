@@ -10,8 +10,21 @@ import { Input } from "@/components/ui/input"
 import { ArrowLeft, Loader2, MessageSquare, Plus, FileText, CheckCircle2, ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { addJourneyStageFeedback, getStartupJourney } from "@/services/startup.service" // I need to create this function
-import { getStartupDocuments } from "@/services/startup.service" // I need to verify this function
+import { addJourneyStageFeedback, getStartupJourney, getStartupDocuments, updateJourneyStageMentor } from "@/services/startup.service"
+
+const MENTOR_FLOW_STAGES = [
+  "Student with a Startup Idea",
+  "EDC Startup Registration",
+  "Initial Idea Screening",
+  "Research & Development Team",
+  "Business Strategy Team",
+  "Product Development Team",
+  "Legal & Compliance Team",
+  "Marketing & Branding Team",
+  "Finance & Funding Team",
+  "Pitch Preparation",
+  "Demo Day / Investors / Incubation",
+]
 
 export default function MentorStartupDetailsPage() {
   const { id } = useParams()
@@ -29,7 +42,6 @@ export default function MentorStartupDetailsPage() {
   async function loadData() {
     setLoading(true)
     
-    // Fetch journey stages and documents (Assuming we can fetch them via a service)
     const [journeyRes, docsRes] = await Promise.all([
       getStartupJourney(id as string),
       getStartupDocuments(id as string)
@@ -41,19 +53,17 @@ export default function MentorStartupDetailsPage() {
     setLoading(false)
   }
 
-  async function handleAddFeedback(stageId: string) {
-    const feedback = feedbackInputs[stageId]
-    if (!feedback) return
-    
-    setSubmitting(stageId)
-    const res = await addJourneyStageFeedback(stageId, feedback)
+  async function handleStageStatusUpdate(stageName: string, newStatus: string) {
+    setSubmitting(stageName)
+    const feedback = feedbackInputs[stageName]
+    const res = await updateJourneyStageMentor(id as string, stageName, newStatus, feedback)
     setSubmitting(null)
     
     if (res.error) {
       toast.error(res.error)
     } else {
-      toast.success("Feedback added successfully!")
-      setFeedbackInputs(prev => ({ ...prev, [stageId]: "" }))
+      toast.success(`Stage "${stageName}" updated to ${newStatus}`)
+      setFeedbackInputs(prev => ({ ...prev, [stageName]: "" }))
       loadData()
     }
   }
@@ -74,65 +84,88 @@ export default function MentorStartupDetailsPage() {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Mentorship Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Review journey stages and documents for this startup.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Mentorship & Journey Review</h1>
+          <p className="text-muted-foreground mt-1">Review the 10-step startup flow, provide milestone guidance, and track submitted documents.</p>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-6">
           <h2 className="text-xl font-semibold flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-primary" /> Journey Stages
+            <CheckCircle2 className="h-5 w-5 text-primary" /> Incubation Milestones & Flow
           </h2>
-          {stages.length === 0 ? (
-            <Card className="bg-muted/30 border-dashed">
-              <CardContent className="pt-6 text-center text-muted-foreground text-sm">
-                No journey stages recorded yet.
-              </CardContent>
-            </Card>
-          ) : (
-            stages.map(stage => (
-              <Card key={stage.id} className="border-border shadow-sm">
-                <CardHeader className="pb-3 bg-muted/10">
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-lg">{stage.stage_name}</CardTitle>
-                    <Badge variant={stage.status === 'completed' ? 'default' : 'secondary'}>
-                      {stage.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-4 space-y-4">
-                  {stage.feedback ? (
-                    <div className="bg-secondary/20 p-4 rounded-xl border border-secondary text-sm">
-                      <h5 className="font-semibold text-secondary-foreground mb-1 text-xs uppercase tracking-wider">Current Feedback</h5>
-                      <p className="text-muted-foreground whitespace-pre-wrap">{stage.feedback}</p>
+          <div className="space-y-4">
+            {MENTOR_FLOW_STAGES.map((stageName, idx) => {
+              const dbStage = stages.find(s => s.stage_name === stageName || s.stage_name?.includes(stageName))
+              const currentStatus = dbStage?.status || 'pending'
+
+              return (
+                <Card key={idx} className="border-border shadow-sm">
+                  <CardHeader className="pb-3 bg-muted/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs">
+                          {idx + 1}
+                        </span>
+                        <CardTitle className="text-base font-semibold">{stageName}</CardTitle>
+                      </div>
+                      <Badge variant={currentStatus === 'completed' || currentStatus === 'Approved' ? 'default' : 'secondary'} className="w-fit">
+                        {currentStatus}
+                      </Badge>
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">No feedback provided yet.</p>
-                  )}
-                  
-                  <div className="space-y-3 pt-3 border-t">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Add New Feedback</p>
-                    <Textarea 
-                      placeholder="Share your guidance, critiques, or next steps..."
-                      value={feedbackInputs[stage.id] || ""}
-                      onChange={e => setFeedbackInputs(prev => ({...prev, [stage.id]: e.target.value}))}
-                      className="min-h-[100px] text-sm resize-none"
-                    />
-                    <Button 
-                      size="sm" 
-                      className="w-full gap-2" 
-                      disabled={!feedbackInputs[stage.id] || submitting === stage.id}
-                      onClick={() => handleAddFeedback(stage.id)}
-                    >
-                      {submitting === stage.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
-                      Submit Feedback
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-4">
+                    {dbStage?.feedback ? (
+                      <div className="bg-secondary/20 p-3 rounded-xl border border-secondary text-xs">
+                        <h5 className="font-semibold text-secondary-foreground mb-1 uppercase tracking-wider">Guidance Notes</h5>
+                        <p className="text-muted-foreground whitespace-pre-wrap">{dbStage.feedback}</p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">No guidance notes recorded yet.</p>
+                    )}
+                    
+                    <div className="space-y-3 pt-2 border-t">
+                      <Textarea 
+                        placeholder="Add guidance or evaluation feedback..."
+                        value={feedbackInputs[stageName] || ""}
+                        onChange={e => setFeedbackInputs(prev => ({...prev, [stageName]: e.target.value}))}
+                        className="min-h-[70px] text-xs resize-none"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="text-xs"
+                          disabled={submitting === stageName}
+                          onClick={() => handleStageStatusUpdate(stageName, 'in-progress')}
+                        >
+                          In Progress
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="text-xs"
+                          disabled={submitting === stageName}
+                          onClick={() => handleStageStatusUpdate(stageName, 'Needs Improvement')}
+                        >
+                          Needs Work
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          className="text-xs bg-green-600 hover:bg-green-700 text-white gap-1.5"
+                          disabled={submitting === stageName}
+                          onClick={() => handleStageStatusUpdate(stageName, 'completed')}
+                        >
+                          {submitting === stageName ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                          Pass / Approve
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
         </div>
 
         <div className="space-y-6">

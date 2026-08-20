@@ -103,16 +103,15 @@ export default function LoginPage() {
         </FieldGroup>
       </form>
 
-      <Button variant="outline" size="lg" asChild className="w-full">
-        <Link href="/">
-          <ArrowLeft className="mr-2 h-4 w-4" />
+      <div className="flex flex-col items-center gap-2 text-center text-xs text-muted-foreground">
+        <Link href="/" className="inline-flex items-center gap-1 font-medium text-foreground hover:underline underline-offset-4">
+          <ArrowLeft className="h-3 w-3" />
           Back to Home
         </Link>
-      </Button>
-
-      <p className="text-center text-xs text-muted-foreground">
-        Trouble signing in? Contact the EDC office at edc@niat.edu
-      </p>
+        <p>
+          Trouble signing in? Contact the EDC office at edc@niat.edu
+        </p>
+      </div>
     </div>
   )
 }

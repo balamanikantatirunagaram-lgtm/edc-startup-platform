@@ -35,7 +35,21 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { getAllStartups, updateStartupStatus, getStartupDocumentsAdmin, getStartupJourneyAdmin, getTeamMembersAdmin, deleteStartupAdmin } from "@/services/admin.service"
+import { getAllStartups, updateStartupStatus, getStartupDocumentsAdmin, getStartupJourneyAdmin, updateStartupJourneyStageAdmin, getTeamMembersAdmin, deleteStartupAdmin } from "@/services/admin.service"
+
+const FLOW_STAGES = [
+  "Student with a Startup Idea",
+  "EDC Startup Registration",
+  "Initial Idea Screening",
+  "Research & Development Team",
+  "Business Strategy Team",
+  "Product Development Team",
+  "Legal & Compliance Team",
+  "Marketing & Branding Team",
+  "Finance & Funding Team",
+  "Pitch Preparation",
+  "Demo Day / Investors / Incubation",
+]
 
 export default function AdminStartupReviewPage({
   params,
@@ -56,6 +70,8 @@ export default function AdminStartupReviewPage({
   const [nextSteps, setNextSteps] = React.useState("")
   const [submitting, setSubmitting] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
+  const [updatingStage, setUpdatingStage] = React.useState<string | null>(null)
+  const [stageFeedbackInputs, setStageFeedbackInputs] = React.useState<Record<string, string>>({})
 
   React.useEffect(() => {
     async function loadData() {
@@ -274,29 +290,75 @@ export default function AdminStartupReviewPage({
           
           {/* Journey Section */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Startup Journey Status</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base">Startup Flow & Milestone Status</CardTitle>
+                <CardDescription>Update progress across the 10-phase incubation lifecycle.</CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
-              {journeyStages.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No journey stages initiated.</p>
-              ) : (
-                <div className="space-y-4">
-                  {journeyStages.map((stage, idx) => (
-                    <div key={idx} className="flex flex-col gap-1 text-sm border-b pb-3 last:border-0 last:pb-0">
-                      <div className="flex justify-between font-medium">
-                        <span>{stage.stage_name}</span>
-                        <StatusBadge status={stage.status} />
+              <div className="space-y-4">
+                {FLOW_STAGES.map((stageName, idx) => {
+                  const dbStage = journeyStages.find(
+                    (s) => s.stage_name === stageName || s.stage_name?.includes(stageName)
+                  )
+                  const currentStageStatus = dbStage?.status || "pending"
+
+                  return (
+                    <div key={idx} className="flex flex-col gap-2 p-3.5 rounded-xl border bg-card/60">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs">
+                            {idx + 1}
+                          </span>
+                          <span className="font-semibold text-sm">{stageName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={currentStageStatus}
+                            onValueChange={async (newVal) => {
+                              if (!newVal) return
+                              setUpdatingStage(stageName)
+                              const res = await updateStartupJourneyStageAdmin(
+                                id,
+                                stageName,
+                                newVal,
+                                stageFeedbackInputs[stageName]
+                              )
+                              setUpdatingStage(null)
+                              if (res.error) {
+                                toast.error(res.error)
+                              } else {
+                                toast.success(`Stage "${stageName}" updated to ${newVal}`)
+                                const journeyRes = await getStartupJourneyAdmin(id as string)
+                                if (journeyRes.stages) setJourneyStages(journeyRes.stages)
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="w-[140px] h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="in-progress">In Progress</SelectItem>
+                              <SelectItem value="Under Review">Under Review</SelectItem>
+                              <SelectItem value="Needs Improvement">Needs Improvement</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="Approved">Approved</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      {stage.feedback && (
-                        <p className="text-xs text-muted-foreground mt-1 bg-muted p-2 rounded">
-                          Feedback: {stage.feedback}
+
+                      {dbStage?.feedback && (
+                        <p className="text-xs text-muted-foreground bg-muted/60 p-2 rounded whitespace-pre-wrap">
+                          {dbStage.feedback}
                         </p>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )
+                })}
+              </div>
             </CardContent>
           </Card>
         </div>

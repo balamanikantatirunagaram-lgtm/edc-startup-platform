@@ -9,13 +9,17 @@ import { getStartupJourney, advanceJourneyStage } from "@/services/startup.servi
 import { toast } from "sonner"
 
 const DEFAULT_STAGES = [
-  { id: '1', title: 'Idea Validation', status: 'pending', desc: 'Market research and problem identification' },
-  { id: '2', title: 'Customer Discovery', status: 'pending', desc: 'Interview 20 potential customers' },
-  { id: '3', title: 'Business Model', status: 'pending', desc: 'Develop Business Model Canvas and Revenue Model' },
-  { id: '4', title: 'Prototype / MVP', status: 'pending', desc: 'Build the first version of the product' },
-  { id: '5', title: 'Legal & Marketing', status: 'pending', desc: 'Company registration and GTM strategy' },
-  { id: '6', title: 'Pitch Deck & Funding', status: 'pending', desc: 'Prepare for Investor Demo Day' },
-  { id: '7', title: 'Incubation & Launch', status: 'pending', desc: 'Official launch and incubation support' }
+  { id: '1', title: 'Student with a Startup Idea', status: 'pending', desc: 'Identify core problem, validate customer pain points, and brainstorm solution' },
+  { id: '2', title: 'EDC Startup Registration', status: 'pending', desc: 'Form student team and register startup application in EDC portal' },
+  { id: '3', title: 'Initial Idea Screening', status: 'pending', desc: 'Screening evaluation by EDC review panel on market feasibility' },
+  { id: '4', title: 'Research & Development Team', status: 'pending', desc: 'Market sizing, competitor analysis, IP research and technical architecture' },
+  { id: '5', title: 'Business Strategy Team', status: 'pending', desc: 'Business Model Canvas, unit economics, and go-to-market strategy' },
+  { id: '6', title: 'Product Development Team', status: 'pending', desc: 'Build and test Minimum Viable Product (MVP) with early user feedback' },
+  { id: '7', title: 'Legal & Compliance Team', status: 'pending', desc: 'Entity incorporation, founder agreements, and regulatory compliance' },
+  { id: '8', title: 'Marketing & Branding Team', status: 'pending', desc: 'Brand positioning, digital presence, and customer acquisition channels' },
+  { id: '9', title: 'Finance & Funding Team', status: 'pending', desc: 'Financial modeling, valuation, seed grant support, and budget planning' },
+  { id: '10', title: 'Pitch Preparation', status: 'pending', desc: 'Pitch deck refinement, mock investor trials, and storytelling polish' },
+  { id: '11', title: 'Demo Day / Investors / Incubation', status: 'pending', desc: 'Live pitch to angel investors, venture funds, and incubation onboarding' }
 ]
 
 export default function StartupJourneyPage() {

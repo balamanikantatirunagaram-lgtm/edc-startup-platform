@@ -336,6 +336,53 @@ export async function getStartupJourneyAdmin(startupId: string) {
     return { error: err.message }
   }
 }
+
+export async function updateStartupJourneyStageAdmin(startupId: string, stageName: string, status: string, feedback?: string) {
+  try {
+    const supabase = getAdminSupabase()
+    
+    // Check if stage exists
+    const { data: existing } = await supabase
+      .from('startup_journey_stages')
+      .select('id, feedback')
+      .eq('startup_id', startupId)
+      .eq('stage_name', stageName)
+      .maybeSingle()
+
+    if (existing) {
+      const updatedFeedback = feedback 
+        ? `${existing.feedback ? existing.feedback + '\n\n' : ''}[${new Date().toLocaleDateString()}] Admin:\n${feedback}`
+        : existing.feedback
+
+      const { error } = await supabase
+        .from('startup_journey_stages')
+        .update({
+          status,
+          feedback: updatedFeedback,
+          completed_at: status === 'completed' || status === 'Approved' ? new Date().toISOString() : null
+        })
+        .eq('id', existing.id)
+
+      if (error) return { error: error.message }
+    } else {
+      const { error } = await supabase
+        .from('startup_journey_stages')
+        .insert({
+          startup_id: startupId,
+          stage_name: stageName,
+          status,
+          feedback: feedback ? `[${new Date().toLocaleDateString()}] Admin:\n${feedback}` : null,
+          completed_at: status === 'completed' || status === 'Approved' ? new Date().toISOString() : null
+        })
+
+      if (error) return { error: error.message }
+    }
+
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
 export async function getTeamMembersAdmin(teamId: string) {
   noStore()
   try {
