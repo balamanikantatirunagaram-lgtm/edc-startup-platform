@@ -88,7 +88,7 @@ export function ChatBot() {
       >
         {open
           ? <XIcon className="size-6" />
-          : <img src="/chatbot.png" alt="ChatBot" className="size-full object-cover rounded-full" />
+          : <img src="/image.png" alt="ChatBot" className="size-full object-cover rounded-full" />
         }
       </button>
 
@@ -98,7 +98,7 @@ export function ChatBot() {
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
             <div className="size-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
-              <img src="/chatbot.png" alt="ChatBot" className="size-full object-cover" />
+              <img src="/image.png" alt="ChatBot" className="size-full object-cover" />
             </div>
             <div className="flex flex-col">
               <span className="font-semibold text-sm">EDC AI</span>
@@ -124,7 +124,7 @@ export function ChatBot() {
                 }`}>
                   {msg.role === "user"
                     ? <UserIcon className="size-3.5" />
-                    : <img src="/chatbot.png" alt="ChatBot" className="size-full object-cover" />
+                    : <img src="/image.png" alt="ChatBot" className="size-full object-cover" />
                   }
                 </div>
                 <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
@@ -139,7 +139,7 @@ export function ChatBot() {
             {loading && (
               <div className="flex gap-2">
                 <div className="size-7 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center overflow-hidden">
-                  <img src="/chatbot.png" alt="ChatBot" className="size-full object-cover" />
+                  <img src="/image.png" alt="ChatBot" className="size-full object-cover" />
                 </div>
                 <div className="bg-background border border-border/50 rounded-2xl rounded-tl-sm px-3 py-2 shadow-sm">
                   <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
