@@ -21,21 +21,21 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-8 text-sm text-primary-foreground/70">
           <div>
             <p className="text-2xl font-semibold text-primary-foreground">
-              120+
+              NIAT
             </p>
-            <p>Startups registered</p>
+            <p>National Institute of Advanced Technology</p>
           </div>
           <div>
             <p className="text-2xl font-semibold text-primary-foreground">
-              38
+              CDU
             </p>
-            <p>Incubation ready</p>
+            <p>Centre for Development & Upliftment</p>
           </div>
           <div>
             <p className="text-2xl font-semibold text-primary-foreground">
-              ₹2.4Cr
+              EDC
             </p>
-            <p>Funding facilitated</p>
+            <p>Entrepreneurship Development Cell</p>
           </div>
         </div>
       </div>

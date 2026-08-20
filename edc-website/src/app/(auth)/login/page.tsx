@@ -55,20 +55,6 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          asChild
-          className="-ml-3 text-muted-foreground hover:text-foreground mb-2"
-        >
-          <Link href="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Link>
-        </Button>
-      </div>
-
       <div className="flex flex-col gap-2">
         <h2 className="text-2xl font-semibold tracking-tight text-balance">
           Sign in to your account
@@ -116,6 +102,13 @@ export default function LoginPage() {
           </Button>
         </FieldGroup>
       </form>
+
+      <Button variant="outline" size="lg" asChild className="w-full">
+        <Link href="/">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Home
+        </Link>
+      </Button>
 
       <p className="text-center text-xs text-muted-foreground">
         Trouble signing in? Contact the EDC office at edc@niat.edu
