@@ -14,6 +14,7 @@ import {
   Rocket,
   ArrowRight,
   Sparkles,
+  CheckCircle2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -148,12 +149,22 @@ export default function StartupFlow() {
             From a raw student idea on campus to pitching before top angel investors and entering full-scale incubation. Here is how EDC propels your venture through structured milestone stages.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-2">
-            <Button size="lg" asChild>
-              <Link href="/login">
-                Register Your Startup <ArrowRight className="ml-2 h-4 w-4" />
+            <Button 
+              size="lg" 
+              asChild
+              className="h-13 px-8 text-base font-semibold bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 transition-all duration-200 group rounded-xl"
+            >
+              <Link href="/startup">
+                <span>Register Your Startup</span>
+                <ArrowRight className="ml-2.5 h-4 w-4 group-hover:translate-x-1.5 transition-transform duration-200" />
               </Link>
             </Button>
-            <Button variant="outline" size="lg" asChild>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              asChild
+              className="h-13 px-8 text-base font-medium rounded-xl border-border/80 hover:bg-muted/80 hover:-translate-y-0.5 transition-all duration-200"
+            >
               <Link href="/about">Learn About EDC</Link>
             </Button>
           </div>
@@ -169,28 +180,28 @@ export default function StartupFlow() {
 
             <div className="space-y-12 md:space-y-16">
               {STARTUP_FLOW_STAGES.map((stage, idx) => {
+                const Icon = stage.icon
                 const isEven = idx % 2 === 0
-                const IconComponent = stage.icon
+
                 return (
                   <div
                     key={stage.step}
-                    className={`relative flex flex-col md:flex-row items-center gap-6 md:gap-12 ${
-                      isEven ? "md:flex-row" : "md:flex-row-reverse"
-                    }`}
+                    className={`relative flex flex-col md:flex-row items-center ${
+                      isEven ? "md:flex-row-reverse" : ""
+                    } gap-8`}
                   >
                     {/* Content Card */}
                     <div className="w-full md:w-1/2">
-                      <div className="group relative overflow-hidden rounded-2xl border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/40">
-                        <div className="flex items-center justify-between gap-3 mb-3">
-                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${stage.badgeColor}`}>
-                            Stage {stage.step}: {stage.category}
+                      <div className="rounded-2xl border bg-card/70 backdrop-blur-sm p-6 shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
+                            Phase {stage.step}
                           </span>
-                          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                            {stage.tagline}
+                          <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Key Milestone
                           </span>
                         </div>
-                        <h3 className="text-xl font-bold tracking-tight mb-2 group-hover:text-primary transition-colors flex items-center gap-2">
-                          <IconComponent className="h-5 w-5 shrink-0 text-primary md:hidden" />
+                        <h3 className="text-lg font-bold tracking-tight mb-2">
                           {stage.title}
                         </h3>
                         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -199,18 +210,13 @@ export default function StartupFlow() {
                       </div>
                     </div>
 
-                    {/* Step Icon Node in Center (Desktop) */}
-                    <div className="relative z-10 hidden md:flex items-center justify-center">
-                      <div className="relative flex size-14 items-center justify-center rounded-full bg-background border-4 border-primary shadow-md transition-transform duration-300 hover:scale-110">
-                        <IconComponent className="size-6 text-primary" />
-                        <span className="absolute -bottom-2 px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                          {stage.step}
-                        </span>
-                      </div>
+                    {/* Step Icon Badge Center */}
+                    <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 size-12 items-center justify-center rounded-2xl bg-background border-2 border-primary shadow-lg text-primary z-10">
+                      <Icon className="size-5" />
                     </div>
 
-                    {/* Empty spacer for alignment */}
-                    <div className="hidden md:block w-1/2" />
+                    {/* Spacer for opposite side */}
+                    <div className="hidden md:block md:w-1/2" />
                   </div>
                 )
               })}
@@ -229,9 +235,15 @@ export default function StartupFlow() {
               Get access to dedicated faculty mentors, student R&D teams, strategy advisors, and prepare your startup for investor Demo Day.
             </p>
             <div>
-              <Button size="lg" variant="secondary" asChild className="font-semibold shadow-md">
-                <Link href="/login">
-                  Get Started Today <ArrowRight className="ml-2 h-4 w-4" />
+              <Button 
+                size="lg" 
+                variant="secondary" 
+                asChild 
+                className="h-13 px-8 text-base font-semibold shadow-lg shadow-black/10 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 rounded-xl group"
+              >
+                <Link href="/startup">
+                  <span>Get Started Today</span>
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1.5 transition-transform duration-200" />
                 </Link>
               </Button>
             </div>
