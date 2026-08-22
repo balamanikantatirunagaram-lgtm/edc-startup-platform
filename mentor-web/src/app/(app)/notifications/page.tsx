@@ -11,27 +11,20 @@ import {
   UserIcon,
   FileTextIcon,
   Trash2Icon,
-  UsersIcon,
   Loader2Icon
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getMyInvitations, respondToInvitation } from "@/services/team.service"
 import { getMyNotifications, markAllRead, markOneRead, deleteNotification } from "@/services/notifications.service"
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<any[]>([])
-  const [invitations, setInvitations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchAll = async () => {
     setLoading(true)
-    const [invRes, notifRes] = await Promise.all([
-      getMyInvitations(),
-      getMyNotifications()
-    ])
-    if (invRes.invitations) setInvitations(invRes.invitations)
+    const notifRes = await getMyNotifications()
     if (notifRes.notifications) setNotifications(notifRes.notifications)
     setLoading(false)
   }
@@ -67,17 +60,6 @@ export default function NotificationsPage() {
     }
   }
   
-  const handleInviteAction = async (id: string, status: 'approved' | 'rejected') => {
-    toast.info("Processing...")
-    const res = await respondToInvitation(id, status)
-    if (res.error) {
-      toast.error(res.error)
-    } else {
-      toast.success(`Invitation ${status}!`)
-      setInvitations(prev => prev.filter(inv => inv.id !== id))
-    }
-  }
-
   const getIcon = (type: string) => {
     switch (type) {
       case "feedback":
@@ -109,7 +91,7 @@ export default function NotificationsPage() {
             <BellIcon className="size-5 text-primary" />
             Notifications
           </h1>
-          <p className="text-sm text-muted-foreground">Stay updated on your startup review status and team invites.</p>
+          <p className="text-sm text-muted-foreground">Stay updated on your mentoring activity.</p>
         </div>
         <Button onClick={handleMarkAllRead} variant="outline" size="sm" className="gap-1.5 self-start">
           <CheckCheckIcon className="size-4" />
@@ -117,33 +99,6 @@ export default function NotificationsPage() {
         </Button>
       </section>
       
-      {invitations.length > 0 && (
-        <Card className="border-primary/50">
-          <CardHeader className="bg-primary/5">
-            <CardTitle className="text-base flex items-center gap-2">
-              <UsersIcon className="size-5" />
-              Team Invitations
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border/60">
-              {invitations.map(inv => (
-                <div key={inv.id} className="flex flex-col gap-3 p-4">
-                  <div>
-                    <span className="text-sm font-semibold text-foreground">You have been invited to join team: {inv.teamName}</span>
-                    <p className="text-xs text-muted-foreground mt-1">Requested on {new Date(inv.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleInviteAction(inv.id, 'approved')}>Accept</Button>
-                    <Button size="sm" variant="outline" onClick={() => handleInviteAction(inv.id, 'rejected')}>Decline</Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardContent className="p-0">
           {notifications.length === 0 ? (

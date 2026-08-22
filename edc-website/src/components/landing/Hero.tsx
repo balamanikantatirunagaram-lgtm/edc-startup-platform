@@ -23,7 +23,7 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center items-center">
-            <Link href="/startup" className="w-full sm:w-auto">
+            <Link href="/login" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
                 className="w-full sm:w-auto h-13 px-8 text-base font-semibold bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 transition-all duration-200 rounded-xl justify-center text-center"
@@ -31,13 +31,13 @@ export default function Hero() {
                 Register Your Startup
               </Button>
             </Link>
-            <Link href="/team" className="w-full sm:w-auto">
+            <Link href="/startup-flow" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
                 variant="outline" 
                 className="w-full sm:w-auto h-13 px-8 text-base font-medium rounded-xl border-border/80 hover:bg-muted/80 hover:-translate-y-0.5 transition-all duration-200 justify-center text-center"
               >
-                Join a Team
+                Explore the Program
               </Button>
             </Link>
           </div>

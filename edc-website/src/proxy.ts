@@ -9,7 +9,6 @@ const publicRoutes = [
   '/login',
   '/first-login',
   '/forgot-password',
-  '/reset-password',
   '/suspended',
   '/about',
   '/our-team',

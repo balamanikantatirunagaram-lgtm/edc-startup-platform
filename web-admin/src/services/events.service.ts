@@ -45,7 +45,7 @@ export async function deleteEvent(id: string) {
 export async function getEventRegistrations(eventId: string) {
   noStore()
   const supabase = getAdminSupabase()
-  const { data, error } = await supabase.from('event_registrations').select('*, profiles(full_name, email)').eq('event_id', eventId)
+  const { data, error } = await supabase.from('event_registrations').select('*, students(name, email, niat_id)').eq('event_id', eventId)
   if (error) {
     console.error('getEventRegistrations error:', error)
     return []

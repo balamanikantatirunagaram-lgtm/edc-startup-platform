@@ -11,11 +11,15 @@ export async function POST(req: NextRequest) {
     const token = cookieStore.get('sb-access-token')?.value
     
     let userContext = 'User is not logged in.'
-    let startupContext = 'No startup data.'
-    let teamContext = 'No team data.'
+    let mentoringContext = 'No mentoring data.'
 
     if (token) {
       try {
+        const supabaseAdmin = createClient(
+          process.env.SUPABASE_URL || '',
+          process.env.SUPABASE_SECRET_KEY || '',
+          { auth: { persistSession: false, autoRefreshToken: false } }
+        )
         const supabase = createClient(
           process.env.SUPABASE_URL || '',
           process.env.SUPABASE_PUBLISHABLE_KEY || '',
@@ -26,42 +30,22 @@ export async function POST(req: NextRequest) {
 
         if (user) {
           const name = user.user_metadata?.name || 'Unknown'
-          const niatId = user.user_metadata?.niat_id || 'Unknown'
-          userContext = `Currently logged in as: ${name} (NIAT ID: ${niatId})`
+          userContext = `Currently logged in as mentor: ${name}`
 
-          // Get team info
-          const { data: member } = await supabase
-            .from('team_members')
-            .select('team_id, status, teams(id, name, code, leader_id)')
-            .eq('student_id', user.id)
-            .eq('status', 'approved')
-            .maybeSingle()
+          // Get mentored teams
+          const { data: activeRequests } = await supabaseAdmin
+            .from('mentorship_requests')
+            .select('status, teams(id, name)')
+            .eq('mentor_id', user.id)
 
-          if (member?.teams) {
-            const team: any = member.teams
-            const isLeader = team.leader_id === user.id
-            teamContext = `Team: ${team.name}, Code: ${team.code}, Role: ${isLeader ? 'Team Leader' : 'Team Member'}`
-
-            const { data: startup } = await supabase
-              .from('startups')
-              .select('*')
-              .eq('team_id', team.id)
-              .maybeSingle()
-
-            if (startup) {
-              startupContext = `Startup: ${startup.name}, Stage: ${startup.stage || 'N/A'}, Industry: ${startup.industry || 'N/A'}, Status: ${startup.status || 'N/A'}, Problem: ${startup.problem_statement || 'N/A'}, Solution: ${startup.proposed_solution || 'N/A'}`
-            }
-
-            // Get tasks
-            const { data: tasks } = await supabase
-              .from('tasks')
-              .select('*')
-              .eq('team_id', team.id)
-
-            if (tasks && tasks.length > 0) {
-              const taskSummary = tasks.map(t => `${t.title} (${t.status})`).join(', ')
-              startupContext += `. Tasks: ${taskSummary}`
-            }
+          if (activeRequests && activeRequests.length > 0) {
+            const accepted = activeRequests.filter(r => r.status === 'accepted')
+            const pending = activeRequests.filter(r => r.status === 'pending')
+            const teamNames = accepted.map((r: any) => {
+              const t = Array.isArray(r.teams) ? r.teams[0] : r.teams
+              return t?.name
+            }).filter(Boolean)
+            mentoringContext = `Actively mentoring ${accepted.length} team(s): ${teamNames.join(', ') || 'none'}. Pending mentorship requests: ${pending.length}.`
           }
         }
       } catch (e) {
@@ -69,29 +53,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const systemPrompt = `You are EDC AI — an intelligent assistant for the EDC (Entrepreneurship Development Cell) Startup Platform at NIAT college.
+    const systemPrompt = `You are EDC AI — an intelligent assistant for the EDC (Entrepreneurship Development Cell) Startup Platform at NIAT college, serving the Mentor Portal.
 
 PLATFORM CONTEXT:
 - ${userContext}
-- ${teamContext}  
-- ${startupContext}
+- ${mentoringContext}
 
 YOUR CAPABILITIES:
-- Help students with startup ideas, business models, pitching, and planning
-- Answer questions about the EDC platform features (Team Connect, Register Startup, Tasks, Notifications)
-- Guide students on forming teams, writing problem statements and solutions
-- Provide advice on startup stages: Idea → Prototype → MVP → Traction → Scaling
-- Help with funding schemes (Startup India, CGTMSE, Angel investors)
-- Advise on pitch deck structure, business model canvas, lean canvas
+- Help mentors guide student startups on business models, pitching, and product strategy
+- Answer questions about the Mentor Portal features (Mentoring Requests, My Startups, Network, Document Center, Funding Applications, Meetings, Messages, Job Board, Learning Hub)
+- Provide frameworks for evaluating startups and giving constructive stage-appropriate feedback
+- Advise on funding schemes (Startup India, CGTMSE, Angel investors) mentors can point founders to
+- Suggest how to structure review sessions and milestone tracking
 
-PLATFORM RULES YOU KNOW:
-- Students log in with NIAT ID and default password
-- First-time users must change password and set security question
-- Students can either Register a Startup (becoming Team Leader) or Join a Team via code/QR/invite
-- Team Leaders can assign tasks, invite students, approve/reject join requests
-- Once in a team, "Team Connect" disappears from navigation
-
-Be concise, helpful, and encouraging. Use emojis sparingly for warmth. Always refer to yourself as "EDC AI".`
+Be concise, helpful, and professional. Use emojis sparingly. Always refer to yourself as "EDC AI".`
 
     const nvidiaApiKey = process.env.NVIDIA_API_KEY
     if (!nvidiaApiKey) {

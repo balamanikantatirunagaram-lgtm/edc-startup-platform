@@ -246,7 +246,7 @@ export default function AdminFundingPage() {
                   <tbody className="divide-y text-sm">
                     {applications.map((item) => (
                       <tr key={item.id} className="hover:bg-muted/10 transition-colors">
-                        <td className="p-4 font-medium">{item.startup_id}</td>
+                        <td className="p-4 font-medium">{item.startups?.name || item.startup_id}</td>
                         <td className="p-4 text-muted-foreground">{item.funding_opportunities?.title || item.opportunity_id}</td>
                         <td className="p-4">{item.status}</td>
                       </tr>

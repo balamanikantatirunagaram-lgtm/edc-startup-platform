@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ExternalLink, Building2, MapPin } from "lucide-react"
 import { getIncubators } from "@/services/funding.service"
-import { toast } from "sonner"
 
 export default function IncubatorsPage() {
   const [incubators, setIncubators] = React.useState<any[]>([])
@@ -20,10 +20,6 @@ export default function IncubatorsPage() {
     }
     fetchIncubators()
   }, [])
-
-  const handleApply = () => {
-    toast.success("Application submitted successfully!")
-  }
 
   return (
     <div className="flex flex-col gap-6 pb-10 p-6">
@@ -57,10 +53,15 @@ export default function IncubatorsPage() {
                   {item.description || "No description provided."}
                 </p>
               </CardContent>
-              <CardFooter className="pt-4 bg-muted/20 mt-auto">
-                <Button className="w-full gap-2" onClick={handleApply}>
-                  Apply Now
-                </Button>
+              <CardFooter className="pt-4 bg-muted/20 mt-auto flex flex-col gap-2">
+                <Link href="/funding" className="w-full">
+                  <Button className="w-full gap-2">
+                    View Funding Opportunities
+                  </Button>
+                </Link>
+                <p className="text-xs text-center text-muted-foreground">
+                  Incubator applications are handled through active funding listings.
+                </p>
               </CardFooter>
             </Card>
           ))}

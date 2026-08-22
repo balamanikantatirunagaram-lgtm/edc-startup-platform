@@ -101,11 +101,11 @@ export default function StudentResourcesPage() {
                   {resource.description}
                 </p>
                 
-                <Button asChild variant="outline" className="w-full mt-auto group-hover:border-primary/50 group-hover:bg-primary/5 transition-colors">
-                  <a href={resource.link} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
-                    Open Resource
-                    <ExternalLinkIcon className="size-3.5" />
-                  </a>
+                <Button variant="outline" className="w-full mt-auto group-hover:border-primary/50 group-hover:bg-primary/5 transition-colors" render={
+                  <a href={resource.link} target="_blank" rel="noopener noreferrer" />
+                }>
+                  Open Resource
+                  <ExternalLinkIcon className="size-3.5" />
                 </Button>
               </CardContent>
             </Card>

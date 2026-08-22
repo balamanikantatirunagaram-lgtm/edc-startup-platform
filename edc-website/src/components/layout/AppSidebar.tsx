@@ -19,6 +19,7 @@ import {
   BuildingIcon,
   GlobeIcon,
   TrophyIcon,
+  GraduationCapIcon,
   LogOutIcon,
   CheckCircle2Icon
 } from "lucide-react"
@@ -42,6 +43,10 @@ import { getMyTeamStatus } from "@/services/team.service"
 import { useAppState } from "@/lib/app-state-context"
 import { logout } from "@/services/auth.service"
 import { Button } from "@/components/ui/button"
+import {
+  MENTOR_PORTAL_URL,
+  ADMIN_PORTAL_URL,
+} from "@/config/portal-urls"
 
 const baseStudentNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
@@ -69,10 +74,10 @@ export function AppSidebar() {
       let finalNav = [...baseStudentNav]
       
       if (status.startupStatus === 'Incubation Ready') {
-        // Insert Incubator Connect after My Applications
-        const appIndex = finalNav.findIndex(i => i.title === "My Applications")
-        if (appIndex !== -1) {
-          finalNav.splice(appIndex + 1, 0, { title: "Incubator Connect", href: "/incubators", icon: BuildingIcon })
+        // Insert Incubator Connect after Funding
+        const fundingIndex = finalNav.findIndex(i => i.title === "Funding")
+        if (fundingIndex !== -1) {
+          finalNav.splice(fundingIndex + 1, 0, { title: "Incubator Connect", href: "/incubators", icon: BuildingIcon })
         }
       }
 
@@ -126,27 +131,38 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Only show admin switch if user has admin role */}
-        {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Switch View</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
+        {/* Cross-portal navigation */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Portals</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Mentor Portal"
+                  render={
+                    <a href={MENTOR_PORTAL_URL} target="_blank" rel="noopener noreferrer">
+                      <GraduationCapIcon />
+                      <span>Mentor Portal</span>
+                    </a>
+                  }
+                />
+              </SidebarMenuItem>
+              {isAdmin && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    tooltip="Admin view"
+                    tooltip="Admin Portal"
                     render={
-                      <Link href="/admin">
+                      <a href={ADMIN_PORTAL_URL} target="_blank" rel="noopener noreferrer">
                         <ShieldCheckIcon />
-                        <span>Admin view</span>
-                      </Link>
+                        <span>Admin Portal</span>
+                      </a>
                     }
                   />
                 </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-3">
         <Button

@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/field"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
+import { changePassword } from "@/services/auth.service"
+import { updateNotificationPreferences, getNotificationPreferences } from "@/services/preferences.service"
 
 const rules = [
   { label: "At least 8 characters", test: (v: string) => v.length >= 8 },
@@ -47,6 +49,13 @@ export default function SettingsPage() {
 
   React.useEffect(() => {
     setMounted(true)
+    getNotificationPreferences().then((prefs) => {
+      if (prefs) {
+        if (typeof prefs.emailAlerts === "boolean") setEmailAlerts(prefs.emailAlerts)
+        if (typeof prefs.feedbackAlerts === "boolean") setFeedbackAlerts(prefs.feedbackAlerts)
+        if (typeof prefs.weeklyDigest === "boolean") setWeeklyDigest(prefs.weeklyDigest)
+      }
+    })
   }, [])
 
   const rulesPassed = rules.filter((r) => r.test(newPassword)).length
@@ -54,23 +63,35 @@ export default function SettingsPage() {
   const passwordsMatch = confirmPassword.length > 0 && newPassword === confirmPassword
   const canUpdate = allPassed && passwordsMatch && currentPassword.length > 0
 
-  const handleSaveNotifications = (e: React.FormEvent) => {
+  const handleSaveNotifications = async (e: React.FormEvent) => {
     e.preventDefault()
-    toast.success("Notification preferences updated.")
+    const res = await updateNotificationPreferences({
+      emailAlerts,
+      feedbackAlerts,
+      weeklyDigest
+    })
+    if (res?.error) {
+      toast.error(res.error)
+    } else {
+      toast.success("Notification preferences updated.")
+    }
   }
 
-  const handleChangePassword = (e: React.FormEvent) => {
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canUpdate) return
 
     setUpdating(true)
-    setTimeout(() => {
-      setUpdating(false)
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmPassword("")
-      toast.success("Password updated successfully.")
-    }, 1200)
+    const res = await changePassword(currentPassword, newPassword)
+    setUpdating(false)
+    if (res?.error) {
+      toast.error(res.error)
+      return
+    }
+    setCurrentPassword("")
+    setNewPassword("")
+    setConfirmPassword("")
+    toast.success("Password updated successfully.")
   }
 
   if (!mounted) return null
@@ -97,7 +118,7 @@ export default function SettingsPage() {
         <CardContent className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-semibold">Theme Theme</span>
+              <span className="text-sm font-semibold">Theme</span>
               <span className="text-xs text-muted-foreground">Select between Light, Dark, or System mode.</span>
             </div>
             <div className="flex gap-2">

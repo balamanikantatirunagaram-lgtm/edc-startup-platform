@@ -16,26 +16,42 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { StatCard } from "@/components/shared/StatCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 
-import { getMentorDashboardData } from "@/services/mentorship.service"
+import { getMentorDashboardData, updateRequestStatus } from "@/services/mentorship.service"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardPage() {
   const [loading, setLoading] = React.useState(true)
   const [data, setData] = React.useState<any>(null)
+  const router = useRouter()
+  const [actingId, setActingId] = React.useState<string | null>(null)
+
+  const load = React.useCallback(async () => {
+    const res = await getMentorDashboardData()
+    if (res.error) {
+      toast.error(res.error)
+    } else {
+      setData(res)
+    }
+    setLoading(false)
+  }, [])
 
   React.useEffect(() => {
-    async function load() {
-      const res = await getMentorDashboardData()
-      if (res.error) {
-        toast.error(res.error)
-      } else {
-        setData(res)
-      }
-      setLoading(false)
-    }
     load()
-  }, [])
+  }, [load])
+
+  const handleRequestAction = async (id: string, status: 'accepted' | 'declined') => {
+    setActingId(id)
+    const res = await updateRequestStatus(id, status)
+    setActingId(null)
+    if (res.error) {
+      toast.error(res.error)
+      return
+    }
+    toast.success(`Request ${status}.`)
+    load()
+  }
 
   if (loading || !data) {
     return (
@@ -51,7 +67,7 @@ export default function DashboardPage() {
     )
   }
 
-  const { stats, recentStartups, pendingRequests } = data
+  const { stats, recentStartups, pendingRequests, recentMessages } = data
 
   return (
     <div className="flex flex-col gap-6">
@@ -96,7 +112,13 @@ export default function DashboardPage() {
                         <span className="text-xs text-muted-foreground">{s.industry} • {s.stage}</span>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">Manage</Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => s.startupId ? router.push(`/startups/${s.startupId}`) : router.push('/startups')}
+                    >
+                      Manage
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -114,18 +136,25 @@ export default function DashboardPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-3">
-                  <span className="size-2 rounded-full bg-primary" />
-                  <span className="font-medium text-foreground">EcoTrack:</span>
-                  <span className="truncate">"Can we review the pitch deck tomorrow?"</span>
+              {recentMessages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-sm text-muted-foreground">
+                  No messages yet. Conversations with your teams will appear here.
                 </div>
-                <div className="flex items-center gap-3 opacity-60">
-                  <span className="size-2 rounded-full bg-muted-foreground" />
-                  <span className="font-medium text-foreground">HealthAI:</span>
-                  <span className="truncate">"Thanks for the feedback on our architecture!"</span>
+              ) : (
+                <div className="flex flex-col gap-4 text-sm text-muted-foreground">
+                  {recentMessages.map((m: any, idx: number) => (
+                    <button
+                      key={idx}
+                      className="flex items-center gap-3 text-left hover:text-foreground transition-colors"
+                      onClick={() => router.push('/messages')}
+                    >
+                      <span className={`size-2 rounded-full ${m.isRead ? 'bg-muted-foreground' : 'bg-primary'}`} />
+                      <span className="font-medium text-foreground">{m.teamName}:</span>
+                      <span className="truncate">{m.content}</span>
+                    </button>
+                  ))}
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -145,8 +174,23 @@ export default function DashboardPage() {
                   </div>
                   <span className="text-xs text-muted-foreground">Topic: {req.topic}</span>
                   <div className="flex gap-2 mt-1">
-                    <Button size="sm" className="w-full h-7 text-xs">Accept</Button>
-                    <Button size="sm" variant="outline" className="w-full h-7 text-xs">Decline</Button>
+                    <Button
+                      size="sm"
+                      className="w-full h-7 text-xs"
+                      disabled={actingId === req.id}
+                      onClick={() => handleRequestAction(req.id, 'accepted')}
+                    >
+                      {actingId === req.id ? "..." : "Accept"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full h-7 text-xs"
+                      disabled={actingId === req.id}
+                      onClick={() => handleRequestAction(req.id, 'declined')}
+                    >
+                      Decline
+                    </Button>
                   </div>
                 </div>
               ))}

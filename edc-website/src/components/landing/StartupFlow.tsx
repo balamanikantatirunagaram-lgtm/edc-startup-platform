@@ -143,23 +143,23 @@ export default function StartupFlow() {
             From a raw student idea on campus to pitching before top angel investors and entering full-scale incubation. Here is how EDC propels your venture through structured milestone stages.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-2">
-            <Button 
-              size="lg" 
-              asChild
-              className="h-13 px-8 text-base font-semibold bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 transition-all duration-200 group rounded-xl"
-            >
-              <Link href="/startup" className="flex items-center justify-center">
-                <span>Register Your Startup</span>
-              </Link>
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              asChild
-              className="h-13 px-8 text-base font-medium rounded-xl border-border/80 hover:bg-muted/80 hover:-translate-y-0.5 transition-all duration-200"
-            >
-              <Link href="/about">Learn About EDC</Link>
-            </Button>
+            <Link href="/login" className="flex items-center justify-center">
+              <Button 
+                size="lg" 
+                className="h-13 px-8 text-base font-semibold bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 transition-all duration-200 group rounded-xl"
+              >
+                Register Your Startup
+              </Button>
+            </Link>
+            <Link href="/about">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="h-13 px-8 text-base font-medium rounded-xl border-border/80 hover:bg-muted/80 hover:-translate-y-0.5 transition-all duration-200"
+              >
+                Learn About EDC
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -228,16 +228,15 @@ export default function StartupFlow() {
               Get access to dedicated faculty mentors, student R&D teams, strategy advisors, and prepare your startup for investor Demo Day.
             </p>
             <div>
-              <Button 
-                size="lg" 
-                variant="secondary" 
-                asChild 
-                className="h-13 px-8 text-base font-semibold shadow-lg shadow-black/10 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 rounded-xl group"
-              >
-                <Link href="/startup" className="flex items-center justify-center">
-                  <span>Get Started Today</span>
-                </Link>
-              </Button>
+              <Link href="/login" className="flex items-center justify-center">
+                <Button 
+                  size="lg" 
+                  variant="secondary" 
+                  className="h-13 px-8 text-base font-semibold shadow-lg shadow-black/10 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 rounded-xl group"
+                >
+                  Get Started Today
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

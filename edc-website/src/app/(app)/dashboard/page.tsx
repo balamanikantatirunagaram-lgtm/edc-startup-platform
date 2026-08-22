@@ -102,7 +102,7 @@ export default function DashboardPage() {
           <StatCard label="Team status" value={hasTeam ? "No Startup" : "No Team"} icon={UsersIcon} hint="Join or register" />
         )}
         <StatCard label="Profile complete" value={`${profileCompletion}%`} icon={UserCircleIcon} hint={fieldsLeftHint} />
-        <StatCard label="Unread alerts" value={0} icon={BellIcon} hint="Notifications" />
+        <StatCard label="Unread alerts" value={data?.unreadCount ?? 0} icon={BellIcon} hint="Notifications" />
         <StatCard label="Team Code" value={teamCode || 'None'} icon={TrendingUpIcon} hint="Share to invite" />
       </section>
 

@@ -24,7 +24,7 @@ export async function getFundingApplications() {
   const { data, error } = await supabase.from('funding_applications').select(`
     *,
     funding_opportunities(*),
-    startup_profiles(*)
+    startups(id, name, industry, stage)
   `).order('created_at', { ascending: false })
   if (error) console.error(error)
   return data || []

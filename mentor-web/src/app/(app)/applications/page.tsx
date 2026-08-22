@@ -5,10 +5,26 @@ import { getFundingApplications, updateApplicationStatus } from "@/services/fund
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Field, FieldLabel } from "@/components/ui/field"
+import { toast } from "sonner"
 
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Feedback dialog state
+  const [feedbackApp, setFeedbackApp] = useState<{ id: string; status: string } | null>(null)
+  const [feedback, setFeedback] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -22,16 +38,33 @@ export default function ApplicationsPage() {
     load()
   }, [])
 
-  const handleUpdateStatus = async (appId: string, status: string) => {
-    let feedback = ""
-    if (status === 'rejected' || status === 'accepted') {
-      feedback = prompt("Enter feedback for the startup:") || ""
-    }
-    const res = await updateApplicationStatus(appId, status, feedback)
+  const handleUpdateStatus = async () => {
+    if (!feedbackApp) return
+    setSubmitting(true)
+    const res = await updateApplicationStatus(feedbackApp.id, feedbackApp.status, feedback)
+    setSubmitting(false)
     if (res.success) {
-      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status, feedback } : a))
+      setApplications(prev => prev.map(a => a.id === feedbackApp.id ? { ...a, status: feedbackApp.status, feedback } : a))
+      toast.success(`Application ${feedbackApp.status.replace('_', ' ')}.`)
+      setFeedbackApp(null)
+      setFeedback("")
     } else {
-      alert("Failed to update status")
+      toast.error("Failed to update status")
+    }
+  }
+
+  const openFeedback = (appId: string, status: string) => {
+    setFeedbackApp({ id: appId, status })
+    setFeedback("")
+  }
+
+  const handleMarkReviewing = async (appId: string) => {
+    const res = await updateApplicationStatus(appId, 'under_review', "")
+    if (res.success) {
+      setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'under_review' } : a))
+      toast.success("Application marked as under review.")
+    } else {
+      toast.error("Failed to update status")
     }
   }
 
@@ -81,16 +114,16 @@ export default function ApplicationsPage() {
               </CardContent>
               <CardFooter className="flex justify-end gap-2 border-t pt-4">
                 {app.status === 'pending' && (
-                  <Button variant="outline" size="sm" onClick={() => handleUpdateStatus(app.id, 'under_review')}>
+                  <Button variant="outline" size="sm" onClick={() => handleMarkReviewing(app.id)}>
                     Mark Reviewing
                   </Button>
                 )}
                 {app.status === 'under_review' && (
                   <>
-                    <Button variant="destructive" size="sm" onClick={() => handleUpdateStatus(app.id, 'rejected')}>
+                    <Button variant="destructive" size="sm" onClick={() => openFeedback(app.id, 'rejected')}>
                       Reject
                     </Button>
-                    <Button variant="default" size="sm" onClick={() => handleUpdateStatus(app.id, 'accepted')}>
+                    <Button variant="default" size="sm" onClick={() => openFeedback(app.id, 'accepted')}>
                       Accept
                     </Button>
                   </>
@@ -100,6 +133,39 @@ export default function ApplicationsPage() {
           ))}
         </div>
       )}
+
+      {/* Feedback dialog */}
+      <Dialog open={!!feedbackApp} onOpenChange={(open) => !open && setFeedbackApp(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {feedbackApp?.status === 'accepted' ? 'Accept application' : 'Reject application'}
+            </DialogTitle>
+            <DialogDescription>
+              Leave feedback for the startup team.
+            </DialogDescription>
+          </DialogHeader>
+          <Field className="py-2">
+            <FieldLabel>Feedback</FieldLabel>
+            <Textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              placeholder="e.g. Strong traction, but clarify your revenue model before the next review."
+              rows={4}
+            />
+          </Field>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFeedbackApp(null)}>Cancel</Button>
+            <Button
+              variant={feedbackApp?.status === 'rejected' ? 'destructive' : 'default'}
+              onClick={handleUpdateStatus}
+              disabled={submitting}
+            >
+              {submitting ? "Saving..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

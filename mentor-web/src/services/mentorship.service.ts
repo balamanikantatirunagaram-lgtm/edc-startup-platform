@@ -59,11 +59,39 @@ export async function getMentorDashboardData() {
       .eq('is_read', false)
       .neq('sender_id', mentorId)
 
+    // Count meetings requested with this mentor
+    const { count: totalMeetings } = await supabase
+      .from('meeting_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('receiver_id', mentorId)
+
+    // Fetch recent messages across all mentored teams
+    const mentoredTeamIds = activeRequests?.map(req => req.team_id) || []
+    let recentMessages: Array<{ teamName: string; content: string; isRead: boolean }> = []
+    if (mentoredTeamIds.length > 0) {
+      const { data: recentMsgs } = await supabase
+        .from('mentor_messages')
+        .select('team_id, content, is_read, teams(name)')
+        .eq('mentor_id', mentorId)
+        .neq('sender_id', mentorId)
+        .in('team_id', mentoredTeamIds)
+        .order('created_at', { ascending: false })
+        .limit(3)
+      recentMessages = recentMsgs?.map(m => {
+        const team = Array.isArray(m.teams) ? m.teams[0] : (m.teams as any)
+        return {
+          teamName: team?.name || 'Unknown Team',
+          content: m.content,
+          isRead: m.is_read
+        }
+      }) || []
+    }
+
     const stats = {
       activeStartups: activeRequests?.length || 0,
       pendingRequests: pendingRequests?.length || 0,
       unreadMessages: unreadMessages || 0,
-      totalMeetings: 0 // Mocked for now until meetings table is added
+      totalMeetings: totalMeetings || 0
     }
 
     // Format active startups
@@ -72,13 +100,13 @@ export async function getMentorDashboardData() {
       const startup = team?.startups ? (Array.isArray(team.startups) ? team.startups[0] : team.startups) : null
       return {
         id: startup?.id || team?.id,
+        startupId: startup?.id || null,
         name: startup?.name || team?.name || 'Unknown Team',
         industry: startup?.industry || 'Unspecified',
         stage: startup?.stage || 'Idea Phase',
         status: 'active'
       }
     }) || []
-
     // Format pending requests
     const formattedPending = pendingRequests?.map(req => ({
       id: req.id,
@@ -88,11 +116,12 @@ export async function getMentorDashboardData() {
       date: new Date(req.created_at).toLocaleDateString()
     })) || []
 
-    return { 
+    return {
       success: true,
       stats,
       recentStartups,
-      pendingRequests: formattedPending
+      pendingRequests: formattedPending,
+      recentMessages
     }
 
   } catch (error: any) {

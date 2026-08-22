@@ -214,6 +214,40 @@ export async function getCurrentUser() {
   }
 }
 
+export async function changePassword(currentPassword: string, newPassword: string) {
+  try {
+    const supabase = getSupabase()
+    const supabaseAdmin = getSupabaseAdmin()
+
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
+    if (userError || !user || !user.email) return { error: "Invalid session" }
+
+    // Verify the current password before allowing a change
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword
+    })
+    if (verifyError) return { error: "Current password is incorrect" }
+
+    if (!newPassword || newPassword.length < 8) {
+      return { error: "New password must be at least 8 characters" }
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      password: newPassword
+    })
+    if (error) return { error: error.message }
+    return { success: true }
+  } catch (err: any) {
+    console.error("Change Password Error:", err)
+    return { error: err?.message || String(err) }
+  }
+}
+
 export async function logout() {
   const cookieStore = await cookies()
   const token = cookieStore.get('sb-access-token')?.value

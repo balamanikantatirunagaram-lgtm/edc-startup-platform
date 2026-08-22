@@ -44,7 +44,7 @@ export async function getConversations() {
     // Get all accepted teams for this mentor
     const { data: activeRequests } = await supabaseAdmin
       .from('mentorship_requests')
-      .select('team_id, teams(id, name)')
+      .select('team_id, teams(id, name, startup_id)')
       .eq('mentor_id', mentorId)
       .eq('status', 'accepted')
 
@@ -53,7 +53,8 @@ export async function getConversations() {
     // For each team, fetch the latest message and unread count
     const conversations = await Promise.all(activeRequests.map(async (req) => {
       const teamId = req.team_id
-      const teamName = Array.isArray(req.teams) ? req.teams[0]?.name : (req.teams as any)?.name || 'Unknown Team'
+      const team = Array.isArray(req.teams) ? req.teams[0] : (req.teams as any)
+      const teamName = team?.name || 'Unknown Team'
 
       const { data: lastMessage } = await supabaseAdmin
         .from('mentor_messages')
@@ -75,6 +76,7 @@ export async function getConversations() {
       return {
         teamId,
         teamName,
+        startupId: team?.startup_id || null,
         lastMessage: lastMessage?.content || 'No messages yet.',
         time: lastMessage ? new Date(lastMessage.created_at).toLocaleDateString() : '',
         timestamp: lastMessage ? new Date(lastMessage.created_at).getTime() : 0,
@@ -125,7 +127,6 @@ export async function getTeamMessages(teamId: string) {
     // Fetch sender names
     const senderIds = Array.from(new Set(messages?.map(m => m.sender_id) || []))
     const { data: students } = await supabaseAdmin.from('students').select('id, name, niat_id').in('id', senderIds)
-    const { data: mentors } = await supabaseAdmin.from('auth.users').select('id, raw_user_meta_data').in('id', senderIds)
 
     const enrichedMessages = messages?.map(msg => {
       let senderName = 'Unknown'

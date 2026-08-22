@@ -47,6 +47,12 @@ export async function getDashboardData() {
       skills: user.user.user_metadata?.skills || []
     }
 
+    const { count: unreadCount } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.user.id)
+      .eq('read', false)
+
     const { data: member } = await supabase
       .from('team_members')
       .select('team_id, teams(id, name, code, leader_id, startup_id)')
@@ -60,7 +66,8 @@ export async function getDashboardData() {
         startup: null,
         hasTeam: false,
         isLeader: false,
-        teamCode: null
+        teamCode: null,
+        unreadCount: unreadCount || 0
       }
     }
 
@@ -113,7 +120,8 @@ export async function getDashboardData() {
       hasTeam: true,
       isLeader: team.leader_id === user.user.id,
       teamCode: team.code,
-      teamName: team.name
+      teamName: team.name,
+      unreadCount: unreadCount || 0
     }
   } catch (err: any) {
     return { error: err.message }

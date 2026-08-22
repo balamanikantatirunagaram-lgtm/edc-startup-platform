@@ -6,6 +6,17 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { toast } from "sonner"
 import { Bookmark, BookmarkCheck, Calendar, Search } from "lucide-react"
 
 export default function NetworkPage() {
@@ -13,6 +24,12 @@ export default function NetworkPage() {
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+
+  // Meeting request dialog state
+  const [meetingStartup, setMeetingStartup] = useState<any>(null)
+  const [meetingTopic, setMeetingTopic] = useState("")
+  const [meetingTime, setMeetingTime] = useState("")
+  const [requesting, setRequesting] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -43,17 +60,18 @@ export default function NetworkPage() {
     await toggleBookmark(startupId, newStatus)
   }
 
-  const handleRequestMeeting = async (startupId: string) => {
-    const topic = prompt("Enter meeting topic:")
-    if (!topic) return
-    const preferredTime = prompt("Enter preferred time (e.g. Next Monday 10AM):")
-    if (!preferredTime) return
-
-    const res = await requestMeeting(startupId, { topic, preferred_time: preferredTime })
+  const handleSubmitMeeting = async () => {
+    if (!meetingStartup || !meetingTopic.trim() || !meetingTime.trim()) return
+    setRequesting(true)
+    const res = await requestMeeting(meetingStartup.id, { topic: meetingTopic, preferred_time: meetingTime })
+    setRequesting(false)
     if (res.success) {
-      alert("Meeting requested successfully!")
+      toast.success("Meeting requested successfully!")
+      setMeetingStartup(null)
+      setMeetingTopic("")
+      setMeetingTime("")
     } else {
-      alert("Failed to request meeting: " + res.error)
+      toast.error("Failed to request meeting: " + res.error)
     }
   }
 
@@ -116,7 +134,7 @@ export default function NetworkPage() {
                       Website
                     </Button>
                   ) : <div />}
-                  <Button size="sm" onClick={() => handleRequestMeeting(startup.id)}>
+                  <Button size="sm" onClick={() => { setMeetingStartup(startup); setMeetingTopic(""); setMeetingTime("") }}>
                     <Calendar className="mr-2 h-4 w-4" /> Request Meeting
                   </Button>
                 </CardFooter>
@@ -130,6 +148,46 @@ export default function NetworkPage() {
           )}
         </div>
       )}
+
+      {/* Meeting request dialog */}
+      <Dialog open={!!meetingStartup} onOpenChange={(open) => !open && setMeetingStartup(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request a Meeting</DialogTitle>
+            <DialogDescription>
+              Send a meeting request to {meetingStartup?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <FieldGroup className="gap-4 py-2">
+            <Field>
+              <FieldLabel>Topic</FieldLabel>
+              <Textarea
+                value={meetingTopic}
+                onChange={(e) => setMeetingTopic(e.target.value)}
+                placeholder="e.g. Review of pitch deck and MVP progress"
+                rows={3}
+              />
+            </Field>
+            <Field>
+              <FieldLabel>Preferred time</FieldLabel>
+              <Input
+                value={meetingTime}
+                onChange={(e) => setMeetingTime(e.target.value)}
+                placeholder="e.g. Next Monday 10AM"
+              />
+            </Field>
+          </FieldGroup>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMeetingStartup(null)}>Cancel</Button>
+            <Button
+              onClick={handleSubmitMeeting}
+              disabled={!meetingTopic.trim() || !meetingTime.trim() || requesting}
+            >
+              {requesting ? "Sending..." : "Send Request"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

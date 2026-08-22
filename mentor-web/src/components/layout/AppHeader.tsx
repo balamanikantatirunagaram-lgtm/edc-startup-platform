@@ -2,7 +2,9 @@
 
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { logout } from "@/services/auth.service"
+import { useEffect, useState } from "react"
+import { logout, getCurrentUser } from "@/services/auth.service"
+import { getMyNotifications } from "@/services/notifications.service"
 import { BellIcon, LogOutIcon, UserIcon, SettingsIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -27,32 +29,50 @@ import { useAppState } from "@/lib/app-state-context"
 
 const TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
-  "/startup": "My Startup",
-  "/startup/register": "Register Startup",
-  "/startup/team": "My Team",
+  "/network": "Network",
+  "/learning": "Learning Hub",
+  "/resources": "Resources",
+  "/applications": "Funding Applications",
+  "/meetings": "Meetings",
+  "/requests": "Mentoring Requests",
+  "/startups": "My Startups",
+  "/documents": "Document Center",
+  "/jobs": "Job Board",
+  "/viksit-bharat": "Viksit Bharat",
+  "/messages": "Messages",
   "/notifications": "Notifications",
   "/profile": "Profile",
   "/settings": "Settings",
-  "/onboarding": "Complete your profile",
-  "/mentors": "Mentor Connect",
-  "/resources": "Resources",
-  "/funding": "Funding",
-  "/events": "Events",
-  "/team": "Team Connect",
 }
 
 export function AppHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const { currentUser, notifications } = useAppState()
+  const { currentUser: mockUser, notifications: mockNotifications } = useAppState()
+
+  const [realUser, setRealUser] = useState<{ name: string; niatId: string; avatarUrl: string } | null>(null)
+  const [unread, setUnread] = useState(0)
+
+  useEffect(() => {
+    getCurrentUser().then((u) => {
+      if (u) setRealUser({ name: u.name || u.email, niatId: u.niatId, avatarUrl: (u as any).avatarUrl || "" })
+    })
+    getMyNotifications().then((res) => {
+      if (res.notifications) setUnread(res.notifications.filter((n: any) => !n.read).length)
+    })
+  }, [])
 
   const title = TITLES[pathname] ?? "EDC Cell"
 
-  const unread = notifications.filter((n) => !n.read).length
-  const initials = currentUser.fullName
+  const displayName = realUser?.name || mockUser?.fullName || ""
+  const displayId = realUser?.niatId || mockUser?.niatId || ""
+  const avatarUrl = realUser?.avatarUrl || mockUser?.avatarUrl || ""
+  const initials = displayName
     .split(" ")
     .map((n) => n[0])
     .join("")
+    .toUpperCase()
+    .slice(0, 2)
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-md md:px-6">
@@ -82,13 +102,13 @@ export function AppHeader() {
             render={
               <Button variant="ghost" className="gap-2 pl-1.5 pr-2.5">
                 <Avatar className="size-7">
-                  <AvatarImage src={currentUser.avatarUrl} alt={currentUser.fullName} />
+                  <AvatarImage src={avatarUrl} alt={displayName} />
                   <AvatarFallback className="text-xs">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <span className="hidden text-sm font-medium sm:inline">
-                  {currentUser.fullName}
+                  {displayName}
                 </span>
               </Button>
             }
@@ -97,10 +117,10 @@ export function AppHeader() {
             <DropdownMenuLabel>
               <div className="flex flex-col">
                 <span className="text-sm font-medium">
-                  {currentUser.fullName}
+                  {displayName}
                 </span>
                 <span className="text-xs font-normal text-muted-foreground">
-                  @{currentUser.niatId}
+                  @{displayId}
                 </span>
               </div>
             </DropdownMenuLabel>

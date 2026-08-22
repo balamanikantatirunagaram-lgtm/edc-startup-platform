@@ -157,7 +157,9 @@ export default function MessagesPage() {
             <>
               <div className="p-4 border-b flex justify-between items-center bg-muted/10">
                 <span className="font-semibold">{activeConv?.teamName}</span>
-                <Button variant="outline" size="sm" onClick={() => window.location.href = `/startups/${activeTeamId}`}>View Profile</Button>
+                {activeConv?.startupId && (
+                  <Button variant="outline" size="sm" onClick={() => window.location.href = `/startups/${activeConv.startupId}`}>View Startup</Button>
+                )}
               </div>
               <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
                 {loadingMsgs ? (

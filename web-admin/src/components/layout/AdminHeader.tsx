@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useAppState } from "@/lib/app-state-context"
+import { logout } from "@/services/auth.service"
+import { STUDENT_PORTAL_URL } from "@/config/portal-urls"
 import { Badge } from "@/components/ui/badge"
 
 const TITLES: Record<string, string> = {
@@ -91,14 +93,17 @@ export function AdminHeader() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push("/dashboard")}>
-                Switch to Student View
+              <DropdownMenuItem onClick={() => window.open(STUDENT_PORTAL_URL, "_blank")}>
+                Switch to Student Portal
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
-              onClick={() => router.push("/login")}
+              onClick={async () => {
+                await logout()
+                router.push("/login")
+              }}
             >
               <LogOutIcon />
               Log out

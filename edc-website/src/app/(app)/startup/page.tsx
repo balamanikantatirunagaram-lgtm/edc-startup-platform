@@ -379,8 +379,8 @@ export default function StartupCommandCenter() {
                 <CardTitle>Incubation Lifecycle Status</CardTitle>
                 <CardDescription>Follow the 10-step EDC venture progression roadmap.</CardDescription>
               </div>
-              <Button variant="outline" size="sm" asChild>
-                <a href="/startup/journey">Full Tracker</a>
+              <Button variant="outline" size="sm" render={<a href="/startup/journey" />}>
+                Full Tracker
               </Button>
             </CardHeader>
             <CardContent>
