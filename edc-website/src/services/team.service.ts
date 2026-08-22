@@ -72,12 +72,16 @@ export async function createTeam(data: any) {
       return { error: "Failed to create team. Ensure you don't already have one." }
     }
 
-    // Add leader to team_members automatically
-    await authSupabase.from('team_members').insert({
+    // Add leader to team_members automatically (admin client — RLS could silently block this)
+    const { error: leaderErr } = await adminClient.from('team_members').insert({
       team_id: teamData.id,
       student_id: user.user.id,
       status: 'approved'
     })
+    if (leaderErr) {
+      console.error('Failed to add leader to team_members:', leaderErr)
+      return { error: "Team created but leader membership failed. Please contact support." }
+    }
 
     // Also register the startup details
     const { data: startupData, error: startupError } = await authSupabase
@@ -143,35 +147,46 @@ export async function joinTeam(code: string) {
       return { error: "You are already an approved member of a team." }
     }
 
-    // Check if user already has a pending/invited request for THIS team
-    const { data: pendingForTeam } = await supabaseAdmin
+    // Handle any existing membership row for THIS team across all statuses
+    const { data: prevRow } = await supabaseAdmin
       .from('team_members')
       .select('id, status')
       .eq('team_id', team.id)
       .eq('student_id', user.user.id)
-      .in('status', ['pending', 'invited'])
       .limit(1).maybeSingle()
 
-    if (pendingForTeam) {
-      return { error: pendingForTeam.status === 'pending' 
-        ? "You already have a pending request for this team. Please wait for the leader to respond." 
-        : "You have been invited to this team. Check your invitations." 
+    if (prevRow) {
+      if (prevRow.status === 'pending') {
+        return { error: "You already have a pending request for this team. Please wait for the leader to respond." }
       }
-    }
-
-    const { error } = await supabaseAdmin
-      .from('team_members')
-      .insert({
-        team_id: team.id,
-        student_id: user.user.id,
-        status: 'pending'
-      })
-
-    if (error) {
-      if (error.code === '23505') { // Unique violation
-        return { error: "You are already part of a team or have a pending request." }
+      if (prevRow.status === 'invited') {
+        return { error: "You have been invited to this team. Check your invitations." }
       }
-      return { error: "Failed to send join request." }
+      if (prevRow.status === 'approved') {
+        return { error: "You are already an approved member of a team." }
+      }
+      // status === 'rejected' → reactivate the old row instead of inserting
+      // (UNIQUE(team_id, student_id) would reject a fresh insert)
+      const { error: reErr } = await supabaseAdmin
+        .from('team_members')
+        .update({ status: 'pending' })
+        .eq('id', prevRow.id)
+      if (reErr) return { error: "Failed to send join request." }
+    } else {
+      const { error } = await supabaseAdmin
+        .from('team_members')
+        .insert({
+          team_id: team.id,
+          student_id: user.user.id,
+          status: 'pending'
+        })
+
+      if (error) {
+        if (error.code === '23505') { // Unique violation
+          return { error: "You are already part of a team or have a pending request." }
+        }
+        return { error: "Failed to send join request." }
+      }
     }
 
     // Notify team leader
@@ -252,13 +267,13 @@ export async function handleTeamRequest(requestId: string, status: 'approved' | 
     // Verify user is leader or target student
     const { data: request } = await supabaseAdmin.from('team_members').select('team_id, student_id').eq('id', requestId).single()
     if (!request) return { error: "Request not found" }
-    
-    // Use admin client to bypass strict RLS that might be breaking leader lookup
-    const { data: teams } = await supabaseAdmin.from('teams').select('id, name').eq('leader_id', user.id)
-    const team = teams?.find(t => t.id === request.team_id)
-    
+
+    // Fetch the target team directly (gives us leader_id for auth + notifications)
+    const { data: team } = await supabaseAdmin.from('teams').select('id, name, leader_id').eq('id', request.team_id).single()
+
+    const isLeader = team?.leader_id === user.id
     const isTargetStudent = request.student_id === user.id
-    if (!team && !isTargetStudent) return { error: "Not authorized" }
+    if (!isLeader && !isTargetStudent) return { error: "Not authorized" }
 
     const { error } = await supabaseAdmin
       .from('team_members')
@@ -280,10 +295,23 @@ export async function handleTeamRequest(requestId: string, status: 'approved' | 
         .eq('student_id', request.student_id)
         .neq('id', requestId)
         .in('status', ['pending', 'invited'])
-          
+
       const { createNotification } = await import('./notifications.service')
-      const teamName = team ? team.name : 'the team'
+      const teamName = team?.name || 'the team'
       await createNotification(request.student_id, 'Request Approved', `Your request to join ${teamName} was approved!`, 'success')
+
+      // Student accepted an invite → let the leader know
+      if (isTargetStudent && !isLeader && team?.leader_id) {
+        try {
+          const { data: profile } = await supabaseAdmin
+            .from('students')
+            .select('name, niat_id')
+            .eq('id', request.student_id)
+            .single()
+          const who = profile?.name || profile?.niat_id || 'A student'
+          await createNotification(team.leader_id, 'Invite Accepted', `${who} accepted your invitation to ${teamName}!`, 'success')
+        } catch { /* notification is best-effort */ }
+      }
     }
 
     return { success: true }
@@ -327,21 +355,47 @@ export async function inviteStudent(userId: string, teamId: string) {
       .limit(1).maybeSingle()
 
     if (dupCheck) {
-      return { error: `Student already has a ${dupCheck.status} request for this team.` }
+      if (dupCheck.status === 'rejected') {
+        // Reactivate the old row (UNIQUE(team_id, student_id) would reject a fresh insert)
+        const { error: reErr } = await supabaseAdmin
+          .from('team_members')
+          .update({ status: 'invited' })
+          .eq('id', dupCheck.id)
+        if (reErr) return { error: "Failed to send invite." }
+      } else {
+        return { error: `Student already has a ${dupCheck.status} request for this team.` }
+      }
+    } else {
+      const { error } = await supabaseAdmin
+        .from('team_members')
+        .insert({
+          team_id: teamId,
+          student_id: userId,
+          status: 'invited'
+        })
+
+      if (error) {
+        if (error.code === '23505') return { error: "Student already in a team or invited." }
+        return { error: "Failed to send invite." }
+      }
     }
 
-    const { error } = await supabaseAdmin
-      .from('team_members')
-      .insert({
-        team_id: teamId,
-        student_id: userId,
-        status: 'invited'
-      })
-
-    if (error) {
-      if (error.code === '23505') return { error: "Student already in a team or invited." }
-      return { error: "Failed to send invite." }
-    }
+    // Notify the invited student
+    try {
+      const { createNotification } = await import('./notifications.service')
+      const { data: callerProfile } = await supabaseAdmin
+        .from('students')
+        .select('name, niat_id')
+        .eq('id', caller.user.id)
+        .single()
+      const inviterName = callerProfile?.name || callerProfile?.niat_id || 'A team leader'
+      const { data: targetTeam } = await supabaseAdmin
+        .from('teams')
+        .select('name')
+        .eq('id', teamId)
+        .single()
+      await createNotification(userId, 'Team Invitation', `${inviterName} invited you to join ${targetTeam?.name || 'their startup'}!`, 'info')
+    } catch { /* notification is best-effort */ }
 
     return { success: true }
   } catch (err: any) {

@@ -65,24 +65,33 @@ export async function getMyStartup() {
       return { noStartup: true }
     }
 
-    // Fetch team members with student profile directly from database (avoiding slow auth admin listUsers pagination)
-    const { data: teamMembersDb } = await supabaseAdmin
+    // Fetch approved memberships first, then hydrate student profiles in a second query.
+    // NOTE: team_members.student_id references auth.users (no FK to public.students),
+    // so PostgREST cannot embed students(...) here — we join manually instead.
+    const { data: memberRows } = await supabaseAdmin
       .from('team_members')
-      .select('student_id, students(id, name, niat_id)')
+      .select('student_id')
       .eq('team_id', teamId)
       .eq('status', 'approved')
 
-    const teamMembers = []
-    if (teamMembersDb && teamMembersDb.length > 0) {
-      for (const m of teamMembersDb) {
-        const student = (m as any).students
-        teamMembers.push({
-          name: student?.name || student?.niat_id || 'Unknown Member',
-          role: m.student_id === (memberRecord.teams as any).leader_id ? 'Team Leader' : 'Team Member',
-          id: m.student_id
-        })
-      }
+    const memberIds = (memberRows || []).map((m: any) => m.student_id)
+    const studentsById: Record<string, any> = {}
+    if (memberIds.length > 0) {
+      const { data: profiles } = await supabaseAdmin
+        .from('students')
+        .select('id, name, niat_id')
+        .in('id', memberIds)
+      for (const s of profiles || []) studentsById[s.id] = s
     }
+
+    const teamMembers = memberIds.map((sid: string) => {
+      const student = studentsById[sid]
+      return {
+        name: student?.name || student?.niat_id || 'Unknown Member',
+        role: sid === (memberRecord.teams as any).leader_id ? 'Team Leader' : 'Team Member',
+        id: sid
+      }
+    })
 
     // Map to UI expectations
     return {

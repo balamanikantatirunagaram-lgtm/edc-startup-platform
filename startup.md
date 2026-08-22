@@ -42,3 +42,47 @@ Preserved functionality (zero changes): `loadEverything()`, 30s auto-refresh of 
 - DB: same Supabase project via REST (`students`, `teams`, `team_members`, `startups`, `tasks`, `mentorship_requests`, `job_postings`/`applications`).
 - Other sites: mentor portal receives mentorship requests/messages from this page's Mentors tab; web-admin reviews startups registered via this flow; portal switch links live in header dropdowns.
 - Verification: `tsc --noEmit` + `next build` on edc-website (and quick check on mentor-web after sidebar edits).
+
+## 5. Team Joining Pipeline — Full Workflow Map & Fixes (2026-08-22)
+
+### Workflow map
+```
+CREATE TEAM (leader)                    JOIN VIA CODE (student)              INVITE (leader → student)
+  createTeam():                          joinTeam(code):                      inviteStudent():
+    no existing approved team?            team code valid?                     student free?
+    insert teams (+code)                  no approved team anywhere?           insert/reactivate row
+    insert team_members leader            pending/invited for team?            status='invited'
+      (admin client, error surfaced)      insert OR reactivate rejected        → notify student
+    insert startups, link startup_id      status='pending' → notify leader
+                                                 │
+   ┌─────────────────────────────────────────────┴──────────────────────────┐
+   │ getTeamRequests() shows pending+invited rows to leader (/startup Team) │
+   │ getMyInvitations() shows invited rows to student (/team)               │
+   └─────────────────────────────────────────────┬──────────────────────────┘
+                                                 ▼
+                              handleTeamRequest(id, approved|rejected)
+                                auth = team.leader_id == caller OR target student
+                                update team_members.status
+                                if approved:
+                                  auto-reject all other pending/invited rows of that student
+                                  notify student ("approved!")
+                                  notify leader if a student ACCEPTED an invite
+                                                 ▼
+                       Read paths: getMyTeamStatus() / getMyStartup()
+                       memberships (status=approved) → students hydrated
+                       → roster drives Team tab, task assignee select, stats
+```
+
+DB invariants: `UNIQUE(team_id, student_id)` on team_members; partial unique index allows only ONE `status='approved'` row per student.
+
+### Bugs found & fixed
+1. **Invisible members (root cause):** `team_members.student_id` FK targets `auth.users`, NOT `public.students`. PostgREST embeds `students(...)` failed with PGRST200 → `getMyStartup()` returned an empty roster even though approvals succeeded in DB. Fixed with a manual 2-step query (memberships → batch profile fetch) in **both** edc-website and mentor-web `startup.service.ts`.
+2. **Re-join after rejection broke:** old `rejected` row blocked re-insert (`23505`). `joinTeam()` now reactivates the row to `pending`; `inviteStudent()` reactivates to `invited`.
+3. **Silent leader-membership failure:** `createTeam()` inserted the leader's `team_members` row via the RLS-bound auth client and ignored errors → switched to admin client + surfaced failure.
+4. **Notification gaps:** invites now notify the student; invite acceptance now notifies the leader; approval notifications resolve real team names.
+5. **Root DB fix (recommended):** run `migrations/001_add_team_members_students_fk.sql` in Supabase SQL Editor — adds `fk_team_members_student` so FK embeds work platform-wide (web-admin etc.), with orphan backfill. Code fix works without it; migration makes everything consistent.
+
+### Verification performed
+- Live REST simulation of fixed read path resolved all 5 approved members of team `80850e46…`.
+- `tsc --noEmit` + `next build` green on edc-website; mentor-web typecheck green.
+
