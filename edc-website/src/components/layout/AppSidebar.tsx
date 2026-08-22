@@ -19,7 +19,6 @@ import {
   BuildingIcon,
   GlobeIcon,
   TrophyIcon,
-  GraduationCapIcon,
   LogOutIcon,
   CheckCircle2Icon
 } from "lucide-react"
@@ -43,10 +42,6 @@ import { getMyTeamStatus } from "@/services/team.service"
 import { useAppState } from "@/lib/app-state-context"
 import { logout } from "@/services/auth.service"
 import { Button } from "@/components/ui/button"
-import {
-  MENTOR_PORTAL_URL,
-  ADMIN_PORTAL_URL,
-} from "@/config/portal-urls"
 
 const baseStudentNav = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
@@ -127,39 +122,6 @@ export function AppSidebar() {
                   />
                 </SidebarMenuItem>
               ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Cross-portal navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Portals</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="Mentor Portal"
-                  render={
-                    <a href={MENTOR_PORTAL_URL} target="_blank" rel="noopener noreferrer">
-                      <GraduationCapIcon />
-                      <span>Mentor Portal</span>
-                    </a>
-                  }
-                />
-              </SidebarMenuItem>
-              {isAdmin && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip="Admin Portal"
-                    render={
-                      <a href={ADMIN_PORTAL_URL} target="_blank" rel="noopener noreferrer">
-                        <ShieldCheckIcon />
-                        <span>Admin Portal</span>
-                      </a>
-                    }
-                  />
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

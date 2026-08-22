@@ -7,34 +7,55 @@ import { getMyTeamStatus, getTeamRequests, handleTeamRequest, searchStudentsByNi
 import { getStartupApplications, updateApplicationStatus } from "@/services/jobs.service"
 import { getMyMentorshipRequests } from "@/services/mentorship.service"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2Icon, RocketIcon, UsersIcon, ListTodoIcon, SearchIcon, SendIcon, CheckIcon, XIcon, UserMinusIcon, TrashIcon, BriefcaseIcon, GraduationCapIcon, RouteIcon, CheckCircle2Icon, ClockIcon } from "lucide-react"
+import {
+  Loader2Icon,
+  RocketIcon,
+  UsersIcon,
+  ListTodoIcon,
+  SearchIcon,
+  SendIcon,
+  CheckIcon,
+  XIcon,
+  TrashIcon,
+  BriefcaseIcon,
+  GraduationCapIcon,
+  RouteIcon,
+  CopyIcon,
+  QrCodeIcon,
+  LinkIcon,
+  FileTextIcon,
+  GlobeIcon,
+  VideoIcon,
+  LightbulbIcon,
+  TargetIcon,
+  BanknoteIcon,
+} from "lucide-react"
 import QRCode from "react-qr-code"
+import { StartupHero } from "@/components/startup/StartupHero"
+import { StartupStats } from "@/components/startup/StartupStats"
+import { JourneyTimeline } from "@/components/startup/JourneyTimeline"
+import { TeamMemberCard } from "@/components/startup/TeamMemberCard"
+import { TaskItem } from "@/components/startup/TaskItem"
 
-const JOURNEY_MILESTONES = [
-  { step: 1, title: 'Student with a Startup Idea', category: 'Ideation', desc: 'Identify core problem, validate customer pain points, and brainstorm solution' },
-  { step: 2, title: 'EDC Startup Registration', category: 'Registration', desc: 'Form student team and register startup application in EDC portal' },
-  { step: 3, title: 'Initial Idea Screening', category: 'Screening', desc: 'Screening evaluation by EDC review panel on market feasibility' },
-  { step: 4, title: 'Research & Development Team', category: 'R&D', desc: 'Market sizing, competitor analysis, IP research and technical architecture' },
-  { step: 5, title: 'Business Strategy Team', category: 'Strategy', desc: 'Business Model Canvas, unit economics, and go-to-market strategy' },
-  { step: 6, title: 'Product Development Team', category: 'Product', desc: 'Build and test Minimum Viable Product (MVP) with early user feedback' },
-  { step: 7, title: 'Legal & Compliance Team', category: 'Legal', desc: 'Entity incorporation, founder agreements, and regulatory compliance' },
-  { step: 8, title: 'Marketing & Branding Team', category: 'Marketing', desc: 'Brand positioning, digital presence, and customer acquisition channels' },
-  { step: 9, title: 'Finance & Funding Team', category: 'Finance', desc: 'Financial modeling, valuation, seed grant support, and budget planning' },
-  { step: 10, title: 'Pitch Preparation', category: 'Pitch Prep', desc: 'Pitch deck refinement, mock investor trials, and storytelling polish' },
-  { step: 11, title: 'Demo Day / Investors / Incubation', category: 'Launchpad', desc: 'Live pitch to angel investors, venture funds, and incubation onboarding' }
+const TASK_GROUPS = [
+  { status: "pending", label: "Pending", icon: "bg-amber-500" },
+  { status: "in_progress", label: "In Progress", icon: "bg-blue-500" },
+  { status: "completed", label: "Completed", icon: "bg-green-500" },
 ]
 
 export default function StartupCommandCenter() {
   const [loading, setLoading] = React.useState(true)
   const [status, setStatus] = React.useState<any>(null)
-  
+
   // Portfolio States
   const [currentStartup, setCurrentStartup] = React.useState<any>(null)
   const [isEditing, setIsEditing] = React.useState(false)
@@ -113,7 +134,7 @@ export default function StartupCommandCenter() {
       const mentorsRes = await getMyMentorshipRequests()
       if (mentorsRes.requests) setMentorRequests(mentorsRes.requests)
     }
-    
+
     setLoading(false)
   }
 
@@ -197,6 +218,15 @@ export default function StartupCommandCenter() {
     }
   }
 
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(status.team.code)
+      toast.success("Team code copied!")
+    } catch {
+      toast.error("Could not copy code")
+    }
+  }
+
   // --- TASK LOGIC ---
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -255,64 +285,71 @@ export default function StartupCommandCenter() {
   }
 
   const isLeader = status.isLeader
-  const tabColumns = isLeader ? 6 : 5
+  const teamSize = currentStartup.teamMembers.length
+  const doneTasks = tasks.filter(t => t.status === 'completed').length
+  const assigneeName = (id: string) => currentStartup.teamMembers.find((m: any) => m.id === id)?.name
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto mt-6 px-4 pb-20 w-full">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{currentStartup.name}</h1>
-          <p className="text-muted-foreground">{currentStartup.tagline || "No tagline set."}</p>
-        </div>
-        <div className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-mono font-bold tracking-widest border border-primary/20">
-          TEAM CODE: {status.team.code}
-        </div>
-      </div>
+      {/* HERO */}
+      <StartupHero
+        name={currentStartup.name}
+        tagline={currentStartup.tagline}
+        status={currentStartup.status}
+        teamCode={status.team.code}
+        teamSize={teamSize}
+      />
 
-      <Tabs defaultValue="portfolio" className="w-full">
-        <TabsList className={`grid w-full h-12`} style={{ gridTemplateColumns: `repeat(${tabColumns}, minmax(0, 1fr))` }}>
-          <TabsTrigger value="portfolio" className="h-full gap-2"><RocketIcon className="size-4 hidden sm:block" /> Portfolio</TabsTrigger>
-          <TabsTrigger value="journey" className="h-full gap-2"><RouteIcon className="size-4 hidden sm:block" /> Journey</TabsTrigger>
-          <TabsTrigger value="team" className="h-full gap-2">
+      {/* STATS STRIP */}
+      <StartupStats
+        teamSize={teamSize}
+        totalTasks={tasks.length}
+        doneTasks={doneTasks}
+        pendingRequests={isLeader ? requests.length : 0}
+        mentorCount={mentorRequests.length}
+      />
+
+      <Tabs defaultValue="portfolio" className="w-full gap-6">
+        <TabsList className="h-auto w-full justify-start gap-1 self-start overflow-x-auto rounded-full p-1 sm:w-fit">
+          <TabsTrigger value="portfolio" className="flex-none rounded-full px-3.5 py-1.5 gap-1.5"><RocketIcon className="size-4 hidden sm:block" /> Portfolio</TabsTrigger>
+          <TabsTrigger value="journey" className="flex-none rounded-full px-3.5 py-1.5 gap-1.5"><RouteIcon className="size-4 hidden sm:block" /> Journey</TabsTrigger>
+          <TabsTrigger value="team" className="flex-none rounded-full px-3.5 py-1.5 gap-1.5">
             <UsersIcon className="size-4 hidden sm:block" /> Team
-            {requests.length > 0 && (
-              <span className="ml-1 bg-red-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+            {isLeader && requests.length > 0 && (
+              <span className="ml-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
                 {requests.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="h-full gap-2"><ListTodoIcon className="size-4 hidden sm:block" /> Tasks</TabsTrigger>
-          <TabsTrigger value="mentors" className="h-full gap-2">
+          <TabsTrigger value="tasks" className="flex-none rounded-full px-3.5 py-1.5 gap-1.5"><ListTodoIcon className="size-4 hidden sm:block" /> Tasks</TabsTrigger>
+          <TabsTrigger value="mentors" className="flex-none rounded-full px-3.5 py-1.5 gap-1.5">
             <GraduationCapIcon className="size-4 hidden sm:block" /> Mentors
           </TabsTrigger>
           {isLeader && (
-            <TabsTrigger value="recruitment" className="h-full gap-2"><BriefcaseIcon className="size-4 hidden sm:block" /> Jobs
-            {applications.filter(a => a.status === 'pending').length > 0 && (
-              <span className="ml-1 bg-primary text-primary-foreground text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
-                {applications.filter(a => a.status === 'pending').length}
-              </span>
-            )}
+            <TabsTrigger value="recruitment" className="flex-none rounded-full px-3.5 py-1.5 gap-1.5">
+              <BriefcaseIcon className="size-4 hidden sm:block" /> Jobs
+              {applications.filter(a => a.status === 'pending').length > 0 && (
+                <span className="ml-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                  {applications.filter(a => a.status === 'pending').length}
+                </span>
+              )}
             </TabsTrigger>
           )}
         </TabsList>
 
         {/* PORTFOLIO TAB */}
-        <TabsContent value="portfolio" className="mt-6 space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Startup Profile</CardTitle>
-                <CardDescription>Your startup's core identity and details.</CardDescription>
-              </div>
-              {isLeader && (
-                <Button variant={isEditing ? "destructive" : "outline"} onClick={() => setIsEditing(!isEditing)}>
-                  {isEditing ? "Cancel Edit" : "Edit Details"}
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {isEditing ? (
-                <form id="portfolio-form" onSubmit={handleSavePortfolio} className="space-y-4">
+        <TabsContent value="portfolio" className="space-y-6">
+          {isEditing ? (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Edit Startup Details</CardTitle>
+                  <CardDescription>Update your startup's public profile.</CardDescription>
+                </div>
+                <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSavePortfolio} className="space-y-4">
                   <div className="grid gap-2">
                     <Label>Tagline</Label>
                     <Input value={portfolioData.tagline} onChange={e => setPortfolioData({...portfolioData, tagline: e.target.value})} />
@@ -325,121 +362,156 @@ export default function StartupCommandCenter() {
                     <Label>Proposed Solution</Label>
                     <Textarea className="min-h-[100px]" value={portfolioData.solution} onChange={e => setPortfolioData({...portfolioData, solution: e.target.value})} />
                   </div>
-                  <div className="grid gap-2">
-                    <Label>Pitch Deck URL</Label>
-                    <Input value={portfolioData.pitchDeck} onChange={e => setPortfolioData({...portfolioData, pitchDeck: e.target.value})} />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-2">
+                      <Label>Pitch Deck URL</Label>
+                      <Input value={portfolioData.pitchDeck} onChange={e => setPortfolioData({...portfolioData, pitchDeck: e.target.value})} />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Website URL</Label>
+                      <Input value={portfolioData.website} onChange={e => setPortfolioData({...portfolioData, website: e.target.value})} />
+                    </div>
                   </div>
-                  <div className="grid gap-2">
-                    <Label>Website URL</Label>
-                    <Input value={portfolioData.website} onChange={e => setPortfolioData({...portfolioData, website: e.target.value})} />
-                  </div>
-                  <Button type="submit" className="mt-4">Save Changes</Button>
+                  <Button type="submit">Save Changes</Button>
                 </form>
-              ) : (
-                <div className="space-y-6">
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <Card>
+                <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h3 className="font-semibold text-sm text-muted-foreground mb-1">Problem Statement</h3>
-                    <p className="text-sm bg-muted/30 p-3 rounded-md">{currentStartup.problem || "Not provided."}</p>
+                    <CardTitle>Startup Profile</CardTitle>
+                    <CardDescription>Your startup's core identity and details.</CardDescription>
                   </div>
+                  {isLeader && (
+                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>Edit Details</Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-6 md:grid-cols-[1fr_260px]">
+                    <div className="min-w-0 space-y-4">
+                      <div className="rounded-xl border bg-muted/30 p-4">
+                        <div className="mb-1.5 flex items-center gap-2">
+                          <LightbulbIcon className="size-4 text-amber-500" />
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Problem Statement</h3>
+                        </div>
+                        <p className="text-sm leading-relaxed">{currentStartup.problem || "Not provided."}</p>
+                      </div>
+                      <div className="rounded-xl border bg-muted/30 p-4">
+                        <div className="mb-1.5 flex items-center gap-2">
+                          <TargetIcon className="size-4 text-blue-500" />
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Proposed Solution</h3>
+                        </div>
+                        <p className="text-sm leading-relaxed">{currentStartup.solution || "Not provided."}</p>
+                      </div>
+                      <div className="rounded-xl border bg-muted/30 p-4">
+                        <div className="mb-1.5 flex items-center gap-2">
+                          <BanknoteIcon className="size-4 text-green-600" />
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Business Model</h3>
+                        </div>
+                        <p className="text-sm leading-relaxed">{currentStartup.businessModel || "Not provided."}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border bg-card p-4 h-fit">
+                      <div className="mb-3 flex items-center gap-2">
+                        <LinkIcon className="size-4 text-primary" />
+                        <h3 className="font-semibold text-sm">Quick Links</h3>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {currentStartup.attachments?.pitchDeck ? (
+                          <a href={currentStartup.attachments.pitchDeck} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                            <FileTextIcon className="size-4" /> View Pitch Deck
+                          </a>
+                        ) : (
+                          <p className="flex items-center gap-2 text-xs text-muted-foreground"><FileTextIcon className="size-3.5" /> No pitch deck yet</p>
+                        )}
+                        {currentStartup.attachments?.website ? (
+                          <a href={currentStartup.attachments.website} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                            <GlobeIcon className="size-4" /> Visit Website
+                          </a>
+                        ) : (
+                          <p className="flex items-center gap-2 text-xs text-muted-foreground"><GlobeIcon className="size-3.5" /> No website yet</p>
+                        )}
+                        {currentStartup.attachments?.demoVideo && (
+                          <a href={currentStartup.attachments.demoVideo} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                            <VideoIcon className="size-4" /> Watch Demo Video
+                          </a>
+                        )}
+                      </div>
+                      <Separator className="my-3" />
+                      <Badge variant="secondary" className="capitalize w-full justify-center">{currentStartup.status || 'Pending Review'}</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {isLeader && (
+                <div className="flex flex-col justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 sm:flex-row sm:items-center">
                   <div>
-                    <h3 className="font-semibold text-sm text-muted-foreground mb-1">Proposed Solution</h3>
-                    <p className="text-sm bg-muted/30 p-3 rounded-md">{currentStartup.solution || "Not provided."}</p>
+                    <h4 className="font-semibold text-destructive">Danger Zone</h4>
+                    <p className="text-xs text-muted-foreground">Permanently delete your startup and disband this team.</p>
                   </div>
-                  <div className="flex flex-wrap gap-4">
-                    {currentStartup.attachments?.pitchDeck && (
-                      <a href={currentStartup.attachments.pitchDeck} target="_blank" className={buttonVariants({ variant: "outline" })}>View Pitch Deck</a>
-                    )}
-                    {currentStartup.attachments?.website && (
-                      <a href={currentStartup.attachments.website} target="_blank" className={buttonVariants({ variant: "outline" })}>Visit Website</a>
-                    )}
-                  </div>
+                  <Button variant="destructive" size="sm" onClick={handleDeleteStartup} disabled={isDeleting} className="shrink-0">
+                    {isDeleting ? <Loader2Icon className="size-4 animate-spin mr-2" /> : <TrashIcon className="size-4 mr-2" />}
+                    Delete Startup
+                  </Button>
                 </div>
               )}
-            </CardContent>
-            {isLeader && (
-              <CardFooter className="border-t bg-destructive/10 pt-4 flex justify-between items-center rounded-b-xl">
-                <div>
-                  <h4 className="font-semibold text-destructive">Danger Zone</h4>
-                  <p className="text-xs text-muted-foreground">Permanently delete your startup and disband this team.</p>
-                </div>
-                <Button variant="destructive" onClick={handleDeleteStartup} disabled={isDeleting}>
-                  {isDeleting ? <Loader2Icon className="size-4 animate-spin mr-2" /> : <TrashIcon className="size-4 mr-2" />}
-                  Delete Startup
-                </Button>
-              </CardFooter>
-            )}
-          </Card>
+            </>
+          )}
         </TabsContent>
 
         {/* JOURNEY TAB */}
-        <TabsContent value="journey" className="mt-6 space-y-6">
+        <TabsContent value="journey" className="space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Incubation Lifecycle Status</CardTitle>
-                <CardDescription>Follow the 10-step EDC venture progression roadmap.</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" render={<a href="/startup/journey" />}>
-                Full Tracker
-              </Button>
+            <CardHeader>
+              <CardTitle>Incubation Lifecycle Status</CardTitle>
+              <CardDescription>Follow the 11-step EDC venture progression roadmap.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {JOURNEY_MILESTONES.map((m) => (
-                  <div key={m.step} className="flex items-start gap-4 p-3.5 rounded-xl border bg-card/60 hover:bg-muted/20 transition-colors">
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs">
-                      {m.step}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h4 className="font-semibold text-sm">{m.title}</h4>
-                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                          {m.category}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{m.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <JourneyTimeline />
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* TEAM TAB */}
-        <TabsContent value="team" className="mt-6 space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
+        <TabsContent value="team" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Team Members</CardTitle>
                 <CardDescription>Current roster for {currentStartup.name}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex flex-col gap-2.5">
                 {currentStartup.teamMembers.map((m: any) => (
-                  <div key={m.id} className="flex justify-between items-center p-3 border rounded-lg bg-card">
-                    <div>
-                      <p className="font-medium">{m.name}</p>
-                      <p className="text-xs text-muted-foreground">{m.role}</p>
-                    </div>
-                    {isLeader && m.role !== 'Team Leader' && (
-                      <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" disabled={removing === m.id} onClick={() => handleRemoveMember(m.id)}>
-                        {removing === m.id ? <Loader2Icon className="size-4 animate-spin" /> : <UserMinusIcon className="size-4" />}
-                      </Button>
-                    )}
-                  </div>
+                  <TeamMemberCard
+                    key={m.id}
+                    id={m.id}
+                    name={m.name}
+                    role={m.role}
+                    isLeaderViewing={isLeader}
+                    removing={removing === m.id}
+                    onRemove={handleRemoveMember}
+                  />
                 ))}
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Recruit</CardTitle>
                 <CardDescription>Let others scan this QR to request to join.</CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col items-center">
-                <div className="bg-white p-4 rounded-xl border">
+              <CardContent className="flex flex-col items-center gap-4">
+                <div className="bg-white p-4 rounded-xl border shadow-sm">
                   <QRCode value={status.team.code} size={150} />
                 </div>
+                <Button variant="outline" onClick={handleCopyCode} className="gap-2 font-mono tracking-[0.25em] font-bold text-primary">
+                  {status.team.code}
+                  <CopyIcon className="size-4 opacity-60" />
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -452,10 +524,13 @@ export default function StartupCommandCenter() {
                   <CardDescription>Search by Name or NIAT ID to send direct invites.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSearch} className="flex gap-2">
-                    <Input placeholder="Enter Name or NIAT ID..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                    <Button type="submit" disabled={isSearching}>
-                      {isSearching ? <Loader2Icon className="size-4 animate-spin" /> : <SearchIcon className="size-4" />}
+                  <form onSubmit={handleSearch} className="flex gap-2 max-w-md">
+                    <div className="relative flex-1">
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                      <Input placeholder="Name or NIAT ID..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+                    </div>
+                    <Button type="submit" disabled={isSearching || !searchQuery.trim()}>
+                      {isSearching ? <Loader2Icon className="size-4 animate-spin" /> : "Search"}
                     </Button>
                   </form>
                   {searchResults.length > 0 && (
@@ -479,7 +554,10 @@ export default function StartupCommandCenter() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Pending Join Requests</CardTitle>
+                  <div>
+                    <CardTitle>Pending Join Requests</CardTitle>
+                    <CardDescription>Students who want to join your team.</CardDescription>
+                  </div>
                   <Button variant="ghost" size="sm" onClick={async () => {
                     const res = await getTeamRequests()
                     if (res.requests) setRequests(res.requests)
@@ -494,16 +572,25 @@ export default function StartupCommandCenter() {
                   ) : (
                     <div className="flex flex-col gap-3">
                       {requests.map(req => (
-                        <div key={req.id} className="flex items-center justify-between p-3 rounded-lg border">
-                          <div>
-                            <p className="font-medium">{req.studentName}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {req.status === 'invited' ? '📨 You invited them' : '📩 Requested to join'} · {new Date(req.created_at).toLocaleDateString()}
-                            </p>
+                        <div key={req.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                              {req.studentName?.charAt(0)?.toUpperCase() || "?"}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-sm">{req.studentName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {req.status === 'invited' ? 'You invited them' : 'Requested to join'} · {new Date(req.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleRequestAction(req.id, 'rejected')}>Reject</Button>
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleRequestAction(req.id, 'approved')}>Approve</Button>
+                          <div className="flex shrink-0 gap-2">
+                            <Button variant="outline" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={removing === req.id} onClick={() => handleRequestAction(req.id, 'rejected')}>
+                              <XIcon className="size-4" />
+                            </Button>
+                            <Button size="icon" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleRequestAction(req.id, 'approved')}>
+                              <CheckIcon className="size-4" />
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -516,22 +603,27 @@ export default function StartupCommandCenter() {
         </TabsContent>
 
         {/* TASKS TAB */}
-        <TabsContent value="tasks" className="mt-6 space-y-6">
+        <TabsContent value="tasks" className="space-y-6">
           {isLeader && (
             <Card>
               <CardHeader>
                 <CardTitle>Assign New Task</CardTitle>
+                <CardDescription>Create and delegate work to your team members.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleCreateTask} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                  <div className="grid gap-2 md:col-span-2">
+                <form onSubmit={handleCreateTask} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto] items-end">
+                  <div className="grid gap-2">
                     <Label>Task Title</Label>
                     <Input value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} required placeholder="E.g., Complete Pitch Deck" />
                   </div>
                   <div className="grid gap-2">
+                    <Label>Description</Label>
+                    <Input value={newTaskDesc} onChange={e => setNewTaskDesc(e.target.value)} placeholder="Optional details..." />
+                  </div>
+                  <div className="grid gap-2">
                     <Label>Assignee</Label>
                     <Select value={newTaskAssignee} onValueChange={(v) => setNewTaskAssignee(v ?? '')} required>
-                      <SelectTrigger><SelectValue placeholder="Select member" /></SelectTrigger>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select member" /></SelectTrigger>
                       <SelectContent>
                         {currentStartup.teamMembers.map((m: any) => (
                           <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
@@ -539,91 +631,54 @@ export default function StartupCommandCenter() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button type="submit" disabled={isCreatingTask}>
-                    {isCreatingTask ? "Assigning..." : "Assign Task"}
+                  <Button type="submit" disabled={isCreatingTask} className="gap-2">
+                    {isCreatingTask ? <Loader2Icon className="size-4 animate-spin" /> : <SendIcon className="size-4" />}
+                    Assign
                   </Button>
                 </form>
               </CardContent>
             </Card>
           )}
 
-          <div className="grid gap-4">
-            <h3 className="font-semibold text-lg">Current Tasks</h3>
-            {tasks.length === 0 ? (
+          {tasks.length === 0 ? (
+            <div className="rounded-xl border border-dashed py-12 text-center">
+              <ListTodoIcon className="mx-auto mb-3 size-10 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">No tasks assigned yet.</p>
-            ) : (
-              tasks.map(task => {
-                const assignee = currentStartup.teamMembers.find((m: any) => m.id === task.assigned_to)
+            </div>
+          ) : (
+            <div className="grid gap-6 lg:grid-cols-3">
+              {TASK_GROUPS.map(group => {
+                const groupTasks = tasks.filter(t => t.status === group.status)
                 return (
-                  <Card key={task.id} className={task.status === 'completed' ? 'opacity-60 bg-muted/50' : ''}>
-                    <CardContent className="p-4 flex justify-between items-center">
-                      <div>
-                        <p className={`font-medium ${task.status === 'completed' ? 'line-through' : ''}`}>{task.title}</p>
-                        <p className="text-xs text-muted-foreground">Assigned to: {assignee?.name || 'Unknown'}</p>
-                      </div>
-                      <Select 
-                        value={task.status} 
-                        onValueChange={(val) => handleStatusChange(task.id, val)}
-                      >
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </CardContent>
-                  </Card>
-                )
-              })
-            )}
-          </div>
-        </TabsContent>
-        {isLeader && (
-          <TabsContent value="recruitment" className="mt-6 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Job Applications</CardTitle>
-                <CardDescription>Review students who applied for your roles.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {applications.length === 0 ? (
-                  <div className="text-center py-10 text-muted-foreground">No applications received yet.</div>
-                ) : (
-                  <div className="space-y-4">
-                    {applications.map((app) => (
-                      <div key={app.id} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 border rounded-xl bg-card">
-                        <div className="space-y-1">
-                          <div className="font-semibold">{app.students?.name}</div>
-                          <div className="text-sm text-muted-foreground">Applied for: <span className="font-medium text-foreground">{app.job_postings?.title}</span></div>
-                          <div className="text-sm text-muted-foreground">Dept: {app.students?.department} • Year: {app.students?.academic_year}</div>
-                          <div className="text-sm mt-2 p-2 bg-muted rounded-md italic">"{app.cover_letter}"</div>
-                          {app.resume_url && (
-                            <a href={app.resume_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">View Resume</a>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end gap-2 shrink-0">
-                          <span className="text-xs font-semibold uppercase px-2 py-1 bg-secondary rounded-md">{app.status}</span>
-                          {app.status === 'pending' || app.status === 'reviewed' ? (
-                            <div className="flex gap-2 mt-2">
-                              <Button size="sm" variant="outline" className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200" onClick={() => handleApplicationStatus(app.id, 'accepted')} disabled={updatingApp === app.id}>Accept</Button>
-                              <Button size="sm" variant="outline" className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200" onClick={() => handleApplicationStatus(app.id, 'rejected')} disabled={updatingApp === app.id}>Reject</Button>
-                            </div>
-                          ) : (
-                            <Button size="sm" variant="ghost" onClick={() => handleApplicationStatus(app.id, 'reviewed')} disabled={updatingApp === app.id}>Reset to Reviewed</Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                  <div key={group.status} className="rounded-xl border bg-muted/20 p-3">
+                    <div className="mb-3 flex items-center gap-2 px-1">
+                      <span className={`size-2 rounded-full ${group.icon}`} />
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{group.label}</h3>
+                      <span className="ml-auto text-xs font-medium text-muted-foreground">{groupTasks.length}</span>
+                    </div>
+                    <div className="flex flex-col gap-2.5">
+                      {groupTasks.length === 0 ? (
+                        <p className="py-6 text-center text-xs text-muted-foreground/70">Nothing here</p>
+                      ) : (
+                        groupTasks.map(task => (
+                          <TaskItem
+                            key={task.id}
+                            task={{ id: task.id, title: task.title, description: task.description, status: task.status, assigned_to: task.assigned_to }}
+                            assigneeName={assigneeName(task.assigned_to)}
+                            onStatusChange={handleStatusChange}
+                          />
+                        ))
+                      )}
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-        <TabsContent value="mentors" className="mt-6 space-y-6">
+                )
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* MENTORS TAB */}
+        <TabsContent value="mentors" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>My Mentors</CardTitle>
@@ -639,45 +694,45 @@ export default function StartupCommandCenter() {
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                   {mentorRequests.map(req => (
-                    <Card key={req.id} className="overflow-hidden">
-                      <CardHeader className="bg-muted/30 pb-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex gap-3 items-center">
-                            {req.mentorImage ? (
-                               <img src={req.mentorImage} alt={req.mentorName} className="size-10 rounded-full object-cover border" />
-                            ) : (
-                              <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
-                                {req.mentorName.charAt(0)}
-                              </div>
-                            )}
-                            <div>
-                              <CardTitle className="text-base">{req.mentorName}</CardTitle>
-                              <CardDescription className="text-xs">{req.mentorRole} @ {req.mentorCompany}</CardDescription>
+                    <div key={req.id} className="overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-md">
+                      <div className="flex items-start justify-between gap-3 border-b bg-muted/30 p-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {req.mentorImage ? (
+                            <img src={req.mentorImage} alt={req.mentorName} className="size-11 rounded-full object-cover border" />
+                          ) : (
+                            <div className="flex size-11 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
+                              {req.mentorName.charAt(0)}
                             </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-sm">{req.mentorName}</p>
+                            <p className="truncate text-xs text-muted-foreground">{req.mentorRole} @ {req.mentorCompany}</p>
                           </div>
-                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                            req.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                            req.status === 'declined' ? 'bg-red-100 text-red-700' :
-                            'bg-yellow-100 text-yellow-700'
-                          }`}>
-                            {req.status.toUpperCase()}
-                          </span>
                         </div>
-                      </CardHeader>
-                      <CardContent className="pt-4">
-                        <p className="font-medium text-sm mb-1">{req.topic}</p>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{req.description}</p>
+                        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                          req.status === 'accepted' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' :
+                          req.status === 'declined' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
+                          'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
+                        }`}>
+                          {req.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="space-y-3 p-4">
+                        <div>
+                          <p className="font-medium text-sm">{req.topic}</p>
+                          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{req.description}</p>
+                        </div>
                         {req.status === 'accepted' ? (
-                          <Button className="w-full" variant="default" onClick={() => window.location.href=`/startup/messages/${req.mentor_id}`}>
+                          <Button size="sm" className="w-full" onClick={() => window.location.href = `/startup/messages/${req.mentor_id}`}>
                             Message Mentor
                           </Button>
                         ) : (
-                          <Button className="w-full" variant="outline" disabled>
+                          <Button size="sm" className="w-full" variant="outline" disabled>
                             {req.status === 'pending' ? 'Awaiting Response...' : 'Declined'}
                           </Button>
                         )}
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -685,6 +740,54 @@ export default function StartupCommandCenter() {
           </Card>
         </TabsContent>
 
+        {/* JOBS TAB (leader only) */}
+        {isLeader && (
+          <TabsContent value="recruitment" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Job Applications</CardTitle>
+                <CardDescription>Review students who applied for your roles.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {applications.length === 0 ? (
+                  <div className="rounded-xl border border-dashed py-12 text-center">
+                    <QrCodeIcon className="mx-auto mb-3 size-10 text-muted-foreground/40" />
+                    <p className="text-sm text-muted-foreground">No applications received yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {applications.map((app) => (
+                      <div key={app.id} className="flex flex-col gap-4 rounded-xl border bg-card p-4 md:flex-row md:items-start md:justify-between">
+                        <div className="space-y-1 min-w-0">
+                          <div className="font-semibold">{app.students?.name}</div>
+                          <div className="text-sm text-muted-foreground">Applied for: <span className="font-medium text-foreground">{app.job_postings?.title}</span></div>
+                          <div className="text-sm text-muted-foreground">Dept: {app.students?.department} • Year: {app.students?.academic_year}</div>
+                          <div className="mt-2 rounded-lg bg-muted/50 p-2.5 text-sm italic">"{app.cover_letter}"</div>
+                          {app.resume_url && (
+                            <a href={app.resume_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 pt-1 text-sm text-primary hover:underline">
+                              <FileTextIcon className="size-3.5" /> View Resume
+                            </a>
+                          )}
+                        </div>
+                        <div className="flex flex-row md:flex-col items-center md:items-end gap-3 shrink-0">
+                          <Badge variant="secondary" className="capitalize">{app.status}</Badge>
+                          {app.status === 'pending' || app.status === 'reviewed' ? (
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200 dark:bg-green-950 dark:text-green-400" onClick={() => handleApplicationStatus(app.id, 'accepted')} disabled={updatingApp === app.id}>Accept</Button>
+                              <Button size="sm" variant="outline" className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200 dark:bg-red-950 dark:text-red-400" onClick={() => handleApplicationStatus(app.id, 'rejected')} disabled={updatingApp === app.id}>Reject</Button>
+                            </div>
+                          ) : (
+                            <Button size="sm" variant="ghost" onClick={() => handleApplicationStatus(app.id, 'reviewed')} disabled={updatingApp === app.id}>Reset to Reviewed</Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   )

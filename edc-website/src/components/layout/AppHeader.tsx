@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useAppState } from "@/lib/app-state-context"
+import { MENTOR_PORTAL_URL, ADMIN_PORTAL_URL } from "@/config/portal-urls"
+import { ExternalLinkIcon } from "lucide-react"
 
 const TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -113,6 +115,24 @@ export function AppHeader() {
               <DropdownMenuItem onClick={() => router.push("/settings")}>
                 <SettingsIcon />
                 Settings
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            {currentUser.role === "admin" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => window.open(ADMIN_PORTAL_URL, "_blank")}>
+                    <ExternalLinkIcon />
+                    Admin Portal
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem onClick={() => window.open(MENTOR_PORTAL_URL, "_blank")}>
+                <ExternalLinkIcon />
+                Mentor Portal
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
