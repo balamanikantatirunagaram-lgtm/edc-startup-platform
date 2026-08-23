@@ -25,7 +25,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { useAppState } from "@/lib/app-state-context"
 import { STUDENT_PORTAL_URL, ADMIN_PORTAL_URL } from "@/config/portal-urls"
 import { ExternalLinkIcon } from "lucide-react"
 
@@ -50,7 +49,6 @@ const TITLES: Record<string, string> = {
 export function AppHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const { currentUser: mockUser, notifications: mockNotifications } = useAppState()
 
   const [realUser, setRealUser] = useState<{ name: string; niatId: string; avatarUrl: string } | null>(null)
   const [unread, setUnread] = useState(0)
@@ -66,9 +64,9 @@ export function AppHeader() {
 
   const title = TITLES[pathname] ?? "EDC Cell"
 
-  const displayName = realUser?.name || mockUser?.fullName || ""
-  const displayId = realUser?.niatId || mockUser?.niatId || ""
-  const avatarUrl = realUser?.avatarUrl || mockUser?.avatarUrl || ""
+  const displayName = realUser?.name || ""
+  const displayId = realUser?.niatId || ""
+  const avatarUrl = realUser?.avatarUrl || ""
   const initials = displayName
     .split(" ")
     .map((n) => n[0])

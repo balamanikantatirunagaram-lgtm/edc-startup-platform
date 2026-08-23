@@ -39,7 +39,6 @@ import {
 
 import { useEffect, useState } from "react"
 import { getMyTeamStatus } from "@/services/team.service"
-import { useAppState } from "@/lib/app-state-context"
 import { logout } from "@/services/auth.service"
 import { Button } from "@/components/ui/button"
 
@@ -59,8 +58,7 @@ const baseStudentNav = [
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { currentUser } = useAppState()
-  const isAdmin = currentUser?.role === "admin"
+  const isAdmin = false // student portal
 
   const [navItems, setNavItems] = useState<any[]>(baseStudentNav)
 

@@ -25,7 +25,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { useAppState } from "@/lib/app-state-context"
 import { MENTOR_PORTAL_URL, ADMIN_PORTAL_URL } from "@/config/portal-urls"
 import { ExternalLinkIcon } from "lucide-react"
 
@@ -48,7 +47,6 @@ const TITLES: Record<string, string> = {
 export function AppHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const { currentUser } = useAppState()
   const [unread, setUnread] = React.useState(0)
   const [me, setMe] = React.useState<{ name?: string; avatarUrl?: string; niatId?: string } | null>(null)
 
@@ -78,8 +76,8 @@ export function AppHeader() {
 
   const title = TITLES[pathname] ?? "EDC Cell"
 
-  const fullName = me?.name || currentUser.fullName || ""
-  const avatarSrc = me?.avatarUrl || currentUser.avatarUrl || ""
+  const fullName = me?.name || ""
+  const avatarSrc = me?.avatarUrl || ""
   const initials = fullName
     .split(" ")
     .filter(Boolean)
@@ -134,7 +132,7 @@ export function AppHeader() {
                   {fullName}
                 </span>
                 <span className="text-xs font-normal text-muted-foreground">
-                  {me?.niatId || currentUser.niatId}
+                  {me?.niatId || ""}
                 </span>
               </div>
             </DropdownMenuLabel>
@@ -149,7 +147,7 @@ export function AppHeader() {
                 Settings
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            {(me as any)?.role === "admin" || currentUser.role === "admin" && (
+            {(me as any)?.role === "admin" && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>

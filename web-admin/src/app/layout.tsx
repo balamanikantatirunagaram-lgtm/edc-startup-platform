@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/shared/ThemeProvider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
-import { AppStateProvider } from '@/lib/app-state-context'
 import './globals.css'
 
 const geistSans = Geist({
@@ -48,10 +47,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider>
-            <AppStateProvider>
+            
               {children}
               <Toaster position="top-right" />
-            </AppStateProvider>
+            
           </TooltipProvider>
         </ThemeProvider>
       </body>

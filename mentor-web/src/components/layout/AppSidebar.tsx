@@ -35,7 +35,6 @@ import {
 
 import { useEffect, useState } from "react"
 import { getMyTeamStatus } from "@/services/team.service"
-import { useAppState } from "@/lib/app-state-context"
 import { logout } from "@/services/auth.service"
 import { Button } from "@/components/ui/button"
 import { LogOutIcon } from "lucide-react"
@@ -59,7 +58,6 @@ const mentorNav = [
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const { currentUser } = useAppState()
   const navItems = mentorNav
 
   const isActive = (href: string) =>
