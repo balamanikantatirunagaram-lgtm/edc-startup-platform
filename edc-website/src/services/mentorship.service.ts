@@ -102,15 +102,13 @@ export async function getMyMentorshipRequests() {
 
     if (error || !requests) return { requests: [] }
 
-    // Fetch mentor details from mentors table
-    const mentorIds = requests.map(r => r.mentor_id)
-    const { data: mentors } = await supabaseAdmin
-      .from('mentors')
-      .select('id, name, role, company, image')
-      .in('id', mentorIds)
+    // Resolve mentor info by auth id first (new flow), falling back to the
+    // legacy marketing-table rows for old data.
+    const { resolveMentorProfiles } = await import('./mentor-directory.service')
+    const profiles = await resolveMentorProfiles(requests.map(r => r.mentor_id))
 
     const enrichedRequests = requests.map(req => {
-      const mentor = mentors?.find(m => m.id === req.mentor_id)
+      const mentor = profiles[req.mentor_id]
       return {
         ...req,
         mentorName: mentor?.name || 'Unknown Mentor',

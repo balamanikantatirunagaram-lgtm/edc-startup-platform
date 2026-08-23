@@ -36,6 +36,9 @@ export default function LoginPage() {
       if (res.error) {
         toast.error(res.error)
         setLoading(false)
+        if ((res as any).suspended) {
+          router.push("/suspended")
+        }
         return
       }
 

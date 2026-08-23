@@ -37,10 +37,12 @@ export default function IncubatorsPage() {
           {incubators.map((item: any) => (
             <Card key={item.id} className="flex flex-col h-full">
               <CardHeader>
-                <div className="flex justify-between items-start gap-4 mb-2">
-                  <Badge variant="outline" className="font-medium bg-primary/5 text-primary border-primary/20">
-                    {item.focus_area || "General"}
-                  </Badge>
+                <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+                  {(item.focus_areas || []).slice(0, 2).map((area: string) => (
+                    <Badge key={area} variant="outline" className="font-medium bg-primary/5 text-primary border-primary/20">
+                      {area}
+                    </Badge>
+                  ))}
                 </div>
                 <CardTitle className="text-xl">{item.name}</CardTitle>
                 <CardDescription className="flex items-center gap-1.5 mt-1 text-sm font-medium">
@@ -49,9 +51,11 @@ export default function IncubatorsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col gap-4">
-                <p className="text-sm text-foreground/80 leading-relaxed">
-                  {item.description || "No description provided."}
-                </p>
+                {(item.focus_areas || []).length > 2 && (
+                  <p className="text-xs text-muted-foreground">
+                    Focus: {item.focus_areas.join(" · ")}
+                  </p>
+                )}
               </CardContent>
               <CardFooter className="pt-4 bg-muted/20 mt-auto flex flex-col gap-2">
                 <Link href="/funding" className="w-full">

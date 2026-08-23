@@ -212,11 +212,35 @@ export async function deleteMyStartup() {
 
     const teamId = memberRecord.team_id
 
-    // Delete in order to avoid foreign key constraints
-    await supabaseAdmin.from('startups').delete().eq('team_id', teamId)
+    // Resolve the startup id for this team (needed to purge dependents)
+    const { data: startupRow } = await supabaseAdmin
+      .from('startups')
+      .select('id')
+      .eq('team_id', teamId)
+      .maybeSingle()
+    const startupId = startupRow?.id
+
+    // Delete dependents first (explicit + error-checked so nothing is left orphaned)
+    if (startupId) {
+      await supabaseAdmin.from('startup_documents').delete().eq('startup_id', startupId)
+      const { data: postings } = await supabaseAdmin
+        .from('job_postings').select('id').eq('startup_id', startupId)
+      const postingIds = (postings || []).map((p: any) => p.id)
+      if (postingIds.length > 0) {
+        await supabaseAdmin.from('job_applications').delete().in('job_id', postingIds)
+        await supabaseAdmin.from('job_postings').delete().eq('startup_id', startupId)
+      }
+    }
+    await supabaseAdmin.from('mentorship_requests').delete().eq('team_id', teamId)
     await supabaseAdmin.from('tasks').delete().eq('team_id', teamId)
+    await supabaseAdmin.from('startups').delete().eq('team_id', teamId)
     await supabaseAdmin.from('team_members').delete().eq('team_id', teamId)
-    await supabaseAdmin.from('teams').delete().eq('id', teamId)
+
+    const { error: teamErr } = await supabaseAdmin.from('teams').delete().eq('id', teamId)
+    if (teamErr) {
+      console.error('Team deletion failed:', teamErr)
+      return { error: "Startup deleted but team cleanup failed. Please contact support." }
+    }
 
     return { success: true }
   } catch (err: any) {

@@ -87,18 +87,33 @@ export async function deleteStartupAdmin(startupId: string) {
 
     const teamId = startup.team_id
 
-    // Delete in order to avoid foreign key constraints
-    await supabase.from('job_applications').delete().in('job_id', 
-      (await supabase.from('job_postings').select('id').eq('startup_id', startupId)).data?.map((j: any) => j.id) || []
+    // Delete dependents first, checking each step so failures aren't masked
+    const { data: postings } = await supabase.from('job_postings').select('id').eq('startup_id', startupId)
+    const postingIds = (postings || []).map((j: any) => j.id)
+
+    type StepResult = { error: unknown } | void
+    const steps: Array<[string, () => PromiseLike<StepResult>]> = []
+    if (postingIds.length > 0) steps.push(['job_applications', () => supabase.from('job_applications').delete().in('job_id', postingIds)])
+    steps.push(
+      ['job_postings', () => supabase.from('job_postings').delete().eq('startup_id', startupId)],
+      ['startup_documents', () => supabase.from('startup_documents').delete().eq('startup_id', startupId)],
+      ['startup_journey_stages', () => supabase.from('startup_journey_stages').delete().eq('startup_id', startupId)],
+      ['startup_impact_scores', () => supabase.from('startup_impact_scores').delete().eq('startup_id', startupId)],
+      ['tasks', () => supabase.from('tasks').delete().eq('team_id', teamId)],
+      ['mentorship_requests', () => supabase.from('mentorship_requests').delete().eq('team_id', teamId)],
+      ['startups', () => supabase.from('startups').delete().eq('id', startupId)],
+      ['team_members', () => supabase.from('team_members').delete().eq('team_id', teamId)],
+      ['teams', () => supabase.from('teams').delete().eq('id', teamId)],
     )
-    await supabase.from('job_postings').delete().eq('startup_id', startupId)
-    await supabase.from('startup_documents').delete().eq('startup_id', startupId)
-    await supabase.from('startup_journey_stages').delete().eq('startup_id', startupId)
-    await supabase.from('startup_impact_scores').delete().eq('startup_id', startupId)
-    await supabase.from('tasks').delete().eq('team_id', teamId)
-    await supabase.from('startups').delete().eq('id', startupId)
-    await supabase.from('team_members').delete().eq('team_id', teamId)
-    await supabase.from('teams').delete().eq('id', teamId)
+
+    for (const [label, run] of steps) {
+      const result = await run()
+      const error = result && typeof result === 'object' ? (result as any).error : undefined
+      if (error) {
+        console.error(`deleteStartupAdmin failed at ${label}:`, error)
+        return { error: `Failed to delete ${label} — cleanup aborted to avoid orphaned data.` }
+      }
+    }
 
     return { success: true }
   } catch (err: any) {
@@ -182,7 +197,6 @@ export async function getAllStudents(): Promise<IAdminStudent[]> {
       }
       if (!data || data.length === 0) break
       allStudents = [...allStudents, ...data]
-      if (allStudents.length > 0) console.log("SAMPLE STUDENT:", allStudents[0])
       if (data.length < 1000) break
       page++
     }
@@ -239,14 +253,15 @@ export async function updateStartupStatus(id: string, status: string, feedback?:
       return { error: error.message }
     }
     
-    // Also record it in journey stages
+    // Also record it in journey stages (named so it never hijacks a real
+    // milestone via the UI's fuzzy stage_name matching)
     if (feedback || nextSteps) {
       const combinedFeedback = `${feedback ? `Feedback: ${feedback}\n` : ''}${nextSteps ? `Next Steps: ${nextSteps}` : ''}`
       await supabase
         .from('startup_journey_stages')
         .insert({
           startup_id: id,
-          stage_name: `Status Update: ${status}`,
+          stage_name: `[Review] Status set to ${status}`,
           status: 'completed',
           feedback: combinedFeedback
         })
@@ -359,7 +374,7 @@ export async function updateStartupJourneyStageAdmin(startupId: string, stageNam
         .update({
           status,
           feedback: updatedFeedback,
-          completed_at: status === 'completed' || status === 'Approved' ? new Date().toISOString() : null
+          completed_at: ['completed','approved'].includes(status) ? new Date().toISOString() : null
         })
         .eq('id', existing.id)
 
@@ -372,7 +387,7 @@ export async function updateStartupJourneyStageAdmin(startupId: string, stageNam
           stage_name: stageName,
           status,
           feedback: feedback ? `[${new Date().toLocaleDateString()}] Admin:\n${feedback}` : null,
-          completed_at: status === 'completed' || status === 'Approved' ? new Date().toISOString() : null
+          completed_at: ['completed','approved'].includes(status) ? new Date().toISOString() : null
         })
 
       if (error) return { error: error.message }
@@ -402,10 +417,31 @@ export async function getTeamMembersAdmin(teamId: string) {
 export async function getStudentProfileAdmin(studentId: string) {
   try {
     const supabase = getAdminSupabase()
-    const { data: { user }, error } = await supabase.auth.admin.getUserById(studentId)
-    if (error || !user) return { error: error?.message || "User not found" }
-    
-    return { data: user.user_metadata }
+    // Source of truth is public.students; auth metadata only carries optional extras
+    const { data: student, error } = await supabase
+      .from('students')
+      .select('*')
+      .eq('id', studentId)
+      .single()
+    if (error || !student) return { error: error?.message || "User not found" }
+
+    let meta: any = {}
+    try {
+      const { data: { user } } = await supabase.auth.admin.getUserById(studentId)
+      meta = user?.user_metadata || {}
+    } catch { /* metadata is optional */ }
+
+    return {
+      data: {
+        ...meta,
+        name: student.name,
+        email: student.email,
+        department: student.department,
+        academicYear: student.academic_year,
+        niatId: student.niat_id,
+        created_at: student.created_at
+      }
+    }
   } catch (err: any) {
     return { error: err.message }
   }

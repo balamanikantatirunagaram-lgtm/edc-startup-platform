@@ -70,6 +70,21 @@ export async function login(niatId: string, password: string) {
     
     rateLimitMap.delete(limitKey)
 
+    // Suspension check — web-admin can suspend students (students.is_suspended)
+    const supabaseAdmin = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_SECRET_KEY || "", {
+      auth: { persistSession: false, autoRefreshToken: false }
+    })
+    const { data: studentRow } = await supabaseAdmin
+      .from('students')
+      .select('is_suspended')
+      .eq('id', data.user.id)
+      .maybeSingle()
+    if (studentRow?.is_suspended) {
+      // Do not hand back a session cookie for suspended accounts
+      await supabase.auth.signOut()
+      return { error: "Your account has been suspended. Please contact the EDC team.", suspended: true }
+    }
+
     if (data.session) {
       const cookieStore = await cookies()
       cookieStore.set('sb-access-token', data.session.access_token, {

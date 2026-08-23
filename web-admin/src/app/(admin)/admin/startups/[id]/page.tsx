@@ -300,7 +300,7 @@ export default function AdminStartupReviewPage({
               <div className="space-y-4">
                 {FLOW_STAGES.map((stageName, idx) => {
                   const dbStage = journeyStages.find(
-                    (s) => s.stage_name === stageName || s.stage_name?.includes(stageName)
+                    (s) => s.stage_name === stageName || (s.stage_name?.includes(stageName) && !s.stage_name?.startsWith('[Review]'))
                   )
                   const currentStageStatus = dbStage?.status || "pending"
 
@@ -340,11 +340,11 @@ export default function AdminStartupReviewPage({
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="in-progress">In Progress</SelectItem>
-                              <SelectItem value="Under Review">Under Review</SelectItem>
-                              <SelectItem value="Needs Improvement">Needs Improvement</SelectItem>
+                              <SelectItem value="in_progress">In Progress</SelectItem>
+                              <SelectItem value="under_review">Under Review</SelectItem>
+                              <SelectItem value="needs_improvement">Needs Improvement</SelectItem>
                               <SelectItem value="completed">Completed</SelectItem>
-                              <SelectItem value="Approved">Approved</SelectItem>
+                              <SelectItem value="approved">Approved</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -394,10 +394,10 @@ export default function AdminStartupReviewPage({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Under Review">Under Review</SelectItem>
-                        <SelectItem value="Needs Improvement">Needs Improvement</SelectItem>
-                        <SelectItem value="Approved">Approved</SelectItem>
-                        <SelectItem value="Incubation Ready">Incubation Ready</SelectItem>
+                        <SelectItem value="under_review">Under Review</SelectItem>
+                        <SelectItem value="needs_improvement">Needs Improvement</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="incubation_ready">Incubation Ready</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>

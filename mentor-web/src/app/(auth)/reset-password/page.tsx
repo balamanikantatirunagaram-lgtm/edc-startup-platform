@@ -6,10 +6,13 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { CheckCircle2Icon } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/shared/PasswordInput"
+import { getSecurityQuestion, resetPasswordWithSecurityAnswer } from "@/services/auth.service"
 
 const rules = [
   { label: "At least 8 characters", test: (v: string) => v.length >= 8 },
@@ -19,15 +22,43 @@ const rules = [
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const [username, setUsername] = useState("")
+  const [question, setQuestion] = useState("")
+  const [answer, setAnswer] = useState("")
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [fetchingQ, setFetchingQ] = useState(false)
 
   const allValid = rules.every((r) => r.test(password))
   const matches = password.length > 0 && password === confirm
+  const canSubmit = username.trim() && answer.trim() && allValid && matches
 
-  function handleSubmit(e: React.FormEvent) {
+  async function loadQuestion() {
+    if (!username.trim() || fetchingQ) return
+    setFetchingQ(true)
+    const res = await getSecurityQuestion(username.trim())
+    setFetchingQ(false)
+    if (res.error || !res.question) {
+      setQuestion("")
+      toast.error(res.error || "Could not find your security question.")
+    } else {
+      setQuestion(res.question)
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (allValid && matches) router.push("/login")
+    if (!canSubmit || loading) return
+    setLoading(true)
+    const res = await resetPasswordWithSecurityAnswer(username.trim(), answer.trim(), password)
+    setLoading(false)
+    if (res.error) {
+      toast.error(res.error)
+    } else {
+      toast.success("Password reset! Sign in with your new password.")
+      router.push("/login")
+    }
   }
 
   return (
@@ -35,12 +66,38 @@ export default function ResetPasswordPage() {
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight text-balance">Set a new password</h1>
         <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
-          Choose a strong password you don&apos;t use anywhere else.
+          Verify your identity with your security question, then choose a strong password.
         </p>
       </div>
 
       <form onSubmit={handleSubmit}>
         <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="username">Username</FieldLabel>
+            <Input
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onBlur={loadQuestion}
+              placeholder="Your mentor username"
+              autoComplete="username"
+            />
+          </Field>
+
+          {fetchingQ && <p className="text-sm text-muted-foreground">Loading question…</p>}
+          {question && !fetchingQ && (
+            <Field>
+              <FieldLabel htmlFor="answer">{question}</FieldLabel>
+              <Input
+                id="answer"
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                placeholder="Your answer"
+                autoComplete="off"
+              />
+            </Field>
+          )}
+
           <Field>
             <FieldLabel htmlFor="password">New password</FieldLabel>
             <PasswordInput
@@ -78,8 +135,8 @@ export default function ResetPasswordPage() {
             {confirm.length > 0 && !matches && <FieldDescription>Passwords do not match.</FieldDescription>}
           </Field>
 
-          <Button type="submit" className="w-full" disabled={!allValid || !matches}>
-            Reset password
+          <Button type="submit" className="w-full" disabled={!canSubmit || loading}>
+            {loading ? "Resetting…" : "Reset password"}
           </Button>
         </FieldGroup>
       </form>

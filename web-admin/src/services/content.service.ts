@@ -51,16 +51,14 @@ export async function createEvent(event: any) {
   const { error } = await supabase.from('events').insert([event])
   if (error) return { error: error.message }
   
-  // Notify all students
+  // Notify all students (notifications table uses top-level title/message columns)
   const { data: students } = await supabase.from('students').select('id')
   if (students && students.length > 0) {
     const notifications = students.map(student => ({
       user_id: student.id,
       type: 'info',
-      payload: {
-        title: 'New Event: ' + event.title,
-        message: `A new event "${event.title}" has been scheduled for ${event.date}.`
-      }
+      title: 'New Event: ' + event.title,
+      message: `A new event "${event.title}" has been scheduled for ${event.date}.`
     }))
     // Supabase allows bulk inserts up to 1000 rows usually, which should be fine here
     await supabase.from('notifications').insert(notifications)
@@ -175,7 +173,7 @@ export async function getMentors() {
 export async function createMentor(mentor: any) {
   const supabase = getAdminSupabase()
   
-  const email = `${mentor.username.toLowerCase().replace(/\\s+/g, '')}@mentor.com`
+  const email = `${mentor.username.toLowerCase().replace(/\s+/g, '')}@mentor.com`
   const password = mentor.password
   
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({

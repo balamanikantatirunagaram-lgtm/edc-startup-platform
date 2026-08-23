@@ -115,9 +115,11 @@ export async function applyForJob(jobId: string, coverLetter: string, resumeFile
       const fileExt = resumeFile.name.split('.').pop()
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
       const { error: uploadError } = await supabaseAdmin.storage.from('resumes').upload(fileName, resumeFile)
-      if (!uploadError) {
-        resumeUrl = supabaseAdmin.storage.from('resumes').getPublicUrl(fileName).data.publicUrl
+      if (uploadError) {
+        console.error('Resume upload failed:', uploadError)
+        return { error: "Failed to upload your resume. Please try again." };
       }
+      resumeUrl = supabaseAdmin.storage.from('resumes').getPublicUrl(fileName).data.publicUrl
     }
 
     const { error: insertError } = await supabaseAdmin
@@ -221,29 +223,44 @@ export async function updateApplicationStatus(applicationId: string, status: str
 
     // Phase 2 Sync: If accepted, add to team roster and close job posting
     if (status === 'accepted') {
-      const { error: teamErr } = await supabaseAdmin
+      // NOTE: team_members has no `role` column in the live DB — inserting one
+      // fails silently and leaves the accepted applicant out of the team.
+      const { data: existingMember } = await supabaseAdmin
         .from('team_members')
-        .insert({
-          team_id: teamId,
-          student_id: appCheck.student_id,
-          status: 'approved',
-          role: (appCheck.job_postings as any).role_type || 'Team Member'
-        });
-        
-      if (!teamErr) {
-        await supabaseAdmin
-          .from('job_postings')
-          .update({ status: 'closed' })
-          .eq('id', appCheck.job_id);
+        .select('id')
+        .eq('team_id', teamId)
+        .eq('student_id', appCheck.student_id)
+        .limit(1).maybeSingle();
+
+      if (existingMember) {
+        const { error: reErr } = await supabaseAdmin
+          .from('team_members')
+          .update({ status: 'approved' })
+          .eq('id', existingMember.id)
+        if (reErr) return { error: "Failed to add applicant to your team." }
       } else {
-        console.error("Failed to add team member:", teamErr);
+        const { error: teamErr } = await supabaseAdmin
+          .from('team_members')
+          .insert({
+            team_id: teamId,
+            student_id: appCheck.student_id,
+            status: 'approved'
+          });
+        if (teamErr) return { error: "Failed to add applicant to your team." }
       }
+
+      await supabaseAdmin
+        .from('job_postings')
+        .update({ status: 'closed' })
+        .eq('id', appCheck.job_id);
     }
     
-    // Phase 3 Notifications: Notify student
+    // Phase 3 Notifications: Notify student (top-level title/message columns)
     const { createNotification } = require('./notification.service');
-    await createNotification(appCheck.student_id, `application_${status}`, {
-      message: `Your application for ${(appCheck.job_postings as any).role_type} has been ${status}.`
+    await createNotification(appCheck.student_id, {
+      title: status === 'accepted' ? 'Application Accepted' : `Application ${status}`,
+      message: `Your application for ${(appCheck.job_postings as any).role_type} has been ${status}.`,
+      type: status === 'accepted' ? 'success' : 'info'
     });
 
     return { success: true };

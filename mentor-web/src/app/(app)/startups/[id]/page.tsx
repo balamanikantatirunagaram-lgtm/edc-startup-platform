@@ -109,7 +109,7 @@ export default function MentorStartupDetailsPage() {
                         </span>
                         <CardTitle className="text-base font-semibold">{stageName}</CardTitle>
                       </div>
-                      <Badge variant={currentStatus === 'completed' || currentStatus === 'Approved' ? 'default' : 'secondary'} className="w-fit">
+                      <Badge variant={currentStatus === 'completed' || currentStatus === 'approved' ? 'default' : 'secondary'} className="w-fit">
                         {currentStatus}
                       </Badge>
                     </div>
@@ -137,7 +137,7 @@ export default function MentorStartupDetailsPage() {
                           variant="outline"
                           className="text-xs"
                           disabled={submitting === stageName}
-                          onClick={() => handleStageStatusUpdate(stageName, 'in-progress')}
+                          onClick={() => handleStageStatusUpdate(stageName, 'in_progress')}
                         >
                           In Progress
                         </Button>
@@ -146,7 +146,7 @@ export default function MentorStartupDetailsPage() {
                           variant="outline"
                           className="text-xs"
                           disabled={submitting === stageName}
-                          onClick={() => handleStageStatusUpdate(stageName, 'Needs Improvement')}
+                          onClick={() => handleStageStatusUpdate(stageName, 'needs_improvement')}
                         >
                           Needs Work
                         </Button>

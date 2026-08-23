@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { getMyStartup, updateMyStartup, deleteMyStartup } from "@/services/startup.service"
+import { getMyStartup, updateMyStartup, deleteMyStartup, getStartupJourney } from "@/services/startup.service"
 import { getTeamTasks, createTask, updateTaskStatus } from "@/services/tasks.service"
 import { getMyTeamStatus, getTeamRequests, handleTeamRequest, searchStudentsByNiat, inviteStudent, removeTeamMember } from "@/services/team.service"
 import { getStartupApplications, updateApplicationStatus } from "@/services/jobs.service"
@@ -84,6 +84,9 @@ export default function StartupCommandCenter() {
   // Mentor States
   const [mentorRequests, setMentorRequests] = React.useState<any[]>([])
 
+  // Journey States
+  const [journeyStages, setJourneyStages] = React.useState<any[]>([])
+
   React.useEffect(() => {
     loadEverything()
   }, [])
@@ -133,6 +136,11 @@ export default function StartupCommandCenter() {
 
       const mentorsRes = await getMyMentorshipRequests()
       if (mentorsRes.requests) setMentorRequests(mentorsRes.requests)
+
+      if (startupRes.startup) {
+        const journeyRes = await getStartupJourney()
+        if (journeyRes.stages) setJourneyStages(journeyRes.stages)
+      }
     }
 
     setLoading(false)
@@ -471,7 +479,11 @@ export default function StartupCommandCenter() {
               <CardDescription>Follow the 11-step EDC venture progression roadmap.</CardDescription>
             </CardHeader>
             <CardContent>
-              <JourneyTimeline />
+              <JourneyTimeline
+                currentStage={String(journeyStages.filter((s: any) =>
+                  ['completed', 'approved'].includes((s.status || '').toLowerCase())
+                ).length)}
+              />
             </CardContent>
           </Card>
         </TabsContent>

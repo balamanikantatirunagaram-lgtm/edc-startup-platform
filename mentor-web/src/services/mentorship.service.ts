@@ -39,7 +39,7 @@ export async function getMentorDashboardData() {
     // Fetch active startups (teams that have accepted mentorship requests)
     const { data: activeRequests } = await supabase
       .from('mentorship_requests')
-      .select('id, team_id, teams(id, name, startups(id, name, industry, stage))')
+      .select('id, team_id, teams(id, name, startups!fk_startup(id, name, industry, stage))')
       .eq('mentor_id', mentorId)
       .eq('status', 'accepted')
 

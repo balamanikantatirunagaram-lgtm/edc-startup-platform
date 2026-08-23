@@ -12,6 +12,14 @@ function getSupabase() {
   })
 }
 
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.SUPABASE_URL || ""
+  const supabaseSecret = process.env.SUPABASE_SECRET_KEY || ""
+  return createClient(supabaseUrl, supabaseSecret, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  })
+}
+
 function getAuthenticatedSupabase(token: string) {
   const supabaseUrl = process.env.SUPABASE_URL || ""
   const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || ""
@@ -53,6 +61,17 @@ export async function createTask(title: string, description: string, assignedTo:
     const token = cookieStore.get('sb-access-token')?.value
     if (!token) return { error: "Not authenticated" }
 
+    // Validate assignee is an approved member of this team
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data: membership } = await supabaseAdmin
+      .from('team_members')
+      .select('id')
+      .eq('team_id', status.team.id)
+      .eq('student_id', assignedTo)
+      .eq('status', 'approved')
+      .limit(1).maybeSingle()
+    if (!membership) return { error: "Assignee is not an active member of your team." }
+
     const supabase = getAuthenticatedSupabase(token)
     const { error } = await supabase
       .from('tasks')
@@ -79,6 +98,17 @@ export async function updateTaskStatus(taskId: string, newStatus: string) {
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
     if (!token) return { error: "Not authenticated" }
+
+    // Verify the task belongs to the caller's team
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data: task } = await supabaseAdmin
+      .from('tasks')
+      .select('id, team_id')
+      .eq('id', taskId)
+      .limit(1).maybeSingle()
+    if (!task || !teamStatus.team || task.team_id !== teamStatus.team.id) {
+      return { error: "Task not found in your team." }
+    }
 
     const supabase = getAuthenticatedSupabase(token)
     const { error } = await supabase

@@ -489,6 +489,14 @@ export async function removeTeamMember(studentId: string, teamId: string) {
       return { error: "Leader cannot be removed. You can transfer leadership or delete the team." }
     }
 
+    // Reassign the removed member's open tasks to the leader so nothing is orphaned
+    await supabaseAdmin
+      .from('tasks')
+      .update({ assigned_to: user.user.id })
+      .eq('team_id', teamId)
+      .eq('assigned_to', studentId)
+      .in('status', ['pending', 'in_progress'])
+
     const { error } = await supabaseAdmin
       .from('team_members')
       .delete()

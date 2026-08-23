@@ -20,7 +20,7 @@ export async function applyForFunding(opportunityId: string, startupId: string) 
   const supabase = await getAuthenticatedSupabase()
   const { data, error } = await supabase
     .from('funding_applications')
-    .insert([{ opportunity_id: opportunityId, startup_id: startupId, status: 'pending' }])
+    .insert([{ funding_opportunity_id: opportunityId, startup_id: startupId, status: 'pending' }])
   
   if (error) {
     console.error('Error applying for funding:', error)

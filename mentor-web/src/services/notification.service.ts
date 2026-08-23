@@ -51,16 +51,27 @@ export async function markAsRead(notificationId: string) {
 }
 
 // Function to send notifications from server actions (using Admin client)
-export async function createNotification(userId: string, type: string, payload: any) {
+export async function createNotification(userId: string, typeOrPayload: string | { title?: string; message?: string; type?: string }, maybePayload?: any) {
   try {
     const { createClient } = require('@supabase/supabase-js')
     const supabaseAdmin = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_SECRET_KEY || "", {
       auth: { autoRefreshToken: false, persistSession: false }
     })
-    
+
+    // Backwards compat: legacy signature (userId, type, payload) + new object signature.
+    // Live table has top-level title/message/type columns (no payload JSONB).
+    const data = typeof typeOrPayload === 'string'
+      ? { title: maybePayload?.title, message: maybePayload?.message || '', type: typeOrPayload }
+      : { title: typeOrPayload.title, message: typeOrPayload.message || '', type: typeOrPayload.type || 'info' }
+
     const { error } = await supabaseAdmin
       .from('notifications')
-      .insert([{ user_id: userId, type, payload }])
+      .insert([{
+        user_id: userId,
+        title: data.title || 'Notification',
+        message: data.message,
+        type: data.type
+      }])
       
     if (error) {
       console.error("Failed to create notification:", error)

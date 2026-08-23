@@ -2,6 +2,8 @@
 
 import { createClient } from "@supabase/supabase-js"
 
+const PER_PAGE = 500
+
 function getSupabaseAdmin() {
   return createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_SECRET_KEY || "", {
     auth: { persistSession: false, autoRefreshToken: false }
@@ -25,12 +27,36 @@ export async function getMentorshipEngagements() {
       .from('mentor_messages')
       .select('id, team_id, mentor_id')
 
-    // Fetch all mentors to resolve names
+    // Fetch all mentors to resolve names — auth ids first (new flow),
+    // falling back to the legacy mentors profile table for old rows.
     const mentorIds = Array.from(new Set(requests.map(r => r.mentor_id)))
-    const { data: mentors } = await supabaseAdmin
-      .from('mentors')
-      .select('id, name')
-      .in('id', mentorIds)
+    const nameById = new Map<string, string>()
+    try {
+      let page = 1
+      for (;;) {
+        const { data } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: PER_PAGE })
+        const users = data?.users || []
+        if (users.length === 0) break
+        for (const u of users) {
+          if (mentorIds.includes(u.id)) {
+            const meta = (u.user_metadata || {}) as any
+            nameById.set(u.id, meta.name || meta.username || u.email?.split('@')[0] || 'Mentor')
+          }
+        }
+        if (users.length < PER_PAGE) break
+        page++
+      }
+    } catch { /* auth listing unavailable — fall through to table lookup */ }
+
+    const missing = mentorIds.filter(id => !nameById.has(id))
+    if (missing.length > 0) {
+      const { data: mentors } = await supabaseAdmin
+        .from('mentors')
+        .select('id, name')
+        .in('id', missing)
+      for (const m of mentors || []) nameById.set(m.id, m.name)
+    }
+    const mentors = Array.from(nameById.entries()).map(([id, name]) => ({ id, name }))
 
     const engagements = requests.map(req => {
       const mentor = mentors?.find(m => m.id === req.mentor_id)

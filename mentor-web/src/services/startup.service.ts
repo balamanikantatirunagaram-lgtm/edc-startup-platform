@@ -232,14 +232,31 @@ export async function deleteMyStartup() {
   }
 }
 
+// Some callers navigate with a TEAM id (mentorship fallback). Resolve either
+// a startup id or a team id down to a real startup id; null if unresolvable.
+async function resolveStartupId(idOrTeamId: string): Promise<string | null> {
+  const supabaseAdmin = getSupabaseAdmin()
+  const { data: direct } = await supabaseAdmin
+    .from('startups').select('id').eq('id', idOrTeamId).limit(1).maybeSingle()
+  if (direct) return direct.id
+  const { data: viaStartupId } = await supabaseAdmin
+    .from('teams').select('startup_id').eq('id', idOrTeamId).limit(1).maybeSingle()
+  if (viaStartupId?.startup_id) return viaStartupId.startup_id
+  const { data: viaTeamId } = await supabaseAdmin
+    .from('startups').select('id').eq('team_id', idOrTeamId).limit(1).maybeSingle()
+  return viaTeamId?.id || null
+}
+
 export async function getStartupDocuments(startupId: string) {
   try {
+    const resolved = await resolveStartupId(startupId)
+    if (!resolved) return { documents: [] }
     const supabaseAdmin = getSupabaseAdmin()
-    
+
     const { data: documents, error } = await supabaseAdmin
       .from('startup_documents')
       .select('*')
-      .eq('startup_id', startupId)
+      .eq('startup_id', resolved)
       .order('created_at', { ascending: false })
 
     if (error) return { error: error.message }
@@ -251,12 +268,14 @@ export async function getStartupDocuments(startupId: string) {
 
 export async function getStartupJourney(startupId: string) {
   try {
+    const resolved = await resolveStartupId(startupId)
+    if (!resolved) return { stages: [] }
     const supabaseAdmin = getSupabaseAdmin()
-    
+
     const { data: stages, error } = await supabaseAdmin
       .from('startup_journey_stages')
       .select('*')
-      .eq('startup_id', startupId)
+      .eq('startup_id', resolved)
       .order('created_at', { ascending: false })
 
     if (error) return { error: error.message }
@@ -315,10 +334,13 @@ export async function updateJourneyStageMentor(startupId: string, stageName: str
 
     const mentorName = user.user.user_metadata?.name || 'Mentor'
 
+    const resolved = await resolveStartupId(startupId)
+    if (!resolved) return { error: "Startup not found." }
+
     const { data: existing } = await supabaseAdmin
       .from('startup_journey_stages')
       .select('id, feedback')
-      .eq('startup_id', startupId)
+      .eq('startup_id', resolved)
       .eq('stage_name', stageName)
       .maybeSingle()
 
@@ -332,7 +354,7 @@ export async function updateJourneyStageMentor(startupId: string, stageName: str
         .update({
           status,
           feedback: updatedFeedback,
-          completed_at: status === 'completed' || status === 'Approved' ? new Date().toISOString() : null
+          completed_at: ['completed','approved'].includes(status) ? new Date().toISOString() : null
         })
         .eq('id', existing.id)
 
@@ -341,11 +363,11 @@ export async function updateJourneyStageMentor(startupId: string, stageName: str
       const { error } = await supabaseAdmin
         .from('startup_journey_stages')
         .insert({
-          startup_id: startupId,
+          startup_id: resolved,
           stage_name: stageName,
           status,
           feedback: feedback ? `[${new Date().toLocaleDateString()}] ${mentorName}:\n${feedback}` : null,
-          completed_at: status === 'completed' || status === 'Approved' ? new Date().toISOString() : null
+          completed_at: ['completed','approved'].includes(status) ? new Date().toISOString() : null
         })
 
       if (error) return { error: error.message }

@@ -104,10 +104,11 @@ export async function deleteNotification(id: string) {
 
 export async function createNotification(userId: string, title: string, message: string, type: string = 'info') {
   const supabase = createClient(supabaseUrl, supabaseSecretKey)
-  
+
+  // Live table has top-level title/message columns (no payload JSONB)
   const { error } = await supabase
     .from('notifications')
-    .insert([{ user_id: userId, type, payload: { title, message } }])
+    .insert([{ user_id: userId, title, message, type }])
 
   if (error) {
     console.error('Error creating notification:', error)

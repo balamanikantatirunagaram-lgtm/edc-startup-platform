@@ -166,24 +166,17 @@ export default function StartupJourneyPage() {
           
           <Card>
             <CardHeader>
-              <CardTitle>Assigned EDC Team</CardTitle>
+              <CardTitle>Get Mentor Support</CardTitle>
+              <CardDescription>Connect with EDC mentors to accelerate your current stage.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">DR</div>
-                <div>
-                  <p className="font-medium text-sm">Dr. Ramesh</p>
-                  <p className="text-xs text-muted-foreground">Faculty Mentor</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold text-foreground">AK</div>
-                <div>
-                  <p className="font-medium text-sm">Akash Kumar</p>
-                  <p className="text-xs text-muted-foreground">Business Strategy</p>
-                </div>
-              </div>
-              <Button variant="outline" className="w-full mt-2">Message Team</Button>
+              <p className="text-sm text-muted-foreground">
+                Your assigned mentors will appear here once you request mentorship. Browse the
+                mentor directory and send a request for your current stage.
+              </p>
+              <Button variant="outline" render={<a href="/mentors" />} className="w-full">
+                Browse Mentors
+              </Button>
             </CardContent>
           </Card>
         </div>

@@ -1,8 +1,10 @@
 "use client"
 
+import React from "react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import { logout } from "@/services/auth.service"
+import { getMyNotifications } from "@/services/notifications.service"
 import { BellIcon, LogOutIcon, UserIcon, SettingsIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -46,11 +48,26 @@ const TITLES: Record<string, string> = {
 export function AppHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const { currentUser, notifications } = useAppState()
+  const { currentUser } = useAppState()
+  const [unread, setUnread] = React.useState(0)
+
+  // Real unread count from the notifications table
+  React.useEffect(() => {
+    let active = true
+    const loadUnread = async () => {
+      try {
+        const res = await getMyNotifications()
+        if (!active) return
+        setUnread((res.notifications || []).filter((n: any) => !n.read).length)
+      } catch { /* logged out — badge stays hidden */ }
+    }
+    loadUnread()
+    const interval = setInterval(loadUnread, 60000)
+    return () => { active = false; clearInterval(interval) }
+  }, [pathname])
 
   const title = TITLES[pathname] ?? "EDC Cell"
 
-  const unread = notifications.filter((n) => !n.read).length
   const initials = currentUser.fullName
     .split(" ")
     .map((n) => n[0])

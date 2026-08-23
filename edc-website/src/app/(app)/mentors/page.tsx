@@ -1,12 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { getMentors } from "@/services/content.service"
+import { getMentorDirectory } from "@/services/mentor-directory.service"
 import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
 import { RequestMentorshipButton } from "@/components/shared/RequestMentorshipButton"
 
 export default async function MentorsPage() {
-  const mentors = await getMentors()
+  // Directory ids are auth-users ids so mentorship requests + messages
+  // resolve to the real logged-in mentor in the mentor portal.
+  const { mentors } = await getMentorDirectory()
 
   return (
     <div className="flex flex-col gap-6">

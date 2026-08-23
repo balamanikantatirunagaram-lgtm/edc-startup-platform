@@ -78,7 +78,7 @@ export default function AdminGamificationPage() {
       const payload = {
         title: promptTitle,
         prompt_text: promptContent,
-        system_context: promptContext
+        category: promptContext
       }
       if (editingPromptId) {
         await updateAIPrompt(editingPromptId, payload)
@@ -101,7 +101,7 @@ export default function AdminGamificationPage() {
   const handleEditPrompt = (p: any) => {
     setPromptTitle(p.title || "")
     setPromptContent(p.prompt_text || "")
-    setPromptContext(p.system_context || "")
+    setPromptContext(p.category || "")
     setEditingPromptId(p.id)
     setIsPromptOpen(true)
   }
@@ -215,7 +215,7 @@ export default function AdminGamificationPage() {
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                       <Input placeholder="Title / Key" value={promptTitle} onChange={e => setPromptTitle(e.target.value)} required />
-                      <Textarea placeholder="System Context" value={promptContext} onChange={e => setPromptContext(e.target.value)} />
+                      <Textarea placeholder="Category (e.g. Pitch Help, Ideation)" value={promptContext} onChange={e => setPromptContext(e.target.value)} />
                       <Textarea placeholder="Prompt Template" value={promptContent} onChange={e => setPromptContent(e.target.value)} required className="min-h-[100px]" />
                     </div>
                     <DialogFooter>

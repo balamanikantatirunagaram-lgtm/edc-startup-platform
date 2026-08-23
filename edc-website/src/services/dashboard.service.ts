@@ -85,7 +85,7 @@ export async function getDashboardData() {
         startupData = {
           id: startup.id,
           name: startup.name,
-          tagline: startup.problem_statement?.substring(0, 50) + "..." || "",
+          tagline: startup.tagline || "",
           stage: startup.stage,
           industry: startup.industry,
           problem: startup.problem_statement,

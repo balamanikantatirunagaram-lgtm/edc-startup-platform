@@ -18,8 +18,8 @@ export async function getAiPrompts() {
 export async function chatWithAI(messages: {role: string, content: string}[]) {
   try {
     if (!process.env.NVIDIA_API_KEY) {
-      console.warn("NVIDIA_API_KEY is not set. Using mock AI response.");
-      return { content: `[MOCK AI RESPONSE - Missing API Key]: That's an interesting point! Let's explore that further.` };
+      console.warn("NVIDIA_API_KEY is not set.");
+      return { content: "[Configuration Error]: The AI assistant is not configured right now. Please contact the EDC team.", error: "missing_api_key" };
     }
 
     const controller = new AbortController()

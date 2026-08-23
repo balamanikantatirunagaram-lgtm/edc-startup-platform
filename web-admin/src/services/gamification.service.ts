@@ -26,6 +26,19 @@ export async function awardPoints(payload: any) {
   const supabase = getAdminSupabase()
   const { data, error } = await supabase.from('gamification_points').insert(payload).select().single()
   if (error) throw error
+
+  // Let the student know their points landed
+  try {
+    await supabase.from('notifications').insert([{
+      user_id: payload.student_id,
+      type: 'success',
+      title: 'Points Awarded',
+      message: `You earned ${payload.points} points: ${payload.reason}`
+    }])
+  } catch (notifyErr) {
+    console.error('Award notification failed:', notifyErr)
+  }
+
   return data
 }
 

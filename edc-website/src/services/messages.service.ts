@@ -60,19 +60,19 @@ export async function getMentorMessages(mentorId: string) {
 
     if (error) throw error
 
-    // Fetch sender names
+    // Fetch sender names — senders may be students OR mentors (auth ids or legacy profile-table ids)
     const senderIds = Array.from(new Set(messages?.map(m => m.sender_id) || []))
-    
-    // Some senders are students, some are mentors.
+
     const { data: students } = await supabaseAdmin.from('students').select('id, name, niat_id').in('id', senderIds)
-    const { data: mentors } = await supabaseAdmin.from('mentors').select('id, name').in('id', senderIds)
+    const { resolveMentorProfiles } = await import('./mentor-directory.service')
+    const mentorProfiles = await resolveMentorProfiles(senderIds)
 
     const enrichedMessages = messages?.map(msg => {
       let senderName = 'Unknown'
       const student = students?.find(s => s.id === msg.sender_id)
       if (student) senderName = student.name || student.niat_id
       else {
-        const mentor = mentors?.find(m => m.id === msg.sender_id)
+        const mentor = mentorProfiles[msg.sender_id]
         if (mentor) senderName = mentor.name
       }
       return {

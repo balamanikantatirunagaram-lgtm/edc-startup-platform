@@ -57,16 +57,27 @@ export async function markAsRead(notificationId: string) {
   }
 }
 
-// Function to send notifications from server actions (using Admin client)
-export async function createNotification(userId: string, type: string, payload: any) {
+// Function to send notifications from server actions (using Admin client).
+// The notifications table has top-level title/message/type/read columns (no payload JSONB).
+export async function createNotification(userId: string, payload: { title?: string; message?: string; type?: string } | string, legacyPayload?: any) {
   try {
     const supabaseAdmin = createClient(supabaseUrl, supabaseSecretKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     })
 
+    // Backwards compatibility: old signature was (userId, type, payload)
+    const data = typeof payload === 'string'
+      ? { title: legacyPayload?.title, message: legacyPayload?.message || '', type: payload }
+      : { title: payload.title, message: payload.message || '', type: payload.type || 'info' }
+
     const { error } = await supabaseAdmin
       .from('notifications')
-      .insert([{ user_id: userId, type, payload }])
+      .insert([{
+        user_id: userId,
+        title: data.title || 'Notification',
+        message: data.message,
+        type: data.type
+      }])
 
     if (error) {
       console.error("Failed to create notification:", error)

@@ -129,7 +129,7 @@ export default function ProfilePage() {
         avatarUrl: profile.avatarUrl || ""
       })
       
-      const { points } = await getGamificationPoints(profile.id)
+      const { points } = await getGamificationPoints()
       const totalPoints = points?.reduce((acc: number, curr: any) => acc + (curr.points || 0), 0) || 0
       setGamificationPoints(totalPoints)
     }

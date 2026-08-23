@@ -13,7 +13,8 @@ function getAdminSupabase() {
 export async function getEventsAdmin() {
   noStore()
   const supabase = getAdminSupabase()
-  const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false })
+  // Include registration counts so the events table can show real numbers
+  const { data, error } = await supabase.from('events').select('*, event_registrations(count)').order('created_at', { ascending: false })
   if (error) {
     console.error('getEventsAdmin error:', error)
     return []
@@ -25,6 +26,23 @@ export async function createEvent(event: any) {
   const supabase = getAdminSupabase()
   const { data, error } = await supabase.from('events').insert([event]).select().single()
   if (error) return { error: error.message }
+
+  // Notify all students so new events actually reach the portals
+  try {
+    const { data: students } = await supabase.from('students').select('id').eq('is_suspended', false)
+    if (students && students.length > 0) {
+      const notifications = students.map(student => ({
+        user_id: student.id,
+        type: 'info',
+        title: 'New Event: ' + event.title,
+        message: `A new event "${event.title}" has been scheduled for ${event.date}.`
+      }))
+      await supabase.from('notifications').insert(notifications)
+    }
+  } catch (notifyErr) {
+    console.error('Event notification failed:', notifyErr)
+  }
+
   return { success: true, event: data }
 }
 

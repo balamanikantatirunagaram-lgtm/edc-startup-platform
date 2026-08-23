@@ -58,7 +58,18 @@ export default function Contact() {
               <MessageSquare className="h-6 w-6 text-primary" />
               Send us a message
             </h3>
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form
+              className="space-y-6"
+              onSubmit={(e) => {
+                e.preventDefault()
+                const data = new FormData(e.currentTarget)
+                const subject = encodeURIComponent(String(data.get("subject") || "EDC Inquiry"))
+                const body = encodeURIComponent(
+                  `${data.get("message") || ""}\n\n— ${data.get("name") || "Anonymous"} (${data.get("email") || "no email"})`
+                )
+                window.location.href = `mailto:edc@niat.edu?subject=${subject}&body=${body}`
+              }}
+            >
               <div>
                 <label htmlFor="name" className="block text-sm font-medium leading-6 text-foreground">Full Name</label>
                 <div className="mt-2">

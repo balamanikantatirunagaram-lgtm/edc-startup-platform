@@ -10,9 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { 
-  getInvestors, createInvestor, deleteInvestor,
-  getIncubators, createIncubator, deleteIncubator 
+import {
+  getInvestors, createInvestorAccount, deleteInvestor,
+  getIncubators, createIncubator, deleteIncubator
 } from "@/services/network.service"
 
 function InvestorsTab() {
@@ -22,8 +22,12 @@ function InvestorsTab() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const [formData, setFormData] = React.useState({
+    name: "",
+    email: "",
+    password: "",
     company_name: "",
-    investment_size: "",
+    investment_stage: "",
+    portfolio_size: "",
   })
 
   const load = async () => {
@@ -39,15 +43,21 @@ function InvestorsTab() {
     e.preventDefault()
     setIsSubmitting(true)
     try {
-      await createInvestor({
+      const res = await createInvestorAccount({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
         company_name: formData.company_name,
-        investment_size: formData.investment_size,
-        user_id: formData.company_name.replace(/\s+/g, '').toLowerCase() + '_id',
-        experience: 'Seed Stage'
+        investment_stage: formData.investment_stage.split(',').map(s => s.trim()).filter(Boolean),
+        portfolio_size: formData.portfolio_size ? Number(formData.portfolio_size) : null
       })
+      if (res?.error) {
+        toast.error(res.error)
+        return
+      }
       toast.success("Investor added successfully")
       setIsDialogOpen(false)
-      setFormData({ company_name: "", investment_size: "" })
+      setFormData({ name: "", email: "", password: "", company_name: "", investment_stage: "", portfolio_size: "" })
       load()
     } catch (err: any) {
       toast.error(err.message || "Failed to add investor")
@@ -86,12 +96,28 @@ function InvestorsTab() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Investor Name</label>
+                  <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Jane Investor" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Email (login account)</label>
+                  <Input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="investor@example.com" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Temporary Password</label>
+                  <Input required type="text" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="Min 6 characters" minLength={6} />
+                </div>
+                <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium">Company / Firm Name</label>
                   <Input required value={formData.company_name} onChange={e => setFormData({...formData, company_name: e.target.value})} placeholder="e.g. Sequoia Capital" />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Investment Size Focus</label>
-                  <Input required value={formData.investment_size} onChange={e => setFormData({...formData, investment_size: e.target.value})} placeholder="e.g. $100K - $1M" />
+                  <label className="text-sm font-medium">Investment Stage Focus (comma-separated)</label>
+                  <Input value={formData.investment_stage} onChange={e => setFormData({...formData, investment_stage: e.target.value})} placeholder="e.g. Seed, Series A, Growth" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Portfolio Size</label>
+                  <Input type="number" min={0} value={formData.portfolio_size} onChange={e => setFormData({...formData, portfolio_size: e.target.value})} placeholder="e.g. 25" />
                 </div>
               </div>
               <DialogFooter>
@@ -120,7 +146,8 @@ function InvestorsTab() {
                 <thead>
                   <tr className="border-b bg-muted/30 text-xs font-semibold text-muted-foreground uppercase">
                     <th className="p-4">Name/Company</th>
-                    <th className="p-4">Investment Size</th>
+                    <th className="p-4">Investment Stages</th>
+                    <th className="p-4">Portfolio Size</th>
                     <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -128,7 +155,8 @@ function InvestorsTab() {
                   {investors.map((item) => (
                     <tr key={item.id} className="hover:bg-muted/10 transition-colors">
                       <td className="p-4 font-medium">{item.company_name}</td>
-                      <td className="p-4 text-muted-foreground">{item.investment_size}</td>
+                      <td className="p-4 text-muted-foreground">{(item.investment_stage || []).join(', ') || '—'}</td>
+                      <td className="p-4 text-muted-foreground">{item.portfolio_size ?? '—'}</td>
                       <td className="p-4 text-right">
                         <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(item.id)}>
                           <Trash2Icon className="size-4 mr-2" /> Delete

@@ -68,7 +68,7 @@ export function AppSidebar() {
     getMyTeamStatus().then(status => {
       let finalNav = [...baseStudentNav]
       
-      if (status.startupStatus === 'Incubation Ready') {
+      if (status.startupStatus && ['incubation_ready', 'incubation ready', 'incubation ready'].includes(String(status.startupStatus).toLowerCase())) {
         // Insert Incubator Connect after Funding
         const fundingIndex = finalNav.findIndex(i => i.title === "Funding")
         if (fundingIndex !== -1) {

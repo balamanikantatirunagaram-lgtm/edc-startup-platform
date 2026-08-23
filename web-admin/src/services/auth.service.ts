@@ -71,7 +71,7 @@ export async function login(username: string, password: string) {
     let isMatch = false
     let needsHashing = false
 
-    if (admin.password.startsWith('$2a$') || admin.password.startsWith('$2b$')) {
+    if (admin.password.startsWith('$2a$') || admin.password.startsWith('$2b$') || admin.password.startsWith('$2y$')) {
       isMatch = await bcrypt.compare(password, admin.password)
     } else {
       // Plaintext check - migration path

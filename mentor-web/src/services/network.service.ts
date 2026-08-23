@@ -126,8 +126,10 @@ export async function requestMeeting(startupId: string, details: { topic: string
     // Phase 3 Notifications: Notify the startup leader
     if (receiverId) {
       const { createNotification } = require('./notification.service')
-      await createNotification(receiverId, 'meeting_request', {
-        message: `You have a new meeting request from a mentor regarding: ${details.topic}`
+      await createNotification(receiverId, {
+        title: 'New Meeting Request',
+        message: `You have a new meeting request from a mentor regarding: ${details.topic}`,
+        type: 'info'
       })
     }
     
