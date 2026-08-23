@@ -224,7 +224,12 @@ export async function getAdminStats() {
     const startups = await getAllStartups()
     const students = await getAllStudents()
     
-    const pendingReviews = startups.filter(s => s.status === 'pending' || !s.status).length
+    // Count anything not yet decided as pending review (handles legacy
+    // 'Pending Review' strings, NULLs, and lowercase snake_case variants)
+    const UNDECIDED = new Set(['pending', 'pending_review', 'pending review', 'submitted']);
+    const pendingReviews = startups.filter(
+      s => !s.status || UNDECIDED.has(String(s.status).toLowerCase())
+    ).length
     
     return {
       totalStudents: students.length,
