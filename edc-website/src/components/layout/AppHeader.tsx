@@ -3,7 +3,7 @@
 import React from "react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { logout } from "@/services/auth.service"
+import { logout, getCurrentUser } from "@/services/auth.service"
 import { getMyNotifications } from "@/services/notifications.service"
 import { BellIcon, LogOutIcon, UserIcon, SettingsIcon } from "lucide-react"
 
@@ -50,6 +50,16 @@ export function AppHeader() {
   const router = useRouter()
   const { currentUser } = useAppState()
   const [unread, setUnread] = React.useState(0)
+  const [me, setMe] = React.useState<{ name?: string; avatarUrl?: string; niatId?: string } | null>(null)
+
+  // Real session identity for the header (mock store is never populated)
+  React.useEffect(() => {
+    let active = true
+    getCurrentUser()
+      .then((r) => { if (active && r && (r.name || r.niatId)) setMe(r) })
+      .catch(() => {})
+    return () => { active = false }
+  }, [pathname])
 
   // Real unread count from the notifications table
   React.useEffect(() => {
@@ -68,10 +78,15 @@ export function AppHeader() {
 
   const title = TITLES[pathname] ?? "EDC Cell"
 
-  const initials = currentUser.fullName
+  const fullName = me?.name || currentUser.fullName || ""
+  const avatarSrc = me?.avatarUrl || currentUser.avatarUrl || ""
+  const initials = fullName
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-md md:px-6">
@@ -101,13 +116,13 @@ export function AppHeader() {
             render={
               <Button variant="ghost" className="gap-2 pl-1.5 pr-2.5">
                 <Avatar className="size-7">
-                  <AvatarImage src={currentUser.avatarUrl} alt={currentUser.fullName} />
+                  <AvatarImage src={avatarSrc} alt={fullName} />
                   <AvatarFallback className="text-xs">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <span className="hidden text-sm font-medium sm:inline">
-                  {currentUser.fullName}
+                  {fullName}
                 </span>
               </Button>
             }
@@ -116,10 +131,10 @@ export function AppHeader() {
             <DropdownMenuLabel>
               <div className="flex flex-col">
                 <span className="text-sm font-medium">
-                  {currentUser.fullName}
+                  {fullName}
                 </span>
                 <span className="text-xs font-normal text-muted-foreground">
-                  {currentUser.niatId}
+                  {me?.niatId || currentUser.niatId}
                 </span>
               </div>
             </DropdownMenuLabel>
@@ -134,7 +149,7 @@ export function AppHeader() {
                 Settings
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            {currentUser.role === "admin" && (
+            {(me as any)?.role === "admin" || currentUser.role === "admin" && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
