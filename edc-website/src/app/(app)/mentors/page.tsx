@@ -1,14 +1,27 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { getMentorDirectory } from "@/services/mentor-directory.service"
+import { getMyMentorshipRequests } from "@/services/mentorship.service"
 import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
 import { RequestMentorshipButton } from "@/components/shared/RequestMentorshipButton"
+
+export const dynamic = "force-dynamic"
 
 export default async function MentorsPage() {
   // Directory ids are auth-users ids so mentorship requests + messages
   // resolve to the real logged-in mentor in the mentor portal.
   const { mentors } = await getMentorDirectory()
+
+  // Live relationship state per mentor for badge-aware buttons
+  let stateByMentor: Record<string, "none" | "pending" | "accepted" | "declined"> = {}
+  try {
+    const { requests } = await getMyMentorshipRequests()
+    for (const r of requests || []) {
+      stateByMentor[r.mentor_id] = (r.status === 'accepted' ? 'accepted'
+        : r.status === 'pending' ? 'pending' : r.status === 'declined' ? 'declined' : 'none') as any
+    }
+  } catch { /* logged out or no team */ }
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,7 +61,7 @@ export default async function MentorsPage() {
               </p>
             </CardContent>
             <CardFooter>
-               <RequestMentorshipButton mentorId={mentor.id} />
+               <RequestMentorshipButton mentorId={mentor.id} initialState={stateByMentor[mentor.id] ?? "none"} />
             </CardFooter>
           </Card>
         ))}

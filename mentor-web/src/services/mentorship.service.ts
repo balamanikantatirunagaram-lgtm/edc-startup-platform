@@ -138,14 +138,31 @@ export async function updateRequestStatus(requestId: string, status: 'accepted' 
     
     const supabase = getSupabase(token)
     
-    // Get the request details first
-    const { data: request } = await supabase
+    const { data: user } = await supabase.auth.getUser()
+    if (!user.user) return { error: "Not authenticated" }
+
+    // Get the request details first (service key — mentor identity checked above)
+    const supabaseAdmin = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_SECRET_KEY || "", {
+      auth: { persistSession: false, autoRefreshToken: false }
+    })
+    const { data: request } = await supabaseAdmin
       .from('mentorship_requests')
-      .select('team_id, mentor_id')
+      .select('id, team_id, mentor_id, status, teams(leader_id)')
       .eq('id', requestId)
       .single()
 
-    const { error } = await supabase
+    if (!request) return { error: "Request not found." }
+
+    // State-machine guards: only the request's mentor may decide it,
+    // and only while it is still pending.
+    if (request.mentor_id !== user.user.id) {
+      return { error: "Not authorized" }
+    }
+    if (request.status !== 'pending') {
+      return { error: `This request was already ${request.status}.` }
+    }
+
+    const { error } = await supabaseAdmin
       .from('mentorship_requests')
       .update({ status })
       .eq('id', requestId)

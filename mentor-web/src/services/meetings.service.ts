@@ -54,12 +54,25 @@ export async function getMyMeetings() {
 export async function updateMeetingStatus(meetingId: string, status: 'accepted' | 'declined') {
   try {
     const supabaseAdmin = getSupabaseAdmin()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase()
+    if (!token) return { error: "Not authenticated" }
+    const { data: user } = await supabase.auth.getUser(token)
+    if (!user.user) return { error: "Not authenticated" }
 
     const { data: meetingData } = await supabaseAdmin
       .from('meeting_requests')
-      .select('sender_id, receiver_id')
+      .select('sender_id, receiver_id, status')
       .eq('id', meetingId)
       .single()
+
+    // State-machine guards: only the RECEIVER decides, and only while pending.
+    if (!meetingData) return { error: "Meeting request not found." }
+    if (meetingData.receiver_id !== user.user.id) return { error: "Not authorized" }
+    if (meetingData.status !== 'pending') {
+      return { error: `This request was already ${meetingData.status}.` }
+    }
 
     const { error } = await supabaseAdmin
       .from('meeting_requests')
@@ -78,6 +91,46 @@ export async function updateMeetingStatus(meetingId: string, status: 'accepted' 
         type: status === 'accepted' ? 'success' : 'info'
       })
     }
+
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message }
+  }
+}
+
+// Mentor withdraws a still-pending request they sent
+export async function cancelMeetingRequest(meetingId: string) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+    const supabase = getSupabase()
+    const { data: user } = await supabase.auth.getUser(token)
+    if (!user.user) return { error: "Not authenticated" }
+
+    const { data: m } = await supabaseAdmin
+      .from('meeting_requests')
+      .select('id, sender_id, receiver_id, status, startups(name)')
+      .eq('id', meetingId)
+      .single()
+    if (!m) return { error: "Request not found." }
+    if (m.sender_id !== user.user.id) return { error: "Not authorized" }
+    if (m.status !== 'pending') return { error: "Only pending requests can be cancelled." }
+
+    const { error } = await supabaseAdmin.from('meeting_requests').delete().eq('id', meetingId)
+    if (error) return { error: "Failed to cancel." }
+
+    try {
+      const { createNotification } = require('./notification.service')
+      if (m.receiver_id) {
+        await createNotification(m.receiver_id, {
+          title: 'Meeting Request Cancelled',
+          message: `The mentor cancelled their meeting request regarding ${((m.startups as any) ? (Array.isArray(m.startups) ? m.startups[0]?.name : (m.startups as any).name) : 'a startup')}.`,
+          type: 'info'
+        })
+      }
+    } catch { /* best-effort */ }
 
     return { success: true }
   } catch (err: any) {

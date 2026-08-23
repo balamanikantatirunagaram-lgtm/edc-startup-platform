@@ -124,3 +124,38 @@ export async function sendMentorMessage(mentorId: string, content: string) {
     return { error: error.message }
   }
 }
+
+// Mark all of a mentor's messages in this thread as read (student opened it)
+export async function markMentorMessagesRead(mentorId: string) {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+
+    const supabase = getSupabase(token)
+    const { data: user } = await supabase.auth.getUser()
+    if (!user.user) return { error: "Not authenticated" }
+
+    const supabaseAdmin = getSupabaseAdmin()
+    const { data: member } = await supabaseAdmin
+      .from('team_members')
+      .select('team_id')
+      .eq('student_id', user.user.id)
+      .eq('status', 'approved')
+      .limit(1).maybeSingle()
+    if (!member || !member.team_id) return { error: "No active team" }
+
+    const { error } = await supabaseAdmin
+      .from('mentor_messages')
+      .update({ is_read: true })
+      .eq('team_id', member.team_id)
+      .eq('mentor_id', mentorId)
+      .neq('sender_id', user.user.id)
+      .eq('is_read', false)
+
+    if (error) return { error: error.message }
+    return { success: true }
+  } catch (error: any) {
+    return { error: error.message }
+  }
+}

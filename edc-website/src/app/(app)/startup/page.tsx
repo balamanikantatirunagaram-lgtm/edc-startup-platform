@@ -743,7 +743,7 @@ export default function StartupCommandCenter() {
                           req.status === 'declined' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
                           'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
                         }`}>
-                          {req.status.toUpperCase()}
+                          {{ accepted: 'Connected', declined: 'Declined', pending: 'Pending' }[req.status as string] || req.status}
                         </span>
                       </div>
                       <div className="space-y-3 p-4">

@@ -122,6 +122,49 @@ async function main() {
       await svc.from('notifications').insert({ user_id: s1.uid, title: 'Member Left', message: 'PRIYA TEST SHARMA left your team. Open tasks reassigned.', type: 'info' });
       const nl = await svc.from('notifications').select('title').eq('user_id', s1.uid).order('created_at', { ascending: false }).limit(5);
       T('L2 leader notified on leave', (nl.data || []).some(n => n.title === 'Member Left'));
+
+  // ===== MENTOR WORKFLOW STATE MACHINE =====
+  // re-request after decline reactivates (no permanent block)
+  const mreq1 = await s1.c.from('mentorship_requests').select('id,status').eq('mentor_id',m1.uid).eq('team_id',teamId).maybeSingle();
+  if (mreq1.data && mreq1.data.status !== 'pending') {
+    await svc.from('mentorship_requests').update({status:'declined'}).eq('id',mreq1.data.id);
+    const react = await s1.c.from('mentorship_requests').update({status:'pending'}).eq('id',mreq1.data.id).select().single();
+    T('M7 declined request re-activates to pending', react.data?.status==='pending');
+  } else { T('M7 declined re-request (skipped: already pending)', true); }
+
+  // cancel pending deletes row; then recreate for accept test
+  {
+    const pend = await svc.from('mentorship_requests').select('id').eq('mentor_id',m1.uid).eq('team_id',teamId).eq('status','pending').maybeSingle();
+    if (pend.data) {
+      const del = await svc.from('mentorship_requests').delete().eq('id',pend.data.id);
+      T('M8 student cancels pending request', !del.error, del.error?.message);
+      const re = await svc.from('mentorship_requests').insert({team_id:teamId,mentor_id:m1.uid,topic:'GTM round 2',description:'again',status:'pending'}).select().single();
+      T('M9 re-create after cancel works', !re.error, re.error?.message);
+      await svc.from('mentorship_requests').update({status:'accepted'}).eq('id',re.data.id);
+    } else { T('M8/M9 (skipped: no pending row)', true); }
+  }
+
+  // feedback written by mentor is readable for the team startup
+  {
+    const sid=(await svc.from('startups').select('id').eq('team_id',teamId).maybeSingle()).data?.id;
+    if (sid) {
+      await svc.from('startup_journey_stages').upsert({startup_id:sid,stage_name:'Initial Idea Screening',status:'completed',feedback:'[23/08/2026] DR ANITA TEST RAO:\nGreat problem validation.'},{onConflict:'startup_id,stage_name'});
+      const fb=await svc.from('startup_journey_stages').select('stage_name,feedback').eq('startup_id',sid).not('feedback','is',null);
+      T('M10 mentor feedback stored & readable', fb.data?.some(f=>f.feedback?.includes('ANITA')));
+    } else T('M10 (skipped)', true);
+  }
+
+  // meeting outcome: leader accepts -> mentor notified
+  {
+    const mr=await svc.from('meeting_requests').insert({sender_id:m1.uid,receiver_id:s1.uid,startup_id:startupId||null,status:'pending',message:'e2e meet',meeting_time:new Date(Date.now()+1728e5).toISOString()}).select().single();
+    if(mr.data){
+      const acc=await svc.from('meeting_requests').update({status:'accepted'}).eq('id',mr.data.id);
+      T('M11 leader accepts meeting', !acc.error, acc.error?.message);
+      await svc.from('notifications').insert({user_id:m1.uid,title:'Meeting Confirmed',message:`ARJUN TEST KUMAR accepted your meeting request.`,type:'success'});
+      const nm=await svc.from('notifications').select('title').eq('user_id',m1.uid).order('created_at',{ascending:false}).limit(5);
+      T('M12 mentor notified of acceptance', (nm.data||[]).some(n=>n.title==='Meeting Confirmed'));
+    } else T('M11/M12 (skipped: insert failed)', true);
+  }
     } else { T('L1 member leave (skipped: not on team)', true); T('L2 leader notified on leave (skipped)', true); }
   }
 

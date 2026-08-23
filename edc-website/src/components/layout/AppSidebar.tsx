@@ -52,6 +52,7 @@ const baseStudentNav = [
   { title: "Funding", href: "/funding", icon: BanknoteIcon },
   { title: "Events", href: "/events", icon: CalendarIcon },
   { title: "Viksit Bharat", href: "/viksit-bharat", icon: GlobeIcon },
+  { title: "Meetings", href: "/startup/meetings", icon: CalendarIcon },
   { title: "Profile", href: "/profile", icon: UserIcon },
   { title: "Settings", href: "/settings", icon: SettingsIcon },
 ]

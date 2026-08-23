@@ -282,3 +282,23 @@ User-reported gaps + pipeline-wide notification audit.
 
 ## Harness grown to 32 assertions
 New: task-assignment notification reaches assignee (authed read under RLS), leave flow removes membership + notifies leader.
+
+---
+
+# 12. Mentor ↔ Student Workflow Completion (2026-08-23)
+
+## State machine (Phase 0)
+- `mentorship_requests`: pending → accepted/declined; **declined → re-request now reactivates** (was permanently blocked by unique constraint); new student `cancelMentorshipRequest()` for pending
+- `updateRequestStatus` guarded: caller must be the request's mentor + status must be pending
+- Meetings: receiver-only decisions while pending; new mentor-side `cancelMeetingRequest()` (notifies leader)
+
+## Student experience (Phases 1–2)
+- `/mentors` cards show live state badges; button morphs: Request → "Request sent…" (+Cancel) → "Open Workspace" / "Request Again"
+- `/startup/messages/[mentor_id]` is now a **Mentor Workspace**: Messages tab (chat untouched) + **Feedback tab** surfacing dated journey-stage feedback written by the mentor (previously invisible to students); declined connections get a clear state page; incoming messages marked read on open
+
+## Meetings pipeline completion (Phase 3–4)
+- New edc `meetings.service.ts` + leader page `/startup/meetings` (sidebar entry): incoming requests with Accept/Decline → status chips; every decision notifies the mentor with outcome + proposed time
+- Read receipts both directions (mentor unread counts now actually clear)
+
+## Verification (Phase 7)
+Regression suite grown to **38 assertions — all passing**, including: decline→reactivate, cancel→re-create, feedback storage/readability, meeting accept → mentor notification.
