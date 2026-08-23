@@ -3,7 +3,7 @@
 import * as React from "react"
 import { getMyStartup, updateMyStartup, deleteMyStartup, getStartupJourney } from "@/services/startup.service"
 import { getTeamTasks, createTask, updateTaskStatus } from "@/services/tasks.service"
-import { getMyTeamStatus, getTeamRequests, handleTeamRequest, searchStudentsByNiat, inviteStudent, removeTeamMember } from "@/services/team.service"
+import { getMyTeamStatus, getTeamRequests, handleTeamRequest, searchStudentsByNiat, inviteStudent, removeTeamMember, leaveTeam } from "@/services/team.service"
 import { getStartupApplications, updateApplicationStatus } from "@/services/jobs.service"
 import { getMyMentorshipRequests } from "@/services/mentorship.service"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -223,6 +223,16 @@ export default function StartupCommandCenter() {
     else {
       toast.success("Member removed.")
       loadEverything()
+    }
+  }
+
+  const handleLeaveTeam = async () => {
+    if (!confirm("Are you sure you want to leave this team? Your open tasks will be reassigned to the leader.")) return
+    const res = await leaveTeam()
+    if (res.error) toast.error(res.error)
+    else {
+      toast.success("You left the team.")
+      window.location.href = "/team"
     }
   }
 
@@ -492,9 +502,16 @@ export default function StartupCommandCenter() {
         <TabsContent value="team" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
-              <CardHeader>
-                <CardTitle>Team Members</CardTitle>
-                <CardDescription>Current roster for {currentStartup.name}</CardDescription>
+              <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
+                <div>
+                  <CardTitle>Team Members</CardTitle>
+                  <CardDescription>Current roster for {currentStartup.name}</CardDescription>
+                </div>
+                {!isLeader && (
+                  <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30" onClick={handleLeaveTeam}>
+                    Leave Team
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="flex flex-col gap-2.5">
                 {currentStartup.teamMembers.map((m: any) => (
@@ -592,7 +609,7 @@ export default function StartupCommandCenter() {
                             <div className="min-w-0">
                               <p className="truncate font-medium text-sm">{req.studentName}</p>
                               <p className="text-xs text-muted-foreground">
-                                {req.status === 'invited' ? 'You invited them' : 'Requested to join'} · {new Date(req.created_at).toLocaleDateString()}
+                                {req.status === 'invited' ? 'Invite sent · awaiting response' : 'Wants to join your team'} · {new Date(req.created_at).toLocaleDateString()}
                               </p>
                             </div>
                           </div>

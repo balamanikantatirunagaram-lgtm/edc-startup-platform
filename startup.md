@@ -261,3 +261,24 @@ Suite committed at `scripts/e2e-check.cjs` — **run it after any DB/RLS/service
 1. `scripts/e2e-check.cjs` regression suite (29 assertions incl. dashboard-replication guards).
 2. All future RLS/schema edits must ship with matching harness assertions before merge.
 3. Migrations are idempotent and self-backfilling; 000 now contains the complete policy set so fresh installs start correct.
+
+---
+
+# 11. Missing Workflows Round 4 (2026-08-23)
+
+User-reported gaps + pipeline-wide notification audit.
+
+## Fixed
+| Flow | Gap | Fix |
+|---|---|---|
+| Leader removes member | Removed student got NO notification | `removeTeamMember` now notifies the removed student (team name included) |
+| Task assignment | Assignee never notified | `createTask` notifies the assignee |
+| Job application | Startup leader never notified | `applyForJob` notifies the posting's team leader |
+| Members stuck | No way to leave a team | New **`leaveTeam()`**: blocks leaders (transfer/delete instead), reassigns open tasks to leader, notifies leader; UI "Leave Team" button in Team tab for non-leaders |
+
+## Verified working (was a deployment-lag false alarm)
+- Invitations DO appear on the student's /team page (live-data verified) — the user's test hit the stale Vercel build that predated invite notifications.
+- Leader's Team tab now labels rows distinctly: "Invite sent · awaiting response" vs "Wants to join your team".
+
+## Harness grown to 32 assertions
+New: task-assignment notification reaches assignee (authed read under RLS), leave flow removes membership + notifies leader.

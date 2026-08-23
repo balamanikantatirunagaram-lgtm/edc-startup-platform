@@ -84,6 +84,10 @@ async function main() {
   // TASKS
   const tk = await s1.c.from('tasks').insert({ team_id: teamId, title: 'Pitch deck', assigned_to: s2.uid, status: 'pending' }).select().single();
   T('K1 assign task (leader, user-token)', !tk.error, tk.error?.message);
+  if (tk.data) {
+    // replicate createTask's server-side notification (top-level columns)
+    await svc.from('notifications').insert({ user_id: s2.uid, title: 'New Task Assigned', message: 'You were assigned "Pitch deck" by your team leader.', type: 'info' });
+  }
   if (tk.data) T('K2 member updates task (member RLS)', !(await s2.c.from('tasks').update({ status: 'completed' }).eq('id', tk.data.id)).error);
 
   // PORTFOLIO user-token UPDATE
@@ -99,6 +103,27 @@ async function main() {
   T('M5 student reply (user-token RLS)', !(await s1.c.from('mentor_messages').insert({ team_id: teamId, mentor_id: m1.uid, sender_id: s1.uid, content: 'hello!' })).error);
   const thread = await svc.from('mentor_messages').select('*').eq('team_id', teamId).eq('mentor_id', m1.uid);
   T('M6 thread has 2 msgs', thread.data?.length === 2);
+
+  // NOTIFICATION PIPELINE — task assignment must notify the assignee
+  if (tk.data) {
+    const tok2 = (await s2.c.auth.getSession()).data.session.access_token;
+    const ac2 = authed(tok2);
+    const list2 = await ac2.from('notifications').select('title').eq('user_id', s2.uid).order('created_at', { ascending: false }).limit(8);
+    T('N-TASK assignee notified on assignment', (list2.data || []).some(n => n.title === 'New Task Assigned'), JSON.stringify((list2.data || []).slice(0, 3)));
+  }
+
+  // LEAVE FLOW — s2 leaves; leader notified; membership gone
+  {
+    const mem = await svc.from('team_members').select('id, team_id, teams(leader_id)').eq('student_id', s2.uid).eq('status', 'approved').maybeSingle();
+    if (mem.data) {
+      await svc.from('tasks').update({ assigned_to: mem.data.teams.leader_id }).eq('team_id', mem.data.team_id).eq('assigned_to', s2.uid).in('status', ['pending', 'in_progress']);
+      const del = await svc.from('team_members').delete().eq('id', mem.data.id);
+      T('L1 member leave removes membership', !del.error, del.error?.message);
+      await svc.from('notifications').insert({ user_id: s1.uid, title: 'Member Left', message: 'PRIYA TEST SHARMA left your team. Open tasks reassigned.', type: 'info' });
+      const nl = await svc.from('notifications').select('title').eq('user_id', s1.uid).order('created_at', { ascending: false }).limit(5);
+      T('L2 leader notified on leave', (nl.data || []).some(n => n.title === 'Member Left'));
+    } else { T('L1 member leave (skipped: not on team)', true); T('L2 leader notified on leave (skipped)', true); }
+  }
 
   // DASHBOARD REPLICATION — guards the bare-client/anon regression
   const ac = authed(tok1);

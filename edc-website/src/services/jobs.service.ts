@@ -134,6 +134,27 @@ export async function applyForJob(jobId: string, coverLetter: string, resumeFile
       ]);
 
     if (insertError) return { error: insertError.message };
+
+    // Notify the startup leader about the new application
+    try {
+      const { data: posting } = await supabaseAdmin
+        .from('job_postings').select('title, startups(teams(leader_id))').eq('id', jobId).single();
+      const leaderId = (posting?.startups as any)?.teams?.leader_id;
+      if (leaderId) {
+        const { data: applicant } = await supabaseAdmin
+          .from('students').select('name, niat_id').eq('id', user.user.id).single();
+        const who = applicant?.name || applicant?.niat_id || 'A student';
+        const { createNotification } = require('./notification.service');
+        await createNotification(leaderId, {
+          title: 'New Job Application',
+          message: `${who} applied for your "${posting.title}" opening.`,
+          type: 'info'
+        });
+      }
+    } catch (notifyErr) {
+      console.error('Application notification failed:', notifyErr);
+    }
+
     return { success: true };
   } catch (err: any) {
     return { error: err.message };

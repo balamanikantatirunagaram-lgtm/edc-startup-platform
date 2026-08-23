@@ -480,7 +480,7 @@ export async function removeTeamMember(studentId: string, teamId: string) {
     const supabaseAdmin = getSupabaseAdmin()
 
     // Verify leader
-    const { data: team } = await supabaseAdmin.from('teams').select('leader_id').eq('id', teamId).single()
+    const { data: team } = await supabaseAdmin.from('teams').select('leader_id, name').eq('id', teamId).single()
     if (!team || team.leader_id !== user.user.id) {
       return { error: "Only the leader can remove members." }
     }
@@ -504,7 +504,25 @@ export async function removeTeamMember(studentId: string, teamId: string) {
       .eq('student_id', studentId)
 
     if (error) return { error: "Failed to remove member." }
+
+    // Notify the removed student
+    try {
+      const { createNotification } = await import('./notifications.service')
+      const { data: removedProfile } = await supabaseAdmin
+        .from('students').select('name, niat_id').eq('id', studentId).single()
+      const res = await createNotification(
+        studentId,
+        'Removed from team',
+        `You were removed from ${team?.name || 'the team'} by the team leader.`,
+        'info'
+      )
+      if (res && res.success === false) console.error('remove notification failed')
+      void removedProfile
+    } catch { /* best-effort */ }
+
     return { success: true }
+
+
   } catch (err: any) {
     return { error: err.message }
   }
@@ -603,5 +621,66 @@ export async function getMyPendingRequests() {
     }
   } catch (err: any) {
     return { requests: [] }
+  }
+}
+
+export async function leaveTeam() {
+  try {
+    const supabase = getSupabase()
+    const cookieStore = await cookies()
+    const token = cookieStore.get('sb-access-token')?.value
+    if (!token) return { error: "Not authenticated" }
+
+    const { data: user } = await supabase.auth.getUser(token)
+    if (!user.user) return { error: "Not authenticated" }
+
+    const supabaseAdmin = getSupabaseAdmin()
+
+    const { data: memberRecord } = await supabaseAdmin
+      .from('team_members')
+      .select('id, team_id, teams(id, name, code, leader_id)')
+      .eq('student_id', user.user.id)
+      .eq('status', 'approved')
+      .limit(1).maybeSingle()
+
+    if (!memberRecord || !memberRecord.teams) return { error: "You are not part of a team." }
+    const teams = memberRecord.teams as any
+
+    if (teams.leader_id === user.user.id) {
+      return { error: "Leaders cannot leave. Transfer leadership or delete the startup instead." }
+    }
+
+    // Reassign the leaver's open tasks to the leader
+    await supabaseAdmin
+      .from('tasks')
+      .update({ assigned_to: teams.leader_id })
+      .eq('team_id', memberRecord.team_id)
+      .eq('assigned_to', user.user.id)
+      .in('status', ['pending', 'in_progress'])
+
+    const { error } = await supabaseAdmin
+      .from('team_members')
+      .delete()
+      .eq('id', memberRecord.id)
+
+    if (error) return { error: "Failed to leave the team." }
+
+    // Notify the leader
+    try {
+      const { createNotification } = await import('./notifications.service')
+      const { data: profile } = await supabaseAdmin
+        .from('students').select('name, niat_id').eq('id', user.user.id).single()
+      const who = profile?.name || profile?.niat_id || 'A member'
+      await createNotification(
+        teams.leader_id,
+        'Member Left',
+        `${who} left your team ${teams.name || ''}. Their open tasks were reassigned to you.`.trim(),
+        'info'
+      )
+    } catch { /* best-effort */ }
+
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message }
   }
 }

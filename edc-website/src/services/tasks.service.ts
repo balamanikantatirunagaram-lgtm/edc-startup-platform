@@ -84,6 +84,15 @@ export async function createTask(title: string, description: string, assignedTo:
       })
 
     if (error) return { error: "Failed to create task" }
+
+    // Notify the assignee
+    try {
+      const { createNotification } = await import('./notifications.service')
+      await createNotification(assignedTo, 'New Task Assigned', `You were assigned "${title}" by your team leader.`, 'info')
+    } catch (notifyErr) {
+      console.error('Task notification failed:', notifyErr)
+    }
+
     return { success: true }
   } catch (err: any) {
     return { error: err.message }
