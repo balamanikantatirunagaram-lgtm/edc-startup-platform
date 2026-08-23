@@ -12,7 +12,7 @@ export async function getMyNotifications() {
   const token = cookieStore.get('sb-access-token')?.value
   if (!token) return { notifications: [] }
 
-  const supabase = createClient(supabaseUrl, supabasePublishableKey)
+  const supabase = createClient(supabaseUrl, supabasePublishableKey, { global: { headers: { Authorization: `Bearer ${token}` } } })
   const { data: { user }, error: userError } = await supabase.auth.getUser(token)
   
   if (userError || !user) return { notifications: [] }
@@ -36,7 +36,7 @@ export async function markAllRead() {
   const token = cookieStore.get('sb-access-token')?.value
   if (!token) return { success: false }
 
-  const supabase = createClient(supabaseUrl, supabasePublishableKey)
+  const supabase = createClient(supabaseUrl, supabasePublishableKey, { global: { headers: { Authorization: `Bearer ${token}` } } })
   const { data: { user }, error: userError } = await supabase.auth.getUser(token)
   
   if (userError || !user) return { success: false }
@@ -59,7 +59,7 @@ export async function markOneRead(id: string) {
   const token = cookieStore.get('sb-access-token')?.value
   if (!token) return { success: false }
 
-  const supabase = createClient(supabaseUrl, supabasePublishableKey)
+  const supabase = createClient(supabaseUrl, supabasePublishableKey, { global: { headers: { Authorization: `Bearer ${token}` } } })
   const { data: { user }, error: userError } = await supabase.auth.getUser(token)
   
   if (userError || !user) return { success: false }
@@ -83,7 +83,7 @@ export async function deleteNotification(id: string) {
   const token = cookieStore.get('sb-access-token')?.value
   if (!token) return { success: false }
 
-  const supabase = createClient(supabaseUrl, supabasePublishableKey)
+  const supabase = createClient(supabaseUrl, supabasePublishableKey, { global: { headers: { Authorization: `Bearer ${token}` } } })
   const { data: { user }, error: userError } = await supabase.auth.getUser(token)
   
   if (userError || !user) return { success: false }

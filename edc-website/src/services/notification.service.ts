@@ -13,7 +13,8 @@ async function getAuthedClient() {
   if (!token) return { supabase: null, userId: null }
 
   const supabase = createClient(supabaseUrl, supabasePublishableKey, {
-    auth: { persistSession: false, autoRefreshToken: false }
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
   })
   const { data: { user } } = await supabase.auth.getUser(token)
   if (!user) return { supabase: null, userId: null }

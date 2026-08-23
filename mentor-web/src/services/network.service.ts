@@ -11,11 +11,12 @@ function getSupabaseAdmin() {
   })
 }
 
-function getSupabase() {
+function getSupabase(token?: string) {
   const supabaseUrl = process.env.SUPABASE_URL || ""
   const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || ""
   return createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false, autoRefreshToken: false }
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
   })
 }
 
@@ -34,10 +35,9 @@ export async function getNetworkStartups() {
 }
 
 export async function getBookmarks() {
-  try {
-    const supabase = getSupabase()
-    const cookieStore = await cookies()
+  try {    const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { error: "Not authenticated" }
     
     const { data: user } = await supabase.auth.getUser(token)
@@ -57,10 +57,9 @@ export async function getBookmarks() {
 }
 
 export async function toggleBookmark(startupId: string, isBookmarked: boolean) {
-  try {
-    const supabase = getSupabase()
-    const cookieStore = await cookies()
+  try {    const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { error: "Not authenticated" }
     
     const { data: user } = await supabase.auth.getUser(token)
@@ -90,10 +89,9 @@ export async function toggleBookmark(startupId: string, isBookmarked: boolean) {
 }
 
 export async function requestMeeting(startupId: string, details: { topic: string, preferred_time: string }) {
-  try {
-    const supabase = getSupabase()
-    const cookieStore = await cookies()
+  try {    const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { error: "Not authenticated" }
     
     const { data: user } = await supabase.auth.getUser(token)

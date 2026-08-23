@@ -6,11 +6,12 @@ import { cookies, headers } from "next/headers"
 // Simple in-memory rate limiting (Note: in a serverless environment, this resets per instance. Use Redis for production)
 const rateLimitMap = new Map<string, { count: number; expires: number }>()
 
-function getSupabase() {
+function getSupabase(token?: string) {
   const supabaseUrl = process.env.SUPABASE_URL || ""
   const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || ""
   return createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false, autoRefreshToken: false }
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
   })
 }
 
@@ -94,12 +95,11 @@ export async function login(username: string, password: string) {
 }
 
 export async function setupFirstLogin(question: string, answer: string, newPassword: string) {
-  try {
-    const supabase = getSupabase()
-    const supabaseAdmin = getSupabaseAdmin()
-    
+  try {    const supabaseAdmin = getSupabaseAdmin()
+
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { error: "Not authenticated" }
     
     const { data: { user }, error: userError } = await supabase.auth.getUser(token)
@@ -183,10 +183,9 @@ export async function resetPasswordWithSecurityAnswer(username: string, answer: 
 }
 
 export async function getCurrentUser() {
-  try {
-    const supabase = getSupabase()
-    const cookieStore = await cookies()
+  try {    const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return null
     
     const { data: user, error } = await supabase.auth.getUser(token)
@@ -204,12 +203,11 @@ export async function getCurrentUser() {
 }
 
 export async function changePassword(currentPassword: string, newPassword: string) {
-  try {
-    const supabase = getSupabase()
-    const supabaseAdmin = getSupabaseAdmin()
+  try {    const supabaseAdmin = getSupabaseAdmin()
 
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { error: "Not authenticated" }
 
     const { data: { user }, error: userError } = await supabase.auth.getUser(token)

@@ -13,7 +13,8 @@ export async function getGamificationPoints() {
     if (!token) return { points: [] }
 
     const supabase = createClient(supabaseUrl, supabasePublishableKey, {
-      auth: { persistSession: false, autoRefreshToken: false }
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { Authorization: `Bearer ${token}` } }
     })
     const { data: userData } = await supabase.auth.getUser(token)
     const user = userData?.user

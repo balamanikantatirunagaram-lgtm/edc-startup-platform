@@ -3,11 +3,12 @@
 import { cookies } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 
-function getSupabase() {
+function getSupabase(token?: string) {
   const supabaseUrl = process.env.SUPABASE_URL || ""
   const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || ""
   return createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false, autoRefreshToken: false }
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
   })
 }
 
@@ -21,9 +22,9 @@ function getSupabaseAdmin() {
 
 export async function createTeam(data: any) {
   try {
-    const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { error: "Not authenticated" }
     
     const { data: user, error: userError } = await supabase.auth.getUser(token)
@@ -84,9 +85,9 @@ export async function createTeam(data: any) {
 
 export async function joinTeam(code: string) {
   try {
-    const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { error: "Not authenticated" }
     
     const { data: user } = await supabase.auth.getUser(token)
@@ -145,9 +146,9 @@ export async function joinTeam(code: string) {
 
 export async function getTeamRequests() {
   try {
-    const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { requests: [] }
     
     const { data: user } = await supabase.auth.getUser(token)
@@ -198,9 +199,9 @@ export async function getTeamRequests() {
 
 export async function handleTeamRequest(requestId: string, status: 'approved' | 'rejected') {
   try {
-    const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { error: "Not authenticated" }
     const supabaseAdmin = getSupabaseAdmin()
 
@@ -247,9 +248,9 @@ export async function handleTeamRequest(requestId: string, status: 'approved' | 
 
 export async function inviteStudent(userId: string, teamId: string) {
   try {
-    const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { error: "Not authenticated" }
 
     const { data: caller } = await supabase.auth.getUser(token)
@@ -329,9 +330,9 @@ export async function searchStudentsByNiat(query: string) {
 
 export async function getMyInvitations() {
   try {
-    const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { invitations: [] }
 
     const { data: user } = await supabase.auth.getUser(token)
@@ -365,9 +366,9 @@ export async function respondToInvitation(inviteId: string, status: 'approved' |
 
 export async function removeTeamMember(studentId: string, teamId: string) {
   try {
-    const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { error: "Not authenticated" }
 
     const { data: user } = await supabase.auth.getUser(token)
@@ -400,9 +401,9 @@ export async function removeTeamMember(studentId: string, teamId: string) {
 
 export async function getMyTeamStatus() {
   try {
-    const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     if (!token) return { hasTeam: false }
 
     const { data: user } = await supabase.auth.getUser(token)

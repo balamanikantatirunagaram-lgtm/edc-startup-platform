@@ -651,6 +651,44 @@ DROP POLICY IF EXISTS "Investor can manage own profile" ON public.investor_profi
 CREATE POLICY "Investor can manage own profile" ON public.investor_profiles
   FOR ALL USING (id = auth.uid());
 
+-- User-token WRITE paths used by server actions (see migration 004)
+DROP POLICY IF EXISTS "Authenticated can create teams" ON public.teams;
+CREATE POLICY "Authenticated can create teams" ON public.teams
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated' AND leader_id = auth.uid());
+DROP POLICY IF EXISTS "Leader updates own team" ON public.teams;
+CREATE POLICY "Leader updates own team" ON public.teams
+  FOR UPDATE USING (leader_id = auth.uid());
+DROP POLICY IF EXISTS "Authenticated can register startup" ON public.startups;
+CREATE POLICY "Authenticated can register startup" ON public.startups
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Team members edit own startup" ON public.startups;
+CREATE POLICY "Team members edit own startup" ON public.startups
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.team_members tm
+            WHERE tm.team_id = startups.team_id AND tm.student_id = auth.uid() AND tm.status = 'approved'));
+DROP POLICY IF EXISTS "Leader seeds own membership" ON public.team_members;
+CREATE POLICY "Leader seeds own membership" ON public.team_members
+  FOR INSERT WITH CHECK (student_id = auth.uid());
+DROP POLICY IF EXISTS "Members create team tasks" ON public.tasks;
+CREATE POLICY "Members create team tasks" ON public.tasks
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.team_members tm
+            WHERE tm.team_id = tasks.team_id AND tm.student_id = auth.uid() AND tm.status = 'approved'));
+DROP POLICY IF EXISTS "Members update team tasks" ON public.tasks;
+CREATE POLICY "Members update team tasks" ON public.tasks
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.team_members tm
+            WHERE tm.team_id = tasks.team_id AND tm.student_id = auth.uid() AND tm.status = 'approved'));
+DROP POLICY IF EXISTS "Participants post messages" ON public.mentor_messages;
+CREATE POLICY "Participants post messages" ON public.mentor_messages
+  FOR INSERT WITH CHECK (sender_id = auth.uid() OR mentor_id = auth.uid());
+DROP POLICY IF EXISTS "Startups submit funding applications" ON public.funding_applications;
+CREATE POLICY "Startups submit funding applications" ON public.funding_applications
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.team_members tm
+            JOIN public.startups s ON s.team_id = tm.team_id
+            WHERE s.id = funding_applications.startup_id AND tm.student_id = auth.uid() AND tm.status = 'approved'));
+
 -- Admins: no policy (service-role only access from web-admin server actions)
 
 -- ----------------------------------------------------------------------------

@@ -3,19 +3,20 @@
 import { cookies } from "next/headers"
 import { createClient } from "@supabase/supabase-js"
 
-function getSupabase() {
+function getSupabase(token?: string) {
   const supabaseUrl = process.env.SUPABASE_URL || ""
   const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || ""
   return createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false, autoRefreshToken: false }
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
   })
 }
 
 export async function getDashboardData() {
   try {
-    const supabase = getSupabase()
     const cookieStore = await cookies()
     const token = cookieStore.get('sb-access-token')?.value
+    const supabase = getSupabase(token)
     
     if (!token) {
       return { error: "Not authenticated" }

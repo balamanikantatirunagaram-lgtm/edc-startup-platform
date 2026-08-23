@@ -231,3 +231,33 @@ Single idempotent file that provisions a complete project from scratch OR reconc
 - Seeds: default admin (rotate password!), Viksit Bharat categories
 
 Run order on a fresh project: `000_full_schema.sql` alone suffices. On the current project it's also safe (all guards are IF NOT EXISTS / ON CONFLICT / DO blocks).
+
+---
+
+# 10. Full Feature E2E Test Report (2026-08-23)
+
+Test accounts created in live project: **N25TEST001/002/003** (students), **anita.rao / vikram.mehta** (mentors), **neha.capital** (investor), **TestAdmin** (admin). Password: Test@1234.
+
+## 10.1 Critical regression found & fixed — "dashboards broken on all 3 sites"
+
+Root cause: 9 services in mentor-web + 5 in edc-website created a **bare publishable Supabase client**, validated the token manually via `getUser(token)`, then ran table queries **without the token attached** → executed as role `anon`. Pre-migration-000 this worked only because RLS was off; once RLS went live, anon reads return empty → dashboards rendered empty shells.
+
+Fix: threaded `Authorization: Bearer <token>` into every user-scoped client (dashboard, team, profile, notifications ×2, network, funding, meetings, preferences, gamification, notification, auth.getCurrentUser) across both portals. Verified by new D-series tests replicating dashboard queries exactly.
+
+## 10.2 Second regression found & fixed — migration 000 RLS blocked legit writes
+
+Server actions that intentionally write with the STUDENT's own token failed under 000's read-only policies: team creation, startup registration, task assign/update, portfolio edits, funding applications. Fixed via `migrations/004_rls_write_policies.sql` (leader-scoped team writes, approved-member-scoped tasks/startups, participant-scoped messages); 000 updated to match.
+
+## 10.3 Final automated suite — 29/29 PASS
+
+Auth (3 roles + trigger backfill) · Team create/join/approve/roster · Tasks assign+update (member-scoped RLS) · Portfolio edit persistence · Mentorship request→inbox→accept→2-way messaging thread · Job posting→application · Event registration · Funding application · Points award→student read · Notifications create/mark-read · Meeting requests · Startup status + journey stage writes · Suspension flag.
+Suite committed at `scripts/e2e-check.cjs` — **run it after any DB/RLS/service change**: `node scripts/e2e-check.cjs`.
+
+## 10.4 Data-integrity notes discovered while testing
+- Live DB FK `team_members.team_id → teams` behaves as SET NULL (schema says CASCADE): deleting a team leaves orphaned memberships that can trip the one-approved-team index. Harness now cleans orphans; consider aligning constraint later.
+- Investor account exists but no investor-facing portal consumes `investor_profiles` yet (documented gap).
+
+## 10.5 Repeat-prevention measures adopted
+1. `scripts/e2e-check.cjs` regression suite (29 assertions incl. dashboard-replication guards).
+2. All future RLS/schema edits must ship with matching harness assertions before merge.
+3. Migrations are idempotent and self-backfilling; 000 now contains the complete policy set so fresh installs start correct.
